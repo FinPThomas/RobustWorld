@@ -1,0 +1,196 @@
+{
+ "name": "sample5",
+ "seed": 0,
+ "prompt": "A fixed overhead camera looks straight down at a wooden table. A small blue and green striped ball rolls across the table towards a raised wooden plank. Realistic physics, natural lighting, the camera does not move.",
+ "fps": 16,
+ "context_frames": [
+  0,
+  15
+ ],
+ "target_frames": [
+  16,
+  31
+ ],
+ "clips": [
+  {
+   "clip_id": "start_0020",
+   "source_video": "data/interim/start/start_512.mp4",
+   "pass_id": 20,
+   "include": true,
+   "reasons": [],
+   "path": "data/processed/clips/start/start_0020.mp4",
+   "hand_mask_path": null,
+   "fps": 16,
+   "n_frames": 32,
+   "context_frames": [
+    0,
+    15
+   ],
+   "target_frames": [
+    16,
+    31
+   ],
+   "outcome": "through",
+   "pass_outcome": "through",
+   "ball_at_start": true,
+   "entry_frame": null,
+   "occlusion_start_frame": 15,
+   "hidden_frame": 18,
+   "reappear_frame": 23,
+   "exit_frame": null,
+   "hand_in_context": false,
+   "hand_in_target": false,
+   "hand_touch_frames": [],
+   "other_ball_in_target": false,
+   "source_frames": [
+    4138,
+    4196
+   ],
+   "source_fps": 30.0
+  },
+  {
+   "clip_id": "start_0029",
+   "source_video": "data/interim/start/start_512.mp4",
+   "pass_id": 29,
+   "include": true,
+   "reasons": [],
+   "path": "data/processed/clips/start/start_0029.mp4",
+   "hand_mask_path": null,
+   "fps": 16,
+   "n_frames": 32,
+   "context_frames": [
+    0,
+    15
+   ],
+   "target_frames": [
+    16,
+    31
+   ],
+   "outcome": "hidden",
+   "pass_outcome": "hidden",
+   "ball_at_start": false,
+   "entry_frame": 2,
+   "occlusion_start_frame": 15,
+   "hidden_frame": 17,
+   "reappear_frame": null,
+   "exit_frame": null,
+   "hand_in_context": false,
+   "hand_in_target": false,
+   "hand_touch_frames": [],
+   "other_ball_in_target": false,
+   "source_frames": [
+    5436,
+    5494
+   ],
+   "source_fps": 30.0
+  },
+  {
+   "clip_id": "start_0032",
+   "source_video": "data/interim/start/start_512.mp4",
+   "pass_id": 32,
+   "include": true,
+   "reasons": [],
+   "path": "data/processed/clips/start/start_0032.mp4",
+   "hand_mask_path": null,
+   "fps": 16,
+   "n_frames": 32,
+   "context_frames": [
+    0,
+    15
+   ],
+   "target_frames": [
+    16,
+    31
+   ],
+   "outcome": "hidden",
+   "pass_outcome": "hidden",
+   "ball_at_start": false,
+   "entry_frame": 5,
+   "occlusion_start_frame": 15,
+   "hidden_frame": 17,
+   "reappear_frame": null,
+   "exit_frame": null,
+   "hand_in_context": false,
+   "hand_in_target": false,
+   "hand_touch_frames": [],
+   "other_ball_in_target": false,
+   "source_frames": [
+    5861,
+    5919
+   ],
+   "source_fps": 30.0
+  },
+  {
+   "clip_id": "start_0080",
+   "source_video": "data/interim/start/start_512.mp4",
+   "pass_id": 80,
+   "include": true,
+   "reasons": [],
+   "path": "data/processed/clips/start/start_0080.mp4",
+   "hand_mask_path": null,
+   "fps": 16,
+   "n_frames": 32,
+   "context_frames": [
+    0,
+    15
+   ],
+   "target_frames": [
+    16,
+    31
+   ],
+   "outcome": "through",
+   "pass_outcome": "through",
+   "ball_at_start": false,
+   "entry_frame": 1,
+   "occlusion_start_frame": 15,
+   "hidden_frame": 17,
+   "reappear_frame": 20,
+   "exit_frame": 28,
+   "hand_in_context": false,
+   "hand_in_target": false,
+   "hand_touch_frames": [],
+   "other_ball_in_target": false,
+   "source_frames": [
+    14274,
+    14332
+   ],
+   "source_fps": 30.0
+  },
+  {
+   "clip_id": "start_0084",
+   "source_video": "data/interim/start/start_512.mp4",
+   "pass_id": 84,
+   "include": true,
+   "reasons": [],
+   "path": "data/processed/clips/start/start_0084.mp4",
+   "hand_mask_path": null,
+   "fps": 16,
+   "n_frames": 32,
+   "context_frames": [
+    0,
+    15
+   ],
+   "target_frames": [
+    16,
+    31
+   ],
+   "outcome": "through",
+   "pass_outcome": "through",
+   "ball_at_start": true,
+   "entry_frame": null,
+   "occlusion_start_frame": 15,
+   "hidden_frame": 18,
+   "reappear_frame": 24,
+   "exit_frame": null,
+   "hand_in_context": false,
+   "hand_in_target": false,
+   "hand_touch_frames": [],
+   "other_ball_in_target": false,
+   "source_frames": [
+    15013,
+    15071
+   ],
+   "source_fps": 30.0
+  }
+ ]
+}

@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 robustworld = "robust_world.pipeline:main"
+robustworld-eval = "robust_world.eval.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
