@@ -84,6 +84,38 @@ Main `manifest.jsonl` fields: `clip_id`, `path`, `include`, `reasons`, `outcome`
 To review the clips, open `review.jpg`, which has one row per clip. Hand masks
 are shown in magenta, and a red bar marks the context/target split.
 
+## Evaluating world models
+
+`data/eval/sample5/` holds 5 committed clips (3 through, 2 hidden). It is drawn at
+random within each outcome, so the blocked case is always included. Every model lives
+in its own folder with its own requirements and Colab notebook, and models never
+depend on each other:
+
+| Model | Code | Colab | GPU |
+|---|---|---|---|
+| Wan 2.1 VACE 1.3B | `models/wan21/` | `notebooks/colab_wan21.ipynb` | T4+ |
+| Cosmos-Predict2 2B Video2World | `models/cosmos_predict2/` | `notebooks/colab_cosmos_predict2.ipynb` | A100 |
+
+Each model writes the same prediction format (see `src/robust_world/eval/io.py`):
+- `<clip>.mp4`: the 16 predicted target frames
+- `<clip>_input.mp4`: the frames the model was given
+- `<clip>.json`: settings
+
+That shared format lets one comparison tool handle any set of models:
+
+```bash
+robustworld-eval sample --name sample5 --n 5 --seed 0      # draw a sample
+robustworld-eval baseline                                  # hold-last-frame baseline, no GPU needed
+robustworld-eval grid --models cosmos_predict2 wan21       # ground truth + models
+```
+
+The grid has one column for the ground truth plus one per model, and two rows:
+- **Input:** what each source was given. Frames a model didn't see are dimmed.
+- **Output:** the ground-truth target or the model's prediction.
+
+The context plays first, then the predictions. The tool writes one video per clip, an
+`all.mp4` with every clip stacked, and an `index.html`. Adding a model only adds a column.
+
 ## Large files
 
 GitHub rejects any file over 100 MB, so raw videos are not committed (Git LFS
@@ -99,6 +131,8 @@ ignored. Copy the raw video to wherever the pipeline runs and rerun it there.
 | `data/processed/`      | Clips and manifests                  | no       |
 | `src/robust_world/`    | Pipeline package                     | yes      |
 | `configs/scenes/`      | Per-video scene calibration          | yes      |
+| `data/eval/`           | Small committed eval samples         | yes      |
+| `models/`              | One folder per world model           | yes      |
 | `tests/`               | Tests                                | yes      |
 | `checkpoints/`         | Model weights                        | no       |
 | `outputs/`             | Renders, results                     | no       |

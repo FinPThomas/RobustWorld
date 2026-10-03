@@ -66,8 +66,13 @@ def find(track: list[dict], fps: float, scene: dict, frame_size: int,
         onset = a[k]
         nxt = runs[i + 1] if i + 1 < len(runs) else None
         b = None
-        if nxt and (nxt[0]["frame"] - end["frame"]) / fps <= max_hidden_s and nxt[0]["occ_dist"] >= -TOUCH_TOL:
-            b = nxt
+        if nxt and (nxt[0]["frame"] - end["frame"]) / fps <= max_hidden_s:
+            # Far side: the ball came through, even if it's first detected some way out
+            # (supports/shadow under the occluder can hide it as it emerges).
+            # Same side: only a bounce if it reappears right at the occluder.
+            far_side = side(nxt[0]["x"], nxt[0]["y"]) != side(end["x"], end["y"])
+            if far_side or nxt[0]["occ_dist"] >= -TOUCH_TOL:
+                b = nxt
         outcome = "hidden" if b is None else (
             "through" if side(b[0]["x"], b[0]["y"]) != side(end["x"], end["y"]) else "bounce")
         after = (runs[i + 2] if i + 2 < len(runs) else None) if b else nxt
