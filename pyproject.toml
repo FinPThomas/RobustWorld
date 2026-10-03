@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robust-world"
+version = "0.1.0"
+description = "Preprocess ball-and-occluder videos into context/target clips for world models"
+requires-python = ">=3.9"
+dependencies = [
+    "imageio-ffmpeg>=0.5",
+    "numpy",
+    "opencv-python-headless",
+]
+
+[project.scripts]
+robustworld = "robust_world.pipeline:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
