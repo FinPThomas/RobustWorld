@@ -1,0 +1,5 @@
+{
+  "_comment": "Scene for start.mp4 (512x512, fixed overhead camera). Pixel coords (x, y), origin top-left. Unset keys use robust_world.scene.DEFAULTS.",
+  "occluder_polygon": [[168, 0], [236, 0], [190, 428], [30, 428]],
+  "ignore_regions": [[[260, 512], [280, 435], [380, 405], [512, 390], [512, 512]]]
+}
