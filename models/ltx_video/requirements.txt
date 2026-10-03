@@ -1,0 +1,7 @@
+# LTX-Video inference. torch comes from the environment (Colab ships CUDA builds).
+diffusers>=0.35
+transformers>=4.51
+accelerate
+sentencepiece
+imageio-ffmpeg>=0.5
+opencv-python-headless

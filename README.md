@@ -95,6 +95,8 @@ depend on each other:
 |---|---|---|---|
 | Wan 2.1 VACE 1.3B | `models/wan21/` | `notebooks/colab_wan21.ipynb` | T4+ |
 | Cosmos-Predict2 2B Video2World | `models/cosmos_predict2/` | `notebooks/colab_cosmos_predict2.ipynb` | A100 |
+| LTX-Video 2B distilled (fast) | `models/ltx_video/` | `notebooks/colab_ltx_video.ipynb` | T4+ |
+| V-JEPA 2 ViT-L (scored, no pixels) | `models/vjepa2/` | runs locally (MPS/CPU) | any |
 
 Each model writes the same prediction format (see `src/robust_world/eval/io.py`):
 - `<clip>.mp4`: the 16 predicted target frames
