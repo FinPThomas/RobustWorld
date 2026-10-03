@@ -41,27 +41,40 @@ def pick_dtype(name: str, device: str) -> torch.dtype:
         return getattr(torch, name)
     if device == "cuda":
         return torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    if device == "mps":
+        return torch.bfloat16
     return torch.float32
 
 
-def encode_prompt(base_repo: str, prompt: str, dtype, device):
-    """Load only the T5 text encoder, embed the shared prompt once, then free it."""
+def encode_prompt(base_repo: str, prompt: str, dtype, device, offload_dir: Path | None = None):
+    """Load only the T5 text encoder, embed the shared prompt once, then free it.
+
+    With offload_dir (machines with less RAM than the ~9.5 GB encoder), weights stay on disk and
+    stream through the CPU layer by layer; slow, but it only runs once.
+    """
     from diffusers import LTXConditionPipeline
     from transformers import T5EncoderModel, T5TokenizerFast
 
     tokenizer = T5TokenizerFast.from_pretrained(base_repo, subfolder="tokenizer")
-    text_encoder = T5EncoderModel.from_pretrained(base_repo, subfolder="text_encoder", torch_dtype=dtype,
-                                                  low_cpu_mem_usage=True).to(device)
+    if offload_dir:
+        text_encoder = T5EncoderModel.from_pretrained(
+            base_repo, subfolder="text_encoder", torch_dtype=dtype, device_map="auto",
+            max_memory={"cpu": "2GiB"}, offload_folder=str(offload_dir))
+        device_for_text = "cpu"
+    else:
+        text_encoder = T5EncoderModel.from_pretrained(base_repo, subfolder="text_encoder", torch_dtype=dtype,
+                                                      low_cpu_mem_usage=True).to(device)
+        device_for_text = device
     text_pipe = LTXConditionPipeline(tokenizer=tokenizer, text_encoder=text_encoder, transformer=None,
                                      vae=None, scheduler=None)
     with torch.no_grad():
         embeds, mask, _, _ = text_pipe.encode_prompt(prompt, do_classifier_free_guidance=False,
-                                                     device=device, dtype=dtype)
+                                                     device=device_for_text, dtype=dtype)
     del text_pipe, text_encoder
     gc.collect()
     if device == "cuda":
         torch.cuda.empty_cache()
-    return embeds, mask
+    return embeds.to(device), mask.to(device)
 
 
 def load_video_pipeline(checkpoint: str | None, base_repo: str, dtype, device: str):
@@ -126,9 +139,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--clips", nargs="*", help="only these clip ids")
     p.add_argument("--prompt", help="override the sample's shared prompt")
     p.add_argument("--timesteps", type=float, nargs="+", default=DISTILLED_TIMESTEPS)
+    p.add_argument("--text-encoder-offload", type=Path,
+                   help="stream the T5 encoder from this disk folder (low-RAM machines)")
     args = p.parse_args(argv)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = ("cuda" if torch.cuda.is_available()
+              else "mps" if torch.backends.mps.is_available() else "cpu")
     dtype = pick_dtype(args.dtype, device)
     sample = load_sample(args.sample)
     prompt = args.prompt or sample["prompt"]
@@ -136,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
     clips = [c for c in sample["clips"] if not args.clips or c["clip_id"] in args.clips]
     print(f"LTX-Video 2B distilled on {device} {dtype}; {len(clips)} clips")
 
-    embeds, mask = encode_prompt(args.base_repo, prompt, dtype, device)
+    embeds, mask = encode_prompt(args.base_repo, prompt, dtype, device, args.text_encoder_offload)
     pipe = load_video_pipeline(args.checkpoint or None, args.base_repo, dtype, device)
 
     for clip in clips:
