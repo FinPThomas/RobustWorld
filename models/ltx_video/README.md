@@ -6,9 +6,9 @@ self-contained and doesn't use any other model folder.
 **How it predicts.**
 - LTX's VAE compresses time 8×, so a conditioning video must be 8k+1 frames long. The
   pipeline trims longer ones *from the start*.
-- So it receives the last 9 context frames (7–15) and generates 25 frames, covering
-  clip frames 7–31.
-- Generated frames 9–24 are compared with ground-truth frames 16–31.
+- So it receives the last 17 context frames (7–23) and generates 41 frames, covering
+  clip frames 7–47.
+- Generated frames 17–40 are compared with ground-truth frames 24–47.
 - The distilled model uses 8 fixed timesteps and no classifier-free guidance, which is
   why it's fast.
 

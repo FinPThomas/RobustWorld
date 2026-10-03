@@ -1,4 +1,4 @@
-"""Raw capture video -> 2 s world-model clips (512x512, 16 fps, context | target).
+"""Raw capture video -> 3 s world-model clips (512x512, 16 fps, context | target).
 
 Stages, each cached and rerun only when its inputs change (or with --from):
     downsize  data/raw/videos/<name>.mp4  -> data/interim/<name>/<name>_512.mp4  (square, no audio)

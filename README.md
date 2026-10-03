@@ -53,13 +53,13 @@ detected automatically. To override them, set `background_breaks_s`.
 
 ## Clip format
 
-- 32 frames, 16 fps (2 s), 512x512, H.264.
-- **Frames 0–15: context.** Frame 15 is the last frame before the ball's
+- 48 frames, 16 fps (3 s), 512x512, H.264.
+- **Frames 0–23: context.** Frame 23 is the last frame before the ball's
   outline touches the occluder.
-- **Frames 16–31: target.**
-- For V-JEPA 2, context and target are 16 frames each. For Wan 2.2 (frame
-  counts of 4n+1), condition on the context and generate 17 frames starting
-  from frame 15.
+- **Frames 24–47: target.**
+- For V-JEPA 2, context and target are 24 frames each. For Wan (frame
+  counts of 4n+1), condition on the context and generate 25 frames starting
+  from frame 23.
 
 Every outcome is kept, including the ball staying hidden: the blockade under the
 occluder is part of what the model has to learn. A clip is marked
@@ -71,7 +71,7 @@ occluder is part of what the model has to learn. A clip is marked
   last 0.5 s of context and the whole target.
 
 A hand elsewhere in the frame doesn't exclude the clip. It is saved instead as
-`<clip>_hand.npz` (`masks`: bool `[32, 512, 512]`), so it can be masked out of
+`<clip>_hand.npz` (`masks`: bool `[48, 512, 512]`), so it can be masked out of
 the loss or filled in from the background later.
 
 Main `manifest.jsonl` fields: `clip_id`, `path`, `include`, `reasons`, `outcome`
@@ -99,7 +99,7 @@ depend on each other:
 | V-JEPA 2 ViT-L (scored, no pixels) | `models/vjepa2/` | runs locally (MPS/CPU) | any |
 
 Each model writes the same prediction format (see `src/robust_world/eval/io.py`):
-- `<clip>.mp4`: the 16 predicted target frames
+- `<clip>.mp4`: the predicted target frames (24)
 - `<clip>_input.mp4`: the frames the model was given
 - `<clip>.json`: settings
 
