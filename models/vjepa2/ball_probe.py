@@ -1,24 +1,22 @@
-"""Read the ball out of V-JEPA 2's features, then out of its imagined future.
+"""Where does V-JEPA 2 imagine the ball? Read with the frozen evaluation decoder.
 
 1. Label: the tracker knows where the ball is in every frame, so each 32x32 px token cell
-   at each 2-frame step is labelled "ball here" or not (hidden under the plank = no ball).
-2. Probes: single linear layers (1024 -> 1), trained on clips outside the eval sample.
-   Being linear, anything they find is in V-JEPA's features, not in the probe.
-     - real probe: on the encoder's tokens of real clips (and the context half alone)
-     - imagined probe: on the predictor's imagined target tokens (context encoded alone,
-       no peeking), labelled with where the ball really was. The predictor's outputs are
-       smoothed averages that sit outside the encoder's distribution, so the real probe
-       reads them as a flat ~0.5; this probe is fitted to their own space instead.
-3. Check: on the held-out eval clips, does the real probe find the ball in real tokens?
-4. Read the imagination: on held-out clips, does the imagined probe recover where the
-   ball really goes, better than holding the last context step's ball map still?
+   at each 2-frame step is labelled "ball here" or not.
+2. Decoder: eval_decoder.fit, the only readout allowed on V-JEPA features. Linear, fitted on
+   training clips' context halves only (encoded alone, same-frame labels). It never sees
+   predictions, target-half labels or outcomes, so it cannot learn the blockade; that is
+   for post-training the world model, and this decoder stays the same before and after.
+3. Check: on the held-out eval clips, does it find the ball in real frames (incl. beyond
+   the plank, which it never saw during fitting)?
+4. Read the imagination: the same decoder on the predictor's imagined target features.
+   Reference: the last context step's ball map held still.
 
 Outputs (outputs/vjepa2/ball_probe/):
     <clip>.mp4        frame | real ball map | context/imagined ball map; green = real ball,
-                      red = imagined ball (argmax cell, when the probe is confident)
+                      red = imagined ball (argmax cell, when the decoder is confident)
     summary.png       per clip, over the target: P(ball visible) and P(ball beyond the plank),
-                      real vs imagined (most confident cell, from calibrated probes)
-    metrics.json      probe quality on held-out real tokens and per-clip readouts
+                      real vs imagined
+    metrics.json      decoder quality on held-out real frames and per-clip readouts
 
     python models/vjepa2/ball_probe.py --train-clips 30
 """
@@ -43,11 +41,22 @@ from robust_world.eval.io import read_video  # noqa: E402
 from robust_world.media import write_video  # noqa: E402
 from robust_world.eval.ball import ball_labels, load_tracking, source_indices  # noqa: E402
 from robust_world.passes import side_fn  # noqa: E402
+import eval_decoder  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device, to_pixels  # noqa: E402
 
 CLIP_SIZE = 512
 PANEL = 256
 CONFIDENT = 0.5
+
+
+def cached_encode(cache: Path, clip_id: str, *args, **kwargs) -> dict:
+    path = cache / f"{clip_id}.pt"
+    if path.exists():
+        return torch.load(path)
+    enc = encode(*args, **kwargs)
+    cache.mkdir(parents=True, exist_ok=True)
+    torch.save(enc, path)
+    return enc
 
 
 def _sync(device: str) -> None:
@@ -87,32 +96,6 @@ def encode(model, frames, n_ctx, mean, std, device, imagine: bool) -> dict:
         out["imagined"] = pred.reshape(all_steps - ctx_steps, g, g, -1).half().cpu()
     out["timing"] = timing
     return out
-
-
-def train_probe(x: torch.Tensor, y: torch.Tensor, epochs: int = 20, seed: int = 0) -> torch.nn.Module:
-    """Linear probe with standardised inputs. Plain (unweighted) BCE keeps its outputs calibrated,
-    so P(ball here) can be read as a probability."""
-    torch.manual_seed(seed)
-    mu, sd = x.mean(0), x.std(0) + 1e-4
-    lin = torch.nn.Linear(x.shape[1], 1)
-    rate = y.mean().clamp(1e-4, 1 - 1e-4)
-    with torch.no_grad():                      # start at the base rate (~1.5% of cells), not 50%
-        lin.weight.zero_()
-        lin.bias.fill_(float(torch.log(rate / (1 - rate))))
-    opt = torch.optim.AdamW(lin.parameters(), lr=3e-3, weight_decay=1e-2)
-    loss_fn = torch.nn.BCEWithLogitsLoss()
-    for _ in range(epochs):
-        for idx in torch.randperm(len(x)).split(4096):
-            opt.zero_grad()
-            loss = loss_fn(lin((x[idx] - mu) / sd).squeeze(1), y[idx])
-            loss.backward()
-            opt.step()
-
-    class Probe(torch.nn.Module):
-        def forward(self, t):                     # [..., D] -> probabilities [...]
-            with torch.no_grad():
-                return torch.sigmoid(lin((t.float() - mu) / sd).squeeze(-1))
-    return Probe()
 
 
 def heat(p: np.ndarray) -> np.ndarray:
@@ -180,7 +163,7 @@ def summary_plot(rows: list[dict], path: Path) -> None:
             if i == 1:
                 ax.set_xlabel("clip frame")
     axes[0, 0].legend(fontsize=7)
-    fig.suptitle("Linear ball probe on V-JEPA 2 features: real vs imagined target", fontsize=10)
+    fig.suptitle("Frozen evaluation decoder on V-JEPA 2 features: real vs imagined target", fontsize=10)
     fig.tight_layout()
     fig.savefig(path)
     plt.close(fig)
@@ -215,22 +198,16 @@ def main(argv: list[str] | None = None) -> int:
     print(f"V-JEPA 2 ball probe on {device}: {len(train)} training clips, {len(eval_ids)} held-out eval clips")
 
     cache = REPO / "outputs" / "vjepa2" / "cache" / args.model_id.replace("/", "--")
-    xs, ys, xi, yi = [], [], [], []
+    examples = []
     for i, c in enumerate(train):
         frames = read_video(REPO / c["path"])
         lab, _ = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
         enc = cached_encode(cache, c["clip_id"], model, frames, n_ctx, mean, std, device, imagine=True)
-        cs = enc["context"].shape[0]
-        xs.append(enc["real"].reshape(-1, model.config.hidden_size))
-        ys.append(torch.from_numpy(lab.reshape(-1)).float())
-        xi.append(enc["imagined"].reshape(-1, model.config.hidden_size))
-        yi.append(torch.from_numpy(lab[cs:].reshape(-1)).float())
+        examples.append(eval_decoder.examples_from(enc, lab))
         print(f"\r  encoded training clip {i + 1}/{len(train)}", end="", flush=True)
     print()
-    real_probe = train_probe(torch.cat(xs).float(), torch.cat(ys), seed=args.seed)
-    imag_probe = train_probe(torch.cat(xi).float(), torch.cat(yi), seed=args.seed)
-    print(f"  trained real probe on {sum(len(v) for v in ys)} tokens, "
-          f"imagined probe on {sum(len(v) for v in yi)} imagined tokens")
+    decoder = eval_decoder.fit(examples, seed=args.seed)
+    print(f"  fitted the evaluation decoder on {len(examples)} clips' context halves only")
 
     args.out.mkdir(parents=True, exist_ok=True)
     from sklearn.metrics import roc_auc_score
@@ -248,15 +225,15 @@ def main(argv: list[str] | None = None) -> int:
         lab, centres = ball_labels(source_indices(full_rec, passes, len(frames), n_ctx), track, grid, tub)
         enc = cached_encode(cache, c["clip_id"], model, frames, n_ctx, mean, std, device, imagine=True)
         cs = enc["context"].shape[0]
-        maps_real = real_probe(enc["real"]).numpy()
-        maps_ctx = real_probe(enc["context"]).numpy()
-        maps_imag = imag_probe(enc["imagined"]).numpy()
+        maps_real = decoder(enc["real"]).numpy()
+        maps_ctx = decoder(enc["context"]).numpy()
+        maps_imag = decoder(enc["imagined"]).numpy()
         maps_seen = np.concatenate([maps_ctx, maps_imag])
         future_lab.append(lab[cs:].reshape(-1))
         future_imag.append(maps_imag.reshape(-1))
         future_hold.append(np.repeat(maps_ctx[-1:], len(maps_imag), 0).reshape(-1))
 
-        # Probe quality on held-out real tokens: is the most ball-like cell on the ball?
+        # Decoder quality on held-out real frames: is the most ball-like cell on the ball?
         for s in range(len(lab)):
             if lab[s].any():
                 total += 1
@@ -267,7 +244,7 @@ def main(argv: list[str] | None = None) -> int:
 
         # Readouts over the target: chance the ball is visible, and on the far side of the plank.
         def readout(m):
-            # Calibrated probes: background cells sit near 0, so the most confident cell is the
+            # Calibrated decoder: background cells sit near 0, so the most confident cell is the
             # readout. visible = anywhere; far = beyond the plank and clear of it.
             vis = m.max(axis=(1, 2))
             far = (m * far_cells).max(axis=(1, 2))
@@ -292,7 +269,7 @@ def main(argv: list[str] | None = None) -> int:
                "future_cell_auroc_hold_last_context": round(float(hold_auc), 3) if hold_auc else None,
                "clips": rows}
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=1))
-    print(f"  held-out real tokens: probe's top cell on the ball in {hits}/{total} steps "
+    print(f"  held-out real frames: decoder's top cell on the ball in {hits}/{total} steps "
           f"({metrics['heldout_argmax_hit_rate']:.0%}), cell AUROC {metrics['heldout_cell_auroc']}")
     print(f"  where the ball really goes, read from V-JEPA's imagined tokens: cell AUROC "
           f"{metrics['future_cell_auroc_imagined']} (holding the last context map still: "

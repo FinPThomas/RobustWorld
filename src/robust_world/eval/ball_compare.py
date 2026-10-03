@@ -1,5 +1,7 @@
 """Compare models on the shared ball-level measures (robust_world.eval.ball), all cross-validated
-on the same folds:
+on the same folds. V-JEPA 2 is read by its frozen evaluation decoder (models/vjepa2/eval_decoder.py),
+which can't learn the blockade; any outcome knowledge in its row comes from the world model.
+The TAPNext rule baseline, by design, fits its blockade range on training-fold outcomes.
 
   future cell AUROC   where the ball really is in the target half, scored per 32 px cell
   outcome AUROC/acc   through vs hidden, from the peak P(ball beyond the occluder)
@@ -41,10 +43,10 @@ def _metrics(name: str) -> dict:
 
 
 METHODS = [
-    ("V-JEPA 2: real target features (upper bound)", "vjepa:real", lambda: _vjepa("real"), "tab:green", "-"),
-    ("V-JEPA 2: imagined target (world model)", "vjepa:imagined", lambda: _vjepa("imagined"), "tab:red", "--"),
+    ("V-JEPA 2: real target frames, frozen decoder (upper bound)", "vjepa:real", lambda: _vjepa("real"), "tab:green", "-"),
+    ("V-JEPA 2 pretrained: imagined target (before post-training)", "vjepa:imagined", lambda: _vjepa("imagined"), "tab:red", "--"),
     ("TAPNext + straight-line continuation", "tapnext:continue", lambda: _tapnext("continue"), "tab:gray", ":"),
-    ("TAPNext + continuation + plank/blockade rules", "tapnext:blockade", lambda: _tapnext("blockade"), "tab:blue", "-."),
+    ("TAPNext + continuation + plank/blockade rules (blockade fitted on outcomes)", "tapnext:blockade", lambda: _tapnext("blockade"), "tab:blue", "-."),
 ]
 
 

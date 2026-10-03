@@ -1,17 +1,13 @@
-"""V-JEPA 2: does the model expect the ball to come out from under the plank?
+"""V-JEPA 2 surprise: how far is the imagined future from the real one? (label-free)
 
-V-JEPA 2 predicts in representation space rather than pixels, so it is scored rather
-than rendered:
+The context half is encoded on its own (no peeking at the future), the predictor imagines
+the target half's features, and those are compared with the encoder's features of the real
+full clip (L1, per target time step). This is the V-JEPA "intuitive physics" protocol and
+involves no trained readout. A copy-the-last-context-step baseline gives the scale.
 
-1. Surprise. The context half is encoded on its own (no peeking at the future), the
-   predictor imagines the target half's features, and those are compared with the
-   encoder's features of the real full clip (L1, per target time step). This is the
-   V-JEPA "intuitive physics" protocol. A copy-the-last-context-step baseline gives the
-   scale.
-2. Predicted outcome. A linear probe learns through-vs-hidden from features of *real*
-   target halves; applied to the *imagined* target halves, it reads off what V-JEPA
-   predicts happens. Cross-validated, so a clip is never scored by a probe that saw it.
-   A probe on context features alone shows how much the context gives away.
+Where V-JEPA puts the ball is read by ball_probe_cv.py with the frozen evaluation decoder
+(eval_decoder.py). No readout here is trained on outcomes or on model predictions: learning
+the blockade is for post-training the world model, never for the evaluation.
 
 Frames are resized (not cropped) to 256x256 so the ball's exit at the frame edge is kept.
 
@@ -37,7 +33,7 @@ from robust_world.eval.io import read_video  # noqa: E402
 
 MODEL_ID = "facebook/vjepa2-vitl-fpc64-256"     # or facebook/vjepa2-vitg-fpc64-256 (1B)
 SIZE = 256
-GRID = 4                                        # spatial pooling grid for probe features
+GRID = 4                                        # spatial pooling grid for the saved feature summaries
 
 
 def pick_device() -> str:
@@ -103,43 +99,12 @@ def score_clip(model, frames: list[np.ndarray], n_ctx: int, mean, std, device) -
     }
 
 
-def probe(results: list[dict], kind: str, folds: int, seed: int) -> dict:
-    """Cross-validated through-vs-hidden probes. Trained on real target (or context) features."""
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.model_selection import StratifiedKFold
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
-
-    y = np.array([r["outcome"] == "hidden" for r in results], dtype=int)
-    feats = {name: np.stack([r["features"][name][kind] for r in results])
-             for name in ("context", "target", "predicted")}
-    n_splits = min(folds, int(y.sum()), int(len(y) - y.sum()))
-    p_target, p_imagined, p_context = (np.zeros(len(y)) for _ in range(3))
-    for train, test in StratifiedKFold(n_splits, shuffle=True, random_state=seed).split(y, y):
-        clf = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=5000))
-        clf.fit(feats["target"][train], y[train])
-        p_target[test] = clf.predict_proba(feats["target"][test])[:, 1]
-        p_imagined[test] = clf.predict_proba(feats["predicted"][test])[:, 1]
-        ctx_clf = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=5000))
-        ctx_clf.fit(feats["context"][train], y[train])
-        p_context[test] = ctx_clf.predict_proba(feats["context"][test])[:, 1]
-
-    def acc(p):
-        return float(((p > 0.5) == y).mean())
-    return {"features": kind, "folds": n_splits, "chance": float(max(y.mean(), 1 - y.mean())),
-            "real_target_acc": acc(p_target), "imagined_target_acc": acc(p_imagined),
-            "context_only_acc": acc(p_context), "p_hidden_imagined": p_imagined.tolist(),
-            "p_hidden_context": p_context.tolist()}
-
-
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
     p.add_argument("--sample", type=Path, help="score an eval sample instead of the whole manifest")
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2")
     p.add_argument("--model-id", default=MODEL_ID)
-    p.add_argument("--folds", type=int, default=5)
-    p.add_argument("--seed", type=int, default=0)
     args = p.parse_args(argv)
 
     from transformers import AutoVideoProcessor, VJEPA2Model
@@ -168,9 +133,6 @@ def main(argv: list[str] | None = None) -> int:
         if group:
             summary[f"surprise_{outcome}"] = np.mean([r["surprise"] for r in group], 0).round(4).tolist()
             summary[f"copy_baseline_{outcome}"] = np.mean([r["copy_baseline"] for r in group], 0).round(4).tolist()
-    outcomes = {r["outcome"] for r in results}
-    if {"through", "hidden"} <= outcomes and len(results) >= 10:
-        summary["probe"] = {kind: probe(results, kind, args.folds, args.seed) for kind in ("grid", "mean")}
 
     per_clip = []
     for i, r in enumerate(results):
@@ -178,8 +140,6 @@ def main(argv: list[str] | None = None) -> int:
                "surprise": round(float(r["surprise"].mean()), 4),
                "surprise_per_step": r["surprise"].round(4).tolist(),
                "copy_baseline": round(float(r["copy_baseline"].mean()), 4)}
-        if "probe" in summary:
-            row["p_hidden_imagined"] = round(summary["probe"]["grid"]["p_hidden_imagined"][i], 3)
         per_clip.append(row)
     (args.out / "per_clip.json").write_text(json.dumps(per_clip, indent=1))
     (args.out / "summary.json").write_text(json.dumps(summary, indent=1))
@@ -192,10 +152,6 @@ def main(argv: list[str] | None = None) -> int:
         if f"surprise_{outcome}" in summary:
             print(f"    {outcome:8s} {np.mean(summary[f'surprise_{outcome}']):.4f}   "
                   f"(copy-last-context baseline {np.mean(summary[f'copy_baseline_{outcome}']):.4f})")
-    if "probe" in summary:
-        for kind, pr in summary["probe"].items():
-            print(f"  probe [{kind}] chance {pr['chance']:.2f}: real target {pr['real_target_acc']:.2f}, "
-                  f"V-JEPA imagined target {pr['imagined_target_acc']:.2f}, context only {pr['context_only_acc']:.2f}")
     print(f"-> {args.out}/ (summary.json, per_clip.json, features.npz)")
     return 0
 

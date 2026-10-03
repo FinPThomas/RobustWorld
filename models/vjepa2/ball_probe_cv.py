@@ -1,13 +1,13 @@
-"""Cross-validated V-JEPA 2 ball probe over every included clip, with per-clip run times.
+"""Cross-validated V-JEPA 2 ball readout over every included clip, with per-clip run times.
 
-Same probes as ball_probe.py (linear, calibrated, trained on real and on imagined tokens),
-but scored on all clips with k-fold cross-validation, so each clip is read by probes that
-never saw it. Answers, across the whole dataset:
+Uses the frozen evaluation decoder (eval_decoder.py), fitted per fold on the training clips'
+context halves only, so each clip is read by a decoder that never saw it, and no decoder
+ever sees predictions, target-half labels or outcomes. Answers, across the whole dataset:
 
-  - real features: is the ball found? (sanity)
-  - imagined features: is the ball's true future location recoverable?
-  - outcome: does V-JEPA's imagined future put the ball beyond the plank more for
-    "through" clips than for "hidden" ones? (AUROC of max imagined P(beyond plank))
+  - real frames: is the ball found, including beyond the plank? (sanity / upper bound)
+  - imagined future: where does V-JEPA put the ball, and does it put it beyond the plank
+    more for "through" clips than "hidden" ones? Any such difference comes from the world
+    model, since the decoder has no way to know about the blockade.
 
 Also times every stage per clip on this device (encodings are cached, so only clips
 encoded in this run are timed).
@@ -33,7 +33,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
-from ball_probe import CLIP_SIZE, encode, train_probe  # noqa: E402
+import eval_decoder  # noqa: E402
+from ball_probe import CLIP_SIZE, encode  # noqa: E402
 from robust_world.eval.ball import ball_labels, load_tracking, source_indices  # noqa: E402
 from robust_world.eval.io import read_video  # noqa: E402
 from robust_world.passes import side_fn  # noqa: E402
@@ -62,7 +63,7 @@ def plots(rows: list[dict], out: Path) -> None:
         ax.set_xlabel("clip frame (target half)")
         ax.set_ylim(-0.02, 1.02)
     axes[0].legend(fontsize=8)
-    fig.suptitle("V-JEPA 2 ball probe, cross-validated over all clips (mean ± s.e.)")
+    fig.suptitle("V-JEPA 2 read by the frozen evaluation decoder, cross-validated (mean ± s.e.)")
     fig.tight_layout()
     fig.savefig(out / "curves.png")
     plt.close(fig)
@@ -143,18 +144,14 @@ def main(argv: list[str] | None = None) -> int:
     fut_lab, fut_imag, fut_hold, real_lab, real_map = [], [], [], [], []
     D = model.config.hidden_size
     for fold, (tr, te) in enumerate(StratifiedKFold(args.folds, shuffle=True, random_state=args.seed).split(y_out, y_out)):
-        real_probe = train_probe(torch.cat([data[i]["enc"]["real"].reshape(-1, D) for i in tr]).float(),
-                                 torch.cat([torch.from_numpy(data[i]["lab"].reshape(-1)).float() for i in tr]),
-                                 seed=args.seed)
-        imag_probe = train_probe(torch.cat([data[i]["enc"]["imagined"].reshape(-1, D) for i in tr]).float(),
-                                 torch.cat([torch.from_numpy(data[i]["lab"][data[i]["cs"]:].reshape(-1)).float()
-                                            for i in tr]), seed=args.seed)
+        decoder = eval_decoder.fit([eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr],
+                                   seed=args.seed)
         for i in te:
             d = data[i]
             cs = d["cs"]
-            m_real = real_probe(d["enc"]["real"]).numpy()
-            m_ctx = real_probe(d["enc"]["context"]).numpy()
-            m_imag = imag_probe(d["enc"]["imagined"]).numpy()
+            m_real = decoder(d["enc"]["real"]).numpy()
+            m_ctx = decoder(d["enc"]["context"]).numpy()
+            m_imag = decoder(d["enc"]["imagined"]).numpy()
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
@@ -187,6 +184,10 @@ def main(argv: list[str] | None = None) -> int:
                                         "n": int(len(v))} for k, v in t_arr.items()},
         "model_load_seconds": round(t_load, 1),
     }
+    old_metrics = args.out / "metrics.json"
+    if not timings and old_metrics.exists():          # everything was cached: keep the last measured timings
+        prev = json.loads(old_metrics.read_text())
+        metrics["timing_seconds_per_clip"] = prev.get("timing_seconds_per_clip", {})
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=1))
     (args.out / "per_clip.json").write_text(json.dumps(rows, indent=1))
     plots(rows, args.out)
