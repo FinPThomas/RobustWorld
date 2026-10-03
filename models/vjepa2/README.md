@@ -32,6 +32,19 @@ python models/vjepa2/run.py                              # all included clips (n
 python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip sample
 ```
 
+**Ball detector (the most interpretable view).** `python models/vjepa2/ball_probe.py`
+
+1. The tracker labels which 32 px token cell holds the ball at each step.
+2. Linear detectors are trained on 30 clips outside the eval sample:
+   - one on V-JEPA's **real** features
+   - one on its **imagined** (predictor) features
+3. On the held-out sample this gives a "where is the ball" map for both the real and the
+   imagined future.
+4. It also gives two curves over time: P(ball visible) and P(ball beyond the plank).
+
+The detectors are linear and calibrated, so what they find is in V-JEPA's features.
+Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
+
 **Predictive geometry.** `python models/vjepa2/geometry.py` renders, for each sample clip:
 - the real and imagined token features, projected to colour with one shared PCA basis
 - per-token change against V-JEPA's own output for an empty-scene clip
