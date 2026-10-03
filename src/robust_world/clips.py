@@ -26,11 +26,11 @@ from .paths import CLIPS_ROOT, rel
 from .scene import BALL_EXCLUDE, background_for, fill_mask, foreground_mask
 
 OUT_FPS = 16
-CTX_FRAMES = 16                    # context half; the target half is the same length
+CTX_FRAMES = 24                    # context half (1.5 s); the target half is the same length
 HAND_MIN_PX = 2500                 # foreground pixels in a frame that count as a hand in shot
 FREE_ROLL = 8                      # context frames before the midpoint the ball must roll untouched
 TOUCH_RADII = BALL_EXCLUDE + 1.5   # hand pixels within this many ball radii count as touching it
-SHEET_FRAMES = [0, 5, 10, 15, 16, 21, 26, 31]
+SHEET_FRAMES = [0, 8, 16, 23, 24, 31, 39, 47]
 
 
 def contact_sheet(frames: list[np.ndarray], masks: np.ndarray | None, label: str) -> np.ndarray:
