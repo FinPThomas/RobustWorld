@@ -1,0 +1,34 @@
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- OS ---
+.DS_Store
+
+# --- Never commit credentials dropped in the repo ---
+id_rsa*
+id_ed25519*
+*.pem
+*.key
+
+# --- Derived / regenerable data (keep the repo small) ---
+# Ignore the *contents* but keep the folders (via .gitkeep) so the
+# directory structure survives a fresh clone.
+data/processed/*
+data/interim/*
+outputs/*
+checkpoints/*
+!data/processed/.gitkeep
+!data/processed/frames/
+data/processed/frames/*
+!data/processed/frames/.gitkeep
+!data/interim/.gitkeep
+!outputs/.gitkeep
+!checkpoints/.gitkeep
+
+# --- Source videos ARE tracked (see .gitattributes). ---
+# data/raw/videos/ is intentionally NOT ignored so uploads can be committed.
+# Mind GitHub's 100 MB per-file hard limit; use Git LFS above that.

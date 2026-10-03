@@ -1,0 +1,11 @@
+# Treat media as binary: no line-ending munging, no useless diffs
+*.mp4 binary
+*.mov binary
+*.avi binary
+*.mkv binary
+*.png binary
+*.jpg binary
+
+# If/when Git LFS is installed, swap the lines above for:
+#   *.mp4 filter=lfs diff=lfs merge=lfs -text
+# and run: git lfs install && git lfs track "*.mp4"
