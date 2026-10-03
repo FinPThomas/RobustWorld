@@ -2,7 +2,7 @@
 
 Sample (data/eval/<sample>/, committed so Colab can use it):
     sample.json        {"name", "prompt", "context_frames", "target_frames", "clips": [manifest records]}
-    clips/<id>.mp4     the full 32-frame clip (context + ground-truth target)
+    clips/<id>.mp4     the full clip (context + ground-truth target)
 
 Prediction (<pred_root>/<sample>/<model>/):
     <id>.mp4           predicted target: exactly len(target_frames) frames, 512x512, 16 fps

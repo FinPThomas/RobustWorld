@@ -43,6 +43,18 @@ python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip 
 4. It also gives two curves over time: P(ball visible) and P(ball beyond the plank).
 
 The detectors are linear and calibrated, so what they find is in V-JEPA's features.
+
+5. Against a hand-coded **kinematic baseline** (`kinematic.py`): it fits constant velocity to
+   the tracked ball over the last 1/3 s of context, then extrapolates. The ball counts as hidden
+   while its centre is under the plank or out of frame. It knows nothing about the blockade, so
+   it always predicts the ball coming through. It is scored like V-JEPA:
+   - future-cell AUROC
+   - centre error (both at token-cell resolution)
+   - visibility accuracy
+   - whether the ball ends up beyond the plank
+
+   These are written to `metrics.json` under `vjepa_vs_kinematic`. The blue line in `summary.png`
+   and the blue diamond in the clip videos show the kinematic prediction.
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
 **Predictive geometry.** `python models/vjepa2/geometry.py` renders, for each sample clip:
