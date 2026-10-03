@@ -13,13 +13,20 @@ It's self-contained and doesn't use any other model folder.
 This is the V-JEPA intuitive-physics protocol. A copy-the-last-context-step baseline
 gives the scale.
 
-**Predicted outcome.**
-1. A linear probe learns through-vs-hidden from features of the *real* target halves.
-2. It is then applied to V-JEPA's *imagined* target halves, to read off which outcome
-   the model expects.
+**Where V-JEPA puts the ball.** This uses the frozen evaluation decoder,
+`eval_decoder.py`, which is the only readout allowed on V-JEPA features.
+- It is a linear map from features to "ball in this cell", fitted only on *real* features
+  of the context half (encoded alone).
+- Its labels are the ball positions in those same frames.
+- It never sees predictions, target-half labels or outcomes, so it **cannot learn the
+  blockade**. That has to come from post-training the world model, and this decoder stays
+  the same before and after.
+- `tests/test_eval_isolation.py` enforces this (see `CLAUDE.md`).
+- It still finds the ball beyond the plank in real frames: AUROC ~0.99.
 
-Probes are 5-fold cross-validated. A context-only probe shows how much the first half
-alone gives away.
+To run it:
+- `ball_probe.py`: videos for the 5-clip sample.
+- `ball_probe_cv.py`: all clips, 5-fold, with run times.
 
 Frames are resized to 256×256 rather than cropped, so the ball leaving through the
 frame edge stays in view.
@@ -28,21 +35,10 @@ frame edge stays in view.
 and faster on CUDA.
 ```bash
 pip install -e . -r models/vjepa2/requirements.txt
-python models/vjepa2/run.py                              # all included clips (needs data/processed)
+python models/vjepa2/run.py                              # surprise, all included clips (needs data/processed)
 python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip sample
 ```
 
-**Ball detector (the most interpretable view).** `python models/vjepa2/ball_probe.py`
-
-1. The tracker labels which 32 px token cell holds the ball at each step.
-2. Linear detectors are trained on 30 clips outside the eval sample:
-   - one on V-JEPA's **real** features
-   - one on its **imagined** (predictor) features
-3. On the held-out sample this gives a "where is the ball" map for both the real and the
-   imagined future.
-4. It also gives two curves over time: P(ball visible) and P(ball beyond the plank).
-
-The detectors are linear and calibrated, so what they find is in V-JEPA's features.
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
 **Predictive geometry.** `python models/vjepa2/geometry.py` renders, for each sample clip:
@@ -51,6 +47,6 @@ Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 - `trajectories.png`: real versus imagined paths through feature space
 
 **Outputs** go to `outputs/vjepa2/`:
-- `summary.json`: mean surprise curves per outcome, and probe accuracies
-- `per_clip.json`: per-clip surprise and V-JEPA's predicted P(hidden)
+- `summary.json`: mean surprise curves per outcome (label-free)
+- `per_clip.json`: per-clip surprise
 - `features.npz`
