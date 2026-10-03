@@ -26,7 +26,6 @@ Outputs (outputs/vjepa2/ball_probe/):
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import random
 import sys
@@ -42,6 +41,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 from robust_world.eval.io import read_video  # noqa: E402
 from robust_world.media import write_video  # noqa: E402
+from robust_world.eval.ball import ball_labels, load_tracking, source_indices  # noqa: E402
 from robust_world.passes import side_fn  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device, to_pixels  # noqa: E402
 
@@ -50,67 +50,42 @@ PANEL = 256
 CONFIDENT = 0.5
 
 
-def load_tracking(name: str = "start"):
-    interim = REPO / "data" / "interim" / name
-    track = []
-    for r in csv.DictReader((interim / "track.csv").open()):
-        track.append((int(r["visible"]), float(r["x"] or 0), float(r["y"] or 0), float(r["radius"] or 0)))
-    passes = {p["id"]: p for p in json.loads((interim / "passes.json").read_text())["passes"]}
-    scene = json.loads((REPO / "configs" / "scenes" / f"{name}.json").read_text())
-    return track, passes, scene
-
-
-def source_indices(clip: dict, passes: dict, n_frames: int, n_ctx: int) -> list[int]:
-    """Clip frame k -> source frame, exactly as robust_world.clips cut it."""
-    mid = passes[clip["pass_id"]]["occlusion_start_frame"] - 1
-    step = clip["source_fps"] / clip["fps"]
-    return [int(round(mid + (k - (n_ctx - 1)) * step)) for k in range(n_frames)]
-
-
-def ball_labels(src: list[int], track, grid: int, tubelet: int) -> tuple[np.ndarray, list]:
-    """[steps, grid, grid] bool cells covered by the visible ball, and its centre per step (or None)."""
-    steps = len(src) // tubelet
-    cell = CLIP_SIZE / grid
-    labels = np.zeros((steps, grid, grid), bool)
-    centres = []
-    for s in range(steps):
-        pts = [track[i] for i in src[s * tubelet:(s + 1) * tubelet] if track[i][0]]
-        for _, x, y, r in pts:
-            r = max(r, 8.0)
-            x0, x1 = int((x - r) // cell), int((x + r) // cell)
-            y0, y1 = int((y - r) // cell), int((y + r) // cell)
-            labels[s, max(y0, 0):min(y1, grid - 1) + 1, max(x0, 0):min(x1, grid - 1) + 1] = True
-        centres.append((np.mean([p[1] for p in pts]), np.mean([p[2] for p in pts])) if pts else None)
-    return labels, centres
-
-
-def cached_encode(cache: Path, clip_id: str, *args, **kwargs) -> dict:
-    path = cache / f"{clip_id}.pt"
-    if path.exists():
-        return torch.load(path)
-    enc = encode(*args, **kwargs)
-    cache.mkdir(parents=True, exist_ok=True)
-    torch.save(enc, path)
-    return enc
+def _sync(device: str) -> None:
+    if device == "cuda":
+        torch.cuda.synchronize()
+    elif device == "mps":
+        torch.mps.synchronize()
 
 
 @torch.no_grad()
 def encode(model, frames, n_ctx, mean, std, device, imagine: bool) -> dict:
+    """Real (and optionally context-only + imagined) token grids, plus seconds spent per stage."""
+    import time
     cfg = model.config
     g = SIZE // cfg.patch_size
     per_step = g * g
     ctx_steps, all_steps = n_ctx // cfg.tubelet_size, len(frames) // cfg.tubelet_size
+    timing = {}
+    _sync(device)
+    t = time.perf_counter()
     full = model(to_pixels(frames, mean, std, device), skip_predictor=True).last_hidden_state
+    _sync(device)
+    timing["encode_full"], t = time.perf_counter() - t, time.perf_counter()
     out = {"real": full.reshape(all_steps, g, g, -1).half().cpu()}
     if imagine:
         ctx = model(to_pixels(frames[:n_ctx], mean, std, device), skip_predictor=True).last_hidden_state
+        _sync(device)
+        timing["encode_context"], t = time.perf_counter() - t, time.perf_counter()
         pred = model.predictor(
             encoder_hidden_states=ctx,
             context_mask=[torch.arange(ctx_steps * per_step, device=device).unsqueeze(0)],
             target_mask=[torch.arange(ctx_steps * per_step, all_steps * per_step, device=device).unsqueeze(0)],
         ).last_hidden_state
+        _sync(device)
+        timing["predict"] = time.perf_counter() - t
         out["context"] = ctx.reshape(ctx_steps, g, g, -1).half().cpu()
         out["imagined"] = pred.reshape(all_steps - ctx_steps, g, g, -1).half().cpu()
+    out["timing"] = timing
     return out
 
 

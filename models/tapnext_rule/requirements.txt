@@ -1,0 +1,7 @@
+# TAPNext + rules baseline. torch/torchvision come from the environment.
+# The tapnet repo is cloned into third_party/tapnet and the BootsTAPNext checkpoint
+# downloaded into checkpoints/tapnext/ automatically on first run.
+einops
+scikit-learn
+imageio-ffmpeg>=0.5
+opencv-python-headless
