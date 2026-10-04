@@ -62,7 +62,7 @@ def test_training_lowers_held_out_l1_and_checkpoint_round_trips(tmp_path, monkey
     base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
     args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=15,
                            workers=0, seed=0, loss="l1")
-    log = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    log, _ = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
     before = sum(log["held_out_l1_pretrained"].values())
     after = sum(log["held_out_l1_posttrained"].values())
     assert after < before
@@ -90,7 +90,7 @@ def test_training_never_touches_the_eval_decoder_inputs(tmp_path, monkeypatch):
     enc_before = {k: v.clone() for k, v in model.encoder.state_dict().items()}
     args = SimpleNamespace(model_id="tiny", lr=1e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=2,
                            workers=0, seed=0, loss="l1")
-    posttrain.train_one(model, base, clips[:3], clips[3:], args, "cpu", "fold0")
+    _ = posttrain.train_one(model, base, clips[:3], clips[3:], args, "cpu", "fold0")
     for c in clips:
         after = torch.load(cache / f"{c['clip_id']}.pt")
         assert torch.equal(after["context"], before[c["clip_id"]]["context"])
@@ -106,7 +106,7 @@ def test_commit_loss_trains_and_prefers_its_own_future(tmp_path, monkeypatch):
     args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=10,
                            workers=0, seed=0, loss="commit", motion_alpha=4.0, contrast_weight=0.1,
                            tau=0.02, negatives=3)
-    log = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    log, _ = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
     assert set(log["train_parts"][0]) == {"l1", "wl1", "nce"}
     assert sum(log["held_out_l1_posttrained"].values()) < sum(log["held_out_l1_pretrained"].values())
 
@@ -125,3 +125,55 @@ def test_motion_weights_flag_phantom_balls():
     pred[0, 1, 2, 3] = 5.0                                        # the prediction invents a moving ball
     w = posttrain.motion_weights(target, pred, last, alpha=4.0)
     assert w[0, 1, 2, 3] > w[0, 0, 0, 0] and w.min() >= 1
+
+
+def test_rollout_and_codes_modes(tmp_path, monkeypatch):
+    model = tiny_model()
+    ctx = torch.randn(2, CTX, G, G, D)
+    with torch.no_grad():
+        first = posttrain.imagine(model.predictor, ctx, 1)
+        steps = posttrain.rollout(model.predictor, ctx, ALL - CTX)
+        assert steps.shape == (2, ALL - CTX, G, G, D)
+        assert torch.allclose(steps[:, :1], first, atol=1e-5)       # step 1 sees only the real context
+
+        book = torch.nn.functional.normalize(torch.randn(8, D), dim=-1)
+        snapped = posttrain.imagine_mode(model.predictor, ctx, ALL - CTX, {"rollout": True, "codebook": book})
+        assert all(any(torch.allclose(t, c) for c in book) for t in snapped.reshape(-1, D)[:20])
+
+    clips, cache = fake_clips(tmp_path)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    centres = posttrain.fit_codebook(posttrain.Cached(clips, cache), k=8, seed=0, n_tokens=400, iters=5)
+    assert centres.shape == (8, D) and torch.isfinite(centres).all()
+
+
+def test_codes_rollout_trains(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=8,
+                           workers=0, seed=0, loss="codes", codes=8, code_tau=0.05, rollout=True)
+    log, mode = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    assert mode["rollout"] and mode["codebook"].shape == (8, D)
+    assert log["train_loss"][-1] < log["train_loss"][0]
+
+    args.epochs = 0                                                 # "before": the pretrained predictor
+    log0, _ = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    assert all(torch.equal(v, base[k]) for k, v in model.predictor.state_dict().items())
+
+
+def test_experiment_summary(tmp_path, monkeypatch):
+    import experiments
+    monkeypatch.setattr(experiments, "SCORES", tmp_path / "scores")
+    monkeypatch.setattr(experiments, "OUT", tmp_path / "out")
+    outcomes = {"p_correct_balanced": 0.5, "balanced_accuracy": 0.5, "p_correct": {"through": 0.5},
+                "outcome_auroc": 0.5}
+    ball = {"hit_rate": 0.3, "error_px": 40.0, "phantom_rate": 0.1}
+    for name in ("plain-before", "plain-after"):
+        (tmp_path / "scores" / name).mkdir(parents=True)
+        (tmp_path / "scores" / name / "metrics.json").write_text(json.dumps(
+            {"outcomes_imagined": outcomes, "ball_imagined": ball, "outcomes_real": outcomes, "ball_real": ball}))
+    experiments.summary(SimpleNamespace(variants=["plain", "codes"]))
+    rows = json.loads((tmp_path / "out" / "summary.json").read_text())
+    assert [r["phase"] for r in rows] == ["before", "after", "-"]
+    assert (tmp_path / "out" / "summary.png").exists()

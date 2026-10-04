@@ -58,6 +58,25 @@ training clips' futures. Each fold's predictor trains only on that fold's traini
 `ball_probe_cv.py` refuses a checkpoint that saw the clips it scores. Held-out prediction error
 before and after, per outcome, is in `checkpoints/vjepa2/<run>/log.json`.
 
+Two more options, each worth trying with and without:
+- `--loss codes`: a spherical k-means codebook (`--codes 256`) is fitted on each fold's real
+  training features (label-free; half the tokens are drawn from where features move). The
+  predictor is trained with cross-entropy to pick each target token's code, and its output is
+  snapped to the nearest code at inference, so it has to choose rather than average.
+- `--rollout`: predict one step at a time, feeding the (detached, snapped if `codes`) prediction
+  back in as context, both in training and at inference.
+
+`experiments.py` runs the grid (plain, codes, rollout, codes_rollout), each before (`--epochs 0`,
+the pretrained predictor in that variant's inference mode) and after, scores every run with
+`ball_probe_cv.py`, and writes `outputs/vjepa2/experiments/summary.{md,json,png}`:
+```bash
+python models/vjepa2/experiments.py run --epochs 10
+```
+Headline metrics: P(correct outcome) and balanced accuracy over through/bounce/hidden, with each
+outcome weighted equally (through passes outnumber the others), and the ball hit rate (imagined
+ball within 48 px of the tracker's ball), median error and phantom-ball rate. The decoder on the
+real future frames is the ceiling.
+
 **Blocker figures.** `python models/vjepa2/blocker_figs.py` (after `ball_probe_cv.py`) asks whether
 V-JEPA knows *where* the hidden blocker is. It fits nothing: it reads `per_clip.json` from
 `ball_probe_cv.py` and places each pass by where its straight-line path from the context enters and

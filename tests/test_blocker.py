@@ -105,3 +105,25 @@ def test_cv_folds_unchanged_for_two_outcomes():
     old = list(StratifiedKFold(5, shuffle=True, random_state=0).split(y, y))
     new = ball.cv_folds(clips)
     assert all((a[1] == b[1]).all() for a, b in zip(old, new))
+
+
+def test_three_way_and_ball_track_metrics():
+    import numpy as np
+    from robust_world.eval.ball import ball_track_metrics, three_way_metrics
+    rows = [{"outcome": "through", "far": [0.9], "near": [0.0]},
+            {"outcome": "through", "far": [0.8], "near": [0.0]},
+            {"outcome": "hidden", "far": [0.1], "near": [0.0, 0.0]},
+            {"outcome": "bounce", "far": [0.1], "near": [0.9, 0.0, 0.9]}]
+    m = three_way_metrics(rows)
+    assert m["p_correct"]["through"] == 0.85 and m["recall"]["through"] == 1.0
+    assert set(m["p_correct"]) == {"through", "hidden", "bounce"} and 0 <= m["balanced_accuracy"] <= 1
+
+    from robust_world.eval.ball import CLIP_SIZE
+    g = 8
+    cell = CLIP_SIZE / g
+    m = np.zeros((3, g, g))
+    m[0, 2, 3] = 0.9                                   # right cell
+    m[1, 7, 7] = 0.9                                   # far away
+    m[2, 0, 0] = 0.9                                   # ball invented where there is none
+    t = ball_track_metrics([m], [[((3.5) * cell, 2.5 * cell), (0.5 * cell, 0.5 * cell), None]])
+    assert t["hit_rate"] == 0.5 and t["phantom_rate"] == 1.0 and t["steps_with_ball"] == 2

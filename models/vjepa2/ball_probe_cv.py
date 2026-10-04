@@ -41,9 +41,9 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
 from ball_probe import encode  # noqa: E402
-from posttrain import cache_dir, imagine, load_cached, load_predictor  # noqa: E402
-from robust_world.eval.ball import (OUTCOMES, ball_labels, cv_folds, far_cells, load_tracking,  # noqa: E402
-                                    near_cells, outcome_metrics, source_indices)
+from posttrain import cache_dir, imagine_mode, load_cached, load_predictor  # noqa: E402
+from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
+                                    far_cells, load_tracking, near_cells, outcome_metrics, source_indices)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
 
@@ -135,8 +135,8 @@ def main(argv: list[str] | None = None) -> int:
             torch.save(enc, path)
             timings.append({"read_video": t_read, **enc["timing"],
                             "total": t_read + sum(enc["timing"].values())})
-        lab, _ = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
-        data.append({"clip": c, "enc": enc, "lab": lab, "cs": enc["context"].shape[0]})
+        lab, centres = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
+        data.append({"clip": c, "enc": enc, "lab": lab, "centres": centres, "cs": enc["context"].shape[0]})
         print(f"\r  {i + 1}/{len(clips)} clips ({len(timings)} newly encoded)", end="", flush=True)
     print()
 
@@ -145,6 +145,8 @@ def main(argv: list[str] | None = None) -> int:
     y_out = np.array([d["clip"]["outcome"] == "through" for d in data], int)
     rows = [None] * len(data)
     fut_lab, fut_imag, fut_hold, real_lab, real_map = [], [], [], [], []
+    track_maps = {"real": [], "imagined": []}
+    track_centres = []
     D = model.config.hidden_size
     for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
         decoder = eval_decoder.fit([eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr],
@@ -162,14 +164,16 @@ def main(argv: list[str] | None = None) -> int:
             m_ctx = decoder(d["enc"]["context"]).numpy()
             if args.predictor_run:
                 with torch.no_grad():
-                    imag = imagine(model.predictor, d["enc"]["context"][None].float().to(device),
-                                   d["enc"]["real"].shape[0] - cs)[0].cpu()
+                    imag = imagine_mode(model.predictor, d["enc"]["context"][None].float().to(device),
+                                        d["enc"]["real"].shape[0] - cs, meta)[0].float().cpu()
             else:
                 imag = d["enc"]["imagined"]
             m_imag = decoder(imag).numpy()
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
+            track_maps["real"].append(m_real[cs:]), track_maps["imagined"].append(m_imag)
+            track_centres.append(d["centres"][cs:])
             rows[i] = {"clip_id": d["clip"]["clip_id"], "outcome": d["clip"]["outcome"], "fold": fold,
                        "first_target_frame": cs * tub,
                        "real_visible": m_real[cs:].max((1, 2)).round(3).tolist(),
@@ -201,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         **{f"outcomes_{kind}": outcome_metrics([{"outcome": r["outcome"], "far": r[f"{kind}_far"],
                                                  "near": r[f"{kind}_near"]} for r in rows])
            for kind in ("real", "imagined")},
+        **{f"ball_{kind}": ball_track_metrics(track_maps[kind], track_centres) for kind in ("real", "imagined")},
         "timing_seconds_per_clip": {k: {"mean": round(float(v.mean()), 2), "median": round(float(np.median(v)), 2),
                                         "n": int(len(v))} for k, v in t_arr.items()},
         "model_load_seconds": round(t_load, 1),
@@ -218,6 +223,10 @@ def main(argv: list[str] | None = None) -> int:
           f"(hold last context: {metrics['future_cell_auroc_hold_last_context']})")
     print(f"  outcome from max P(beyond plank): real {metrics['outcome_auroc_real']}, "
           f"imagined {metrics['outcome_auroc_imagined']}; imagined peak mean {metrics['imagined_far_peak_mean']}")
+    oi, bi = metrics["outcomes_imagined"], metrics["ball_imagined"]
+    print(f"  imagined: P(correct outcome) {oi.get('p_correct')} (balanced {oi.get('p_correct_balanced')}), "
+          f"balanced accuracy {oi.get('balanced_accuracy')}; ball hit rate {bi['hit_rate']}, "
+          f"error {bi['error_px']} px, phantom rate {bi['phantom_rate']}")
     if "bounce_auroc" in metrics["outcomes_imagined"]:
         print(f"  bounce vs hidden (ball back on the near side): real {metrics['outcomes_real']['bounce_auroc']}, "
               f"imagined {metrics['outcomes_imagined']['bounce_auroc']}; three-way accuracy imagined "
