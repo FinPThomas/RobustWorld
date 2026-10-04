@@ -43,6 +43,9 @@ def runs(variants):
 
 
 def run(args) -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "config.json").write_text(json.dumps({"variants": args.variants, "epochs": args.epochs,
+                                                 "extra": args.extra, "argv": sys.argv}, indent=1))
     for v, phase, name in runs(args.variants):
         epochs = 0 if phase == "before" else args.epochs
         print(f"== {name}", flush=True)
