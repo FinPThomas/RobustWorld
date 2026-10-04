@@ -41,6 +41,21 @@ python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip 
 
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
+**Blocker figures.** `python models/vjepa2/blocker_figs.py` (after `ball_probe_cv.py`) asks whether
+V-JEPA knows *where* the hidden blocker is. It fits nothing: it reads `per_clip.json` from
+`ball_probe_cv.py` and places each pass by where its straight-line path from the context enters and
+would leave the plank. P(blocked) is 1 − max P(ball beyond the plank) over the target.
+- `blocker_map.png`: every pass's path, coloured by P(blocked), with the plank and the scene file's
+  `blocker_polygon` outlined. Panels: true outcome, V-JEPA imagined, and a straight line plus the
+  known blocker (a reference, not a model).
+- `blocked_vs_crossing.png`: P(blocked) against the expected entry point and, separately, the
+  expected exit point along the plank, with the blocker's span shaded.
+- `crossing.json`: per-pass numbers and AUROCs.
+
+For before/after, run it with `--label base`, then after post-training with
+`--label fine-tuned --before outputs/vjepa2/blocker/crossing.json --out <new dir>`; the base curve
+is drawn dashed.
+
 **Predictive geometry.** `python models/vjepa2/geometry.py` renders, for each sample clip:
 - the real and imagined token features, projected to colour with one shared PCA basis
 - per-token change against V-JEPA's own output for an empty-scene clip
