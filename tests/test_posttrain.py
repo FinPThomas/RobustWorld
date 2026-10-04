@@ -178,3 +178,13 @@ def test_experiment_summary(tmp_path, monkeypatch):
     rows = json.loads((tmp_path / "out" / "summary.json").read_text())
     assert [r["phase"] for r in rows] == ["before", "after", "-"]
     assert (tmp_path / "out" / "summary.png").exists()
+
+
+def test_targets_in_prediction_space_and_fed_back_in_encoder_space(tmp_path):
+    clips, cache = fake_clips(tmp_path, 1)
+    ctx, tgt, last, _ = posttrain.Cached(clips, cache)[0]
+    assert torch.allclose(tgt.std(-1).mean(), torch.tensor(1.0), atol=0.05)          # layer-normalised target
+    like = torch.randn(2, G, G, D) * 3 + 1                                           # encoder-scale context step
+    fed = posttrain.to_encoder_space(torch.randn(2, 1, G, G, D), like)
+    assert torch.allclose(fed.mean(-1)[:, 0], like.mean(-1), atol=1e-4)
+    assert torch.allclose(fed.std(-1)[:, 0], like.std(-1), atol=1e-3)

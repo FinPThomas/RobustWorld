@@ -9,6 +9,7 @@ only thing that differs between "before" and "after" is the predictor's weights.
     codes          --loss codes
     rollout        --rollout
     codes_rollout  --loss codes --rollout
+    commit         --loss commit (motion-weighted L1 + contrast: commit to a ball)
 
 Headline metrics (robust_world.eval.ball), from V-JEPA's imagined future:
     P(correct)         mean probability of the true outcome (through / bounce / hidden), averaged
@@ -33,7 +34,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 VARIANTS = {"plain": [], "codes": ["--loss", "codes"], "rollout": ["--rollout"],
-            "codes_rollout": ["--loss", "codes", "--rollout"]}
+            "codes_rollout": ["--loss", "codes", "--rollout"], "commit": ["--loss", "commit"]}
 SCORES = REPO / "outputs" / "vjepa2" / "ball_probe_cv"
 OUT = REPO / "outputs" / "vjepa2" / "experiments"
 
