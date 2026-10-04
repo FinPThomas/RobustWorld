@@ -24,3 +24,12 @@ def test_copies_new_and_newer_never_older_over_newer(tmp_path):
     assert drive_sync.sync(drive, local) == 0 and (local / "a" / "state.json").read_text() == "new"
     assert drive_sync.sync(local, drive) == 1 and old.read_text() == "new"
     assert not list(drive.rglob("*.part"))
+
+
+def test_feature_cache_is_not_backed_up(tmp_path):
+    local = tmp_path / "outputs"
+    for rel in ("vjepa2/cache/m/c1.pt", "vjepa2/plan/state.json"):
+        (local / rel).parent.mkdir(parents=True, exist_ok=True)
+        (local / rel).write_text("x")
+    assert drive_sync.sync(local, tmp_path / "drive", drive_sync.NOT_BACKED_UP) == 1
+    assert not (tmp_path / "drive" / "vjepa2" / "cache").exists()

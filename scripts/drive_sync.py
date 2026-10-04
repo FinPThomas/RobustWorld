@@ -4,9 +4,10 @@ The plan works on Colab's local disk, which never drops, and keeps Drive as the 
 Drive -> local once per runtime, and plan.py copies local -> Drive after every step and every few
 minutes. A file is copied when it is missing there or newer (never an older one over a newer one); it is
 written to "<name>.part" and renamed, so a copy cut off by a Drive drop never leaves a half file.
-Files are never deleted.
+Files are never deleted. The encoded-feature cache is left out (plan.py re-encodes it on Colab's
+disk in a few minutes), which keeps Drive reads, and so Drive drops, to a minimum.
 
-    python scripts/drive_sync.py <from> <to>
+    python scripts/drive_sync.py <from> <to> [<excluded relative path> ...]
 """
 
 from __future__ import annotations
@@ -16,10 +17,12 @@ import sys
 from pathlib import Path
 
 SKIP = (".part", ".tmp")
+NOT_BACKED_UP = ("vjepa2/cache",)       # under outputs/: ~2 GB of features, quicker to re-encode than to read from Drive
 
 
-def sync(src: Path, dst: Path) -> int:
-    """-> number of files copied. Raises OSError if either side fails (e.g. Drive dropped)."""
+def sync(src: Path, dst: Path, exclude: tuple[str, ...] = ()) -> int:
+    """-> number of files copied, leaving out paths under `exclude` (relative to src, e.g. "vjepa2/cache").
+    Raises OSError if either side fails (e.g. Drive dropped)."""
     src, dst = Path(src), Path(dst)
     if not src.is_dir():
         return 0
@@ -27,7 +30,10 @@ def sync(src: Path, dst: Path) -> int:
     for f in sorted(src.rglob("*")):
         if not f.is_file() or f.name.endswith(SKIP) or f.name.startswith(".write_test_"):
             continue
-        d = dst / f.relative_to(src)
+        rel = f.relative_to(src)
+        if any(rel.as_posix().startswith(e.rstrip("/") + "/") for e in exclude):
+            continue
+        d = dst / rel
         s = f.stat()
         if d.exists():                       # copy only what is newer here (never older over newer)
             t = d.stat()
@@ -44,10 +50,10 @@ def sync(src: Path, dst: Path) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    if len(argv) != 2:
+    if len(argv) < 2:
         print(__doc__)
         return 2
-    n = sync(Path(argv[0]), Path(argv[1]))
+    n = sync(Path(argv[0]), Path(argv[1]), tuple(argv[2:]))
     print(f"copied {n} files {argv[0]} -> {argv[1]}")
     return 0
 
