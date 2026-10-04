@@ -24,11 +24,13 @@ well-placed prediction still counts (columns one_ball_*, argmax_*, cell_auroc). 
     python models/vjepa2/experiments.py run --epochs 10              # train + score all 8 runs
     python models/vjepa2/experiments.py run --variants plain codes   # a subset
     python models/vjepa2/experiments.py summary                      # table + figure from scores
+    python models/vjepa2/experiments.py run --resume --save-as overnight --push   # unattended (Colab)
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import subprocess
 import sys
@@ -46,18 +48,75 @@ def runs(variants):
     return [(v, phase, f"{v}-{phase}") for v in variants for phase in ("before", "after")]
 
 
+def code_version() -> str:
+    r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, capture_output=True, text=True)
+    return r.stdout.strip() or "unknown"
+
+
+def load_grid(args) -> dict:
+    """The grid's state in outputs/vjepa2/experiments/grid.json: settings, results folder, runs done
+    and failed. --resume carries on a grid with the same epochs and extra flags."""
+    path = OUT / "grid.json"
+    if args.resume and path.exists():
+        g = json.loads(path.read_text())
+        if g["epochs"] == args.epochs and g["extra"] == args.extra:
+            print(f"resuming grid {g['results_folder']}: {len(g['done'])} runs done", flush=True)
+            g["variants"] = list(dict.fromkeys(g["variants"] + args.variants))
+            return g
+        print("--resume: settings differ from the saved grid, starting a new one", flush=True)
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d_%H%M")
+    return {"variants": args.variants, "epochs": args.epochs, "extra": args.extra, "argv": sys.argv,
+            "results_folder": f"{stamp}_{args.save_as or 'grid'}", "started": stamp,
+            "done": [], "failed": {}, "code_versions": {}}
+
+
 def run(args) -> None:
+    """Train and score every run in turn. A run that fails (e.g. out of memory) is logged and
+    skipped; after each run the summary is rebuilt and, with --save-as, the results are saved
+    (and pushed) to one results folder, so a disconnect keeps everything finished so far."""
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "config.json").write_text(json.dumps({"variants": args.variants, "epochs": args.epochs,
-                                                 "extra": args.extra, "argv": sys.argv}, indent=1))
+    grid = load_grid(args)
+    (OUT / "config.json").write_text(json.dumps({k: grid[k] for k in ("variants", "epochs", "extra", "argv")},
+                                                indent=1))
     for v, phase, name in runs(args.variants):
+        if name in grid["done"]:
+            print(f"== {name}: done already, skipping", flush=True)
+            continue
         epochs = 0 if phase == "before" else args.epochs
         print(f"== {name}", flush=True)
-        subprocess.run([sys.executable, str(HERE / "posttrain.py"), "train", "--run", name,
-                        "--epochs", str(epochs), *VARIANTS[v], *args.extra], check=True)
-        subprocess.run([sys.executable, str(HERE / "ball_probe_cv.py"),
-                        "--predictor-run", str(REPO / "checkpoints" / "vjepa2" / name)], check=True)
-    summary(args)
+        try:
+            subprocess.run([sys.executable, str(HERE / "posttrain.py"), "train", "--run", name,
+                            "--epochs", str(epochs), *VARIANTS[v], *args.extra], check=True)
+            subprocess.run([sys.executable, str(HERE / "ball_probe_cv.py"),
+                            "--predictor-run", str(REPO / "checkpoints" / "vjepa2" / name)], check=True)
+            grid["done"].append(name)
+            grid["failed"].pop(name, None)
+        except subprocess.CalledProcessError as e:
+            grid["failed"][name] = f"exit code {e.returncode} at {dt.datetime.now():%H:%M} (see the cell output)"
+            print(f"!! {name} failed ({grid['failed'][name]}); carrying on with the next run", flush=True)
+        grid["code_versions"][name] = code_version()
+        (OUT / "grid.json").write_text(json.dumps(grid, indent=1))
+        checkpoint(args, grid)
+    print(f"grid finished: {len(grid['done'])} runs done, {len(grid['failed'])} failed "
+          f"{sorted(grid['failed']) or ''}", flush=True)
+
+
+def checkpoint(args, grid: dict) -> None:
+    """Rebuild the summary from the runs done so far and save/push the results folder."""
+    try:
+        summary(args, only=grid["done"])
+    except SystemExit as e:                       # nothing scored yet
+        print(e, flush=True)
+    except Exception as e:  # noqa: BLE001        a plotting error must not stop the grid
+        print(f"summary failed: {e!r}", flush=True)
+    if not args.save_as:
+        return
+    cmd = [sys.executable, str(REPO / "scripts" / "save_results.py"), "--name", args.save_as,
+           "--into", grid["results_folder"], "--note", args.note or f"grid, {len(grid['done'])} runs done"]
+    if args.push:
+        cmd += ["--push"] + (["--branch", args.branch] if args.branch else [])
+    if subprocess.run(cmd).returncode:
+        print("!! saving results failed; they are still in outputs/ and the grid carries on", flush=True)
 
 
 def headline(m: dict, kind: str) -> dict:
@@ -89,10 +148,12 @@ def training_health(name: str) -> dict:
             "best_epochs": "/".join(str(g["best_epoch"]) for g in logs)}
 
 
-def summary(args) -> None:
+def summary(args, only: list[str] | None = None) -> None:
     rows, last = [], None
     for v, phase, name in runs(args.variants):
         path = SCORES / name / "metrics.json"
+        if only is not None and name not in only:
+            continue
         if path.exists():
             last = json.loads(path.read_text())
             rows.append({"variant": v, "phase": phase, **headline(last, "imagined"), **training_health(name)})
@@ -148,6 +209,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("stage", choices=["run", "summary"])
     p.add_argument("--variants", nargs="+", choices=list(VARIANTS), default=list(VARIANTS))
     p.add_argument("--epochs", type=int, default=10)
+    p.add_argument("--resume", action="store_true", help="skip runs the saved grid already finished")
+    p.add_argument("--save-as", default=None, help="save results to results/<date>_<time>_<name>/ after every run")
+    p.add_argument("--push", action="store_true", help="with --save-as: commit and push them (needs GITHUB_TOKEN)")
+    p.add_argument("--branch", default=None, help="with --push: branch to push to")
+    p.add_argument("--note", default="", help="with --save-as: one line on what this grid tries")
     p.add_argument("--extra", nargs=argparse.REMAINDER, default=[],
                    help="more posttrain.py flags for every run, e.g. --extra --fold 0")
     args = p.parse_args(argv)

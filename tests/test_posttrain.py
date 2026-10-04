@@ -279,3 +279,37 @@ def test_train_all_writes_logs(tmp_path, monkeypatch):
     info = json.loads((tmp_path / "ck" / "t" / "run_info.json").read_text())
     assert info["scale_check"]["target_spread_ln"] == pytest.approx(1.0, abs=0.05)
     assert info["folds"][0]["split"] == "fold0" and info["code_version"]
+
+
+def test_grid_survives_failures_and_resumes(tmp_path, monkeypatch):
+    import subprocess as sp
+    import experiments
+    monkeypatch.setattr(experiments, "SCORES", tmp_path / "scores")
+    monkeypatch.setattr(experiments, "OUT", tmp_path / "out")
+    calls, fail = [], {"codes-after"}
+    metrics = {"outcomes_imagined": {}, "ball_imagined": {}, "outcomes_real": {}, "ball_real": {},
+               "outcomes_imagined_one_ball": {"p_correct_balanced": 0.5}, "future_cell_auroc_imagined": 0.6}
+
+    def fake_run(cmd, check=False, **kw):
+        calls.append(cmd)
+        if "ball_probe_cv.py" in cmd[1]:
+            name = Path(cmd[-1]).name
+            if name in fail:
+                raise sp.CalledProcessError(1, cmd)
+            (tmp_path / "scores" / name).mkdir(parents=True, exist_ok=True)
+            (tmp_path / "scores" / name / "metrics.json").write_text(json.dumps(metrics))
+        return sp.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(experiments.subprocess, "run", fake_run)
+    experiments.main("run --variants plain codes --epochs 2 --save-as night".split())
+    grid = json.loads((tmp_path / "out" / "grid.json").read_text())
+    assert grid["done"] == ["plain-before", "plain-after", "codes-before"] and "codes-after" in grid["failed"]
+    saves = [c for c in calls if "save_results.py" in c[1]]
+    assert len(saves) == 4 and all(grid["results_folder"] in c for c in saves)       # saved after every run
+
+    calls.clear(), fail.clear()
+    experiments.main("run --variants plain codes --epochs 2 --save-as night --resume".split())
+    trained = [c[c.index("--run") + 1] for c in calls if "posttrain.py" in c[1]]
+    assert trained == ["codes-after"]                                                 # only the failed one reruns
+    grid2 = json.loads((tmp_path / "out" / "grid.json").read_text())
+    assert grid2["results_folder"] == grid["results_folder"] and not grid2["failed"]
