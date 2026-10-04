@@ -82,3 +82,29 @@ def test_grid_folder_updates_in_place(tmp_path):
                            "exp:results/2026-10-04_2200_night/vjepa2/experiments/summary.md"],
                           capture_output=True, text=True).stdout
     assert "more runs" in show
+
+
+def test_source_folder_and_status_block(tmp_path):
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    run = lambda *a, cwd=tmp_path: subprocess.run(a, cwd=cwd, check=True, capture_output=True)  # noqa: E731
+    run("git", "init", "-q", "--bare", str(remote))
+    run("git", "init", "-q", "-b", "exp", str(work))
+    (work / "docs").mkdir()
+    (work / "docs" / "plan.md").write_text("# Plan\nkeep me\n<!-- status:start -->\nold\n<!-- status:end -->\ntail\n")
+    run("git", "add", ".", cwd=work)
+    run("git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init", cwd=work)
+    run("git", "push", "-q", str(remote), "exp", cwd=work)
+
+    repo = fake_repo(tmp_path)
+    plan = repo / "outputs" / "vjepa2" / "plan"
+    plan.mkdir()
+    (plan / "summary.json").write_text(json.dumps([{"variant": "gate", "phase": "after", "one_ball_p_correct": 0.8}]))
+    dest = save_results.save("twoday", "", repo, into="2026-10-05_0900_twoday", source="outputs/vjepa2/plan")
+    assert (dest / "vjepa2" / "plan" / "summary.json").exists()
+    assert not (dest / "vjepa2" / "experiments").exists() and not (dest / "checkpoints").exists()
+    save_results.push(dest, "exp", f"file://{remote}", update=True, status=("docs/plan.md", "| step | done |"))
+    doc = subprocess.run(["git", "--git-dir", str(remote), "show", "exp:docs/plan.md"],
+                         capture_output=True, text=True).stdout
+    assert "keep me" in doc and "tail" in doc and "| step | done |" in doc and "old" not in doc
+    assert "gate P(correct, one ball) 0.8" in (repo / "results" / "README.md").read_text()
