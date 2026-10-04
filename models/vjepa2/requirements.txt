@@ -1,5 +1,6 @@
 # V-JEPA 2 scoring. Runs on CUDA, Apple MPS or CPU. torch comes from the environment.
 transformers>=4.53
 scikit-learn
+matplotlib
 imageio-ffmpeg>=0.5
 opencv-python-headless

@@ -87,3 +87,25 @@ def test_no_other_readout_is_trained_on_vjepa_features():
         text = f.read_text()
         for b in banned:
             assert b not in text, f"{f.name} trains a readout ({b}); use eval_decoder instead"
+
+
+def test_decoder_reads_tokens_regardless_of_scale():
+    """Real (encoder) and imagined (predictor) tokens differ in scale; the decoder must read both alike."""
+    rng = np.random.default_rng(0)
+    dec = fit_decoder([fake_clip(rng, o) for o in ["through", "hidden"] * 3])
+    t = torch.randn(5, D)
+    assert torch.allclose(dec(t), dec(t * 5 + 2), atol=1e-5)
+
+
+def test_raw_feature_decoder_is_isolated_too():
+    params = set(inspect.signature(eval_decoder.fit_raw_features).parameters)
+    assert params == {"examples", "seed", "epochs"}
+    rng = np.random.default_rng(0)
+    clips = [fake_clip(rng, o) for o in ["through", "hidden"] * 6]
+    fit_raw = lambda cs: eval_decoder.fit_raw_features(  # noqa: E731
+        [eval_decoder.examples_from(c["enc"], c["labels"]) for c in cs], seed=0, epochs=3)
+    tampered = [dict(c, outcome="hidden", labels=np.where(np.arange(CTX + TGT)[:, None, None] >= CTX, True, c["labels"]),
+                     enc=dict(c["enc"], imagined=c["enc"]["imagined"] * 9, real=c["enc"]["real"] * 0)) for c in clips]
+    assert same(fit_raw(clips), fit_raw(tampered))
+    with pytest.raises(TypeError):
+        eval_decoder.fit_raw_features([{"context": None}])

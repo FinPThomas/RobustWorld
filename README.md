@@ -44,7 +44,13 @@ All videos' manifests are merged into `data/processed/clips/manifest.jsonl`.
    pixels, then delete the `"TODO"` line. Optionally add `ignore_regions` for
    clutter such as furniture that shifts during the recording. See
    `configs/scenes/start.json`.
-4. Run it again.
+4. Set `blocker_polygon` to the outline of the hidden blocker under the occluder, in the
+   same pixel coordinates (lift the plank and read it off `calibration.png`), or `"none"`
+   for a session with no blocker. Leaving it `null` means "not recorded". It is a label
+   only: the clips are unchanged and no model or evaluation readout is fitted on it. It goes
+   into every clip's manifest record, for splitting and for the blocker figures. Record each
+   blocker position as its own video, since a scene file has one blocker.
+5. Run it again.
 
 The defaults assume a fixed camera and a **blue** ball. A different ball colour
 needs `ball_hsv_lo`/`ball_hsv_hi` set in the scene file (OpenCV HSV, H 0–179).
@@ -78,7 +84,7 @@ Main `manifest.jsonl` fields: `clip_id`, `path`, `include`, `reasons`, `outcome`
 (`through` / `hidden` / `bounce` within the clip), `ball_at_start`,
 `entry_frame`, `occlusion_start_frame`, `hidden_frame`, `reappear_frame`,
 `exit_frame` (clip frame indices, or null when outside the clip),
-`hand_mask_path`, `hand_in_context`, `hand_in_target`, `source_video`,
+`hand_mask_path`, `hand_in_context`, `hand_in_target`, `blocker_polygon`, `source_video`,
 `source_frames`.
 
 To review the clips, open `review.jpg`, which has one row per clip. Hand masks

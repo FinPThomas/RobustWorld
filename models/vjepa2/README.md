@@ -41,6 +41,85 @@ python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip 
 
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
+**Post-training** (`posttrain.py`, or `notebooks/colab_vjepa2_posttrain.ipynb` on Colab).
+Only the predictor is trained; the encoder stays frozen, so the evaluation decoder is identical
+before and after, and features are encoded once and cached.
+```bash
+python scripts/pack_clips.py                                 # on your computer, for Colab
+python models/vjepa2/posttrain.py encode                     # cache encoder features
+python models/vjepa2/posttrain.py train --run l1             # one predictor per CV fold
+python models/vjepa2/posttrain.py train --run commit --loss commit   # "commit to a ball" (below)
+python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
+```
+`--loss commit` adds two label-free terms to the L1, so the predictor stops hedging towards "no
+ball": tokens whose features change between steps, in the real future or the prediction, get more
+weight; and an InfoNCE term makes each imagined future closer to its own real future than to other
+training clips' futures. Each fold's predictor trains only on that fold's training clips (`cv_folds`), and
+`ball_probe_cv.py` refuses a checkpoint that saw the clips it scores. Held-out prediction error
+before and after, per outcome, is in `checkpoints/vjepa2/<run>/log.json`.
+
+Targets are layer-normalised per token, the space V-JEPA 2's predictor was pretrained to output
+(the Hugging Face encoder returns un-normalised features, about 5x larger). The evaluation decoder
+reads every token after the same parameter-free layer norm, so real and imagined tokens are on one
+scale. Predictions fed back in a rollout are rescaled to the last context step's per-token mean and spread.
+
+Guards against overfitting and leakage: each fold's train and held-out clips may not share a clip
+or a pass (`check_split`); 10% of the training clips (`--val-frac`) are held back and scored every
+epoch, the best validation epoch's weights are kept (`--patience 3` stops early), and `log.json`
+flags overfitting when validation L1 ends more than 2% above its best or is more than 1.25x the
+L1 on training clips. The fold's held-out clips are never used to pick epochs. The experiment
+summary lists flagged folds and kept epochs per run.
+
+Two more options, each worth trying with and without:
+- `--loss codes`: a spherical k-means codebook (`--codes 256`) is fitted on each fold's real
+  training features (label-free; half the tokens are drawn from where features move). The
+  predictor is trained with cross-entropy to pick each target token's code, and its output is
+  snapped to the nearest code at inference, so it has to choose rather than average.
+- `--rollout`: predict one step at a time, feeding the (detached, snapped if `codes`) prediction
+  back in as context, both in training and at inference.
+
+`experiments.py` runs the grid (plain, codes, rollout, codes_rollout), each before (`--epochs 0`,
+the pretrained predictor in that variant's inference mode) and after, scores every run with
+`ball_probe_cv.py`, and writes `outputs/vjepa2/experiments/summary.{md,json,png}`:
+```bash
+python models/vjepa2/experiments.py run --epochs 10
+```
+Headline metrics: P(correct outcome) and balanced accuracy over through/bounce/hidden, with each
+outcome weighted equally (through passes outnumber the others), and the ball hit rate (imagined
+ball within 48 px of the tracker's ball), median error and phantom-ball rate. The decoder on the
+real future frames is the ceiling.
+
+Threshold-free scores (in the summary first): they assume one ball and normalise each imagined
+step's cell probabilities, so a blurred but well-placed prediction still counts: P(correct outcome)
+and through-vs-blocked AUROC from the share of the ball beyond the plank, the most likely cell's
+distance to the real ball, and ball cell AUROC. `enc_space_*` reads the same predictions mapped
+into encoder space (gamma * prediction + beta, the encoder's own final layer norm) with the decoder
+fitted on raw features, as a check on the layer-norm decoder. `scale_check.py` is a 16-clip
+reproduction of the scale mismatch and its fix.
+
+Unattended (overnight on Colab): `experiments.py run --resume --save-as overnight --push --branch <b>`
+saves and pushes `results/<date>_<time>_overnight/` after every run, logs and skips a run that
+fails, and with `--resume` skips runs already done (state in `outputs/vjepa2/experiments/grid.json`).
+
+`python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
+`results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the
+end. `results/README.md` indexes every saved run.
+
+**Blocker figures.** `python models/vjepa2/blocker_figs.py` (after `ball_probe_cv.py`) asks whether
+V-JEPA knows *where* the hidden blocker is. It fits nothing: it reads `per_clip.json` from
+`ball_probe_cv.py` and places each pass by where its straight-line path from the context enters and
+would leave the plank. P(blocked) is 1 − max P(ball beyond the plank) over the target.
+- `blocker_map.png`: every pass's path, coloured by P(blocked), with the plank and the scene file's
+  `blocker_polygon` outlined. Panels: true outcome, V-JEPA imagined, and a straight line plus the
+  known blocker (a reference, not a model).
+- `blocked_vs_crossing.png`: P(blocked) against the expected entry point and, separately, the
+  expected exit point along the plank, with the blocker's span shaded.
+- `crossing.json`: per-pass numbers and AUROCs.
+
+For before/after, run it with `--label base`, then after post-training with
+`--label fine-tuned --before outputs/vjepa2/blocker/crossing.json --out <new dir>`; the base curve
+is drawn dashed.
+
 **Predictive geometry.** `python models/vjepa2/geometry.py` renders, for each sample clip:
 - the real and imagined token features, projected to colour with one shared PCA basis
 - per-token change against V-JEPA's own output for an empty-scene clip

@@ -21,6 +21,8 @@ DEFAULTS = {
     "ball_min_area": 60,             # px; smaller blue blobs are noise
     "background_breaks_s": "auto",   # or a list of times where the static scene changed
     "ignore_regions": [],            # polygons of clutter (e.g. furniture) never treated as a hand
+    "blocker_polygon": None,         # outline of the hidden blocker under the occluder; "none" if
+                                     # there is no blocker; unset (None) if not recorded
 }
 KERNEL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
 
@@ -38,7 +40,19 @@ def load_scene(path: Path) -> dict:
     scene = {**DEFAULTS, **json.loads(path.read_text())}
     scene["occluder"] = np.array(scene["occluder_polygon"], dtype=np.float32)
     scene["ignore"] = [np.array(r, dtype=np.int32) for r in scene["ignore_regions"]]
+    scene["blocker"] = blocker_array(scene)
+    if scene["blocker"] is not None:
+        outside = [p for p in scene["blocker_polygon"]
+                   if cv2.pointPolygonTest(scene["occluder"], (float(p[0]), float(p[1])), True) < -2]
+        if outside:
+            print(f"  warning: blocker_polygon points {outside} lie outside occluder_polygon in {path.name}")
     return scene
+
+
+def blocker_array(scene: dict) -> np.ndarray | None:
+    """The blocker outline as a float32 array, or None when there is no blocker or it isn't recorded."""
+    b = scene.get("blocker_polygon")
+    return np.array(b, dtype=np.float32) if isinstance(b, list) and b else None
 
 
 def write_scene_template(path: Path, video: Path, calibration_png: Path) -> None:
@@ -59,9 +73,11 @@ def write_scene_template(path: Path, video: Path, calibration_png: Path) -> None
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         '{\n'
-        f'  "_comment": "Scene for {path.stem}.mp4. Set occluder_polygon from {calibration_png.name} (x, y px), then remove TODO.",\n'
+        f'  "_comment": "Scene for {path.stem}.mp4. Set occluder_polygon from {calibration_png.name} (x, y px), then remove TODO. '
+        'Set blocker_polygon to the hidden blocker\'s outline, or \\"none\\" if there is no blocker.",\n'
         '  "TODO": true,\n'
-        '  "occluder_polygon": [[0, 0], [0, 0], [0, 0], [0, 0]]\n'
+        '  "occluder_polygon": [[0, 0], [0, 0], [0, 0], [0, 0]],\n'
+        '  "blocker_polygon": null\n'
         '}\n')
 
 

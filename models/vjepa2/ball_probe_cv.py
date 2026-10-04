@@ -6,15 +6,22 @@ ever sees predictions, target-half labels or outcomes. Answers, across the whole
 
   - real frames: is the ball found, including beyond the plank? (sanity / upper bound)
   - imagined future: where does V-JEPA put the ball, and does it put it beyond the plank
-    more for "through" clips than "hidden" ones? Any such difference comes from the world
-    model, since the decoder has no way to know about the blockade.
+    more for "through" clips than blocked ones (hidden, or bounce: back out on the near side)?
+    Any such difference comes from the world model, since the decoder has no way to know
+    about the blockade.
 
 Also times every stage per clip on this device (encodings are cached, so only clips
 encoded in this run are timed).
 
-Outputs (outputs/vjepa2/ball_probe_cv/): curves.png, outcome.png, metrics.json, per_clip.json
+With --predictor-run (checkpoints from posttrain.py), each fold's clips are imagined by the
+predictor post-trained on that fold's training clips; the encoder, the cached features and the
+decoder are the same as for the pretrained model.
+
+Outputs (outputs/vjepa2/ball_probe_cv/, or .../<run>/ with --predictor-run): curves.png,
+outcome.png, metrics.json, per_clip.json
 
     python models/vjepa2/ball_probe_cv.py
+    python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
 """
 
 from __future__ import annotations
@@ -25,7 +32,6 @@ import sys
 import time
 from pathlib import Path
 
-import cv2
 import numpy as np
 import torch
 
@@ -34,10 +40,12 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
-from ball_probe import CLIP_SIZE, encode  # noqa: E402
-from robust_world.eval.ball import ball_labels, load_tracking, source_indices  # noqa: E402
+from ball_probe import encode  # noqa: E402
+from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
+from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
+                                    far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
+                                    source_indices)
 from robust_world.eval.io import read_video  # noqa: E402
-from robust_world.passes import side_fn  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
 
 
@@ -46,7 +54,7 @@ def plots(rows: list[dict], out: Path) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    colours = {"through": "tab:blue", "hidden": "tab:orange"}
+    colours = {"through": "tab:blue", "hidden": "tab:orange", "bounce": "tab:green"}
     fig, axes = plt.subplots(1, 2, figsize=(11, 4), dpi=120, sharey=True)
     for ax, key, title in [(axes[0], "visible", "P(ball visible)"), (axes[1], "far", "P(ball beyond the plank)")]:
         for outcome, col in colours.items():
@@ -73,9 +81,9 @@ def plots(rows: list[dict], out: Path) -> None:
     for i, src in enumerate(("real", "imagined")):
         for outcome, col in colours.items():
             v = [max(r[f"{src}_far"]) for r in rows if r["outcome"] == outcome]
-            x = i * 2 + (0 if outcome == "through" else 0.7) + rng.uniform(-0.15, 0.15, len(v))
+            x = i * 2 + 0.5 * list(colours).index(outcome) + rng.uniform(-0.15, 0.15, len(v))
             ax.scatter(x, v, s=14, color=col, alpha=0.7, label=outcome if i == 0 else None)
-    ax.set_xticks([0.35, 2.35])
+    ax.set_xticks([0.5, 2.5])
     ax.set_xticklabels(["real features", "V-JEPA imagined"])
     ax.set_ylabel("max P(ball beyond the plank) over target")
     ax.set_title("Does the imagined future put the ball beyond the plank?")
@@ -92,10 +100,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe_cv")
     p.add_argument("--model-id", default=MODEL_ID)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--predictor-run", type=Path, help="posttrain.py run folder with fold{k}.pt checkpoints")
     args = p.parse_args(argv)
+    if args.predictor_run and args.out == p.get_default("out"):
+        args.out = args.out / args.predictor_run.name
 
     from sklearn.metrics import roc_auc_score
-    from sklearn.model_selection import StratifiedKFold
     from transformers import AutoVideoProcessor, VJEPA2Model
 
     device = pick_device()
@@ -106,12 +116,11 @@ def main(argv: list[str] | None = None) -> int:
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
     track, passes, scene = load_tracking()
-    side = side_fn(scene["occluder_polygon"])
-    cache = REPO / "outputs" / "vjepa2" / "cache" / args.model_id.replace("/", "--")
+    cache = cache_dir(args.model_id)
     cache.mkdir(parents=True, exist_ok=True)
 
     clips = [json.loads(line) for line in args.manifest.open()]
-    clips = [c for c in clips if c.get("include") and c["outcome"] in ("through", "hidden")]
+    clips = [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
     print(f"V-JEPA 2 ball probe (cross-validated) on {device}: {len(clips)} clips, model load {t_load:.1f}s")
 
     data, timings = [], []
@@ -121,46 +130,71 @@ def main(argv: list[str] | None = None) -> int:
         frames = read_video(REPO / c["path"])
         t_read = time.perf_counter() - t0
         n_ctx = c["context_frames"][1] + 1
-        if path.exists():
-            enc = torch.load(path)
-        else:
+        enc = load_cached(cache, c)
+        if enc is None:
             enc = encode(model, frames, n_ctx, mean, std, device, imagine=True)
             torch.save(enc, path)
             timings.append({"read_video": t_read, **enc["timing"],
                             "total": t_read + sum(enc["timing"].values())})
-        lab, _ = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
-        data.append({"clip": c, "enc": enc, "lab": lab, "cs": enc["context"].shape[0]})
+        lab, centres = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
+        data.append({"clip": c, "enc": enc, "lab": lab, "centres": centres, "cs": enc["context"].shape[0]})
         print(f"\r  {i + 1}/{len(clips)} clips ({len(timings)} newly encoded)", end="", flush=True)
     print()
 
-    cell = CLIP_SIZE / grid
-    occluder = np.array(scene["occluder_polygon"], np.float32)
-    far_cells = np.array([[side((x + 0.5) * cell, (y + 0.5) * cell) == "L" and
-                           cv2.pointPolygonTest(occluder, ((x + 0.5) * cell, (y + 0.5) * cell), True) < -cell
-                           for x in range(grid)] for y in range(grid)])
+    far, near = far_cells(scene, grid), near_cells(scene, grid)
 
     y_out = np.array([d["clip"]["outcome"] == "through" for d in data], int)
     rows = [None] * len(data)
-    fut_lab, fut_imag, fut_hold, real_lab, real_map = [], [], [], [], []
+    fut_lab, fut_imag, fut_hold, fut_alt, real_lab, real_map = [], [], [], [], [], []
+    track_maps = {"real": [], "imagined": [], "imagined_encoder_space": []}
+    # Alternative to layer-normalising the decoder's input: map predictions into encoder space with
+    # the encoder's own final layer norm (gamma * prediction + beta) and read them with the decoder
+    # fitted on raw features. Both decoders are fitted on the same real context features only.
+    gamma = model.encoder.layernorm.weight.detach().float().cpu()
+    beta = model.encoder.layernorm.bias.detach().float().cpu()
+    track_centres = []
     D = model.config.hidden_size
-    for fold, (tr, te) in enumerate(StratifiedKFold(args.folds, shuffle=True, random_state=args.seed).split(y_out, y_out)):
-        decoder = eval_decoder.fit([eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr],
-                                   seed=args.seed)
+    for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
+        examples = [eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr]
+        decoder = eval_decoder.fit(examples, seed=args.seed)
+        decoder_raw = eval_decoder.fit_raw_features(examples, seed=args.seed)
+        if args.predictor_run:
+            meta = load_predictor(model, args.predictor_run / f"fold{fold}.pt")
+            test_ids = {data[i]["clip"]["clip_id"] for i in te}
+            if test_ids & set(meta["train_clip_ids"]):
+                raise SystemExit(f"fold{fold}.pt was trained on clips this fold scores; "
+                                 "train it with the same manifest, --folds and --seed")
         for i in te:
             d = data[i]
             cs = d["cs"]
             m_real = decoder(d["enc"]["real"]).numpy()
             m_ctx = decoder(d["enc"]["context"]).numpy()
-            m_imag = decoder(d["enc"]["imagined"]).numpy()
+            if args.predictor_run:
+                with torch.no_grad():
+                    imag = imagine_mode(model.predictor, d["enc"]["context"][None].float().to(device),
+                                        d["enc"]["real"].shape[0] - cs, meta)[0].float().cpu()
+            else:
+                imag = d["enc"]["imagined"]
+            m_imag = decoder(imag).numpy()
+            m_alt = decoder_raw(target_space(imag.float()) * gamma + beta).numpy()
+            fut_alt.append(m_alt.reshape(-1))
+            track_maps["imagined_encoder_space"].append(m_alt)
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
+            track_maps["real"].append(m_real[cs:]), track_maps["imagined"].append(m_imag)
+            track_centres.append(d["centres"][cs:])
             rows[i] = {"clip_id": d["clip"]["clip_id"], "outcome": d["clip"]["outcome"], "fold": fold,
                        "first_target_frame": cs * tub,
                        "real_visible": m_real[cs:].max((1, 2)).round(3).tolist(),
-                       "real_far": (m_real[cs:] * far_cells).max((1, 2)).round(3).tolist(),
+                       "real_far": (m_real[cs:] * far).max((1, 2)).round(3).tolist(),
+                       "real_near": (m_real[cs:] * near).max((1, 2)).round(3).tolist(),
                        "imagined_visible": m_imag.max((1, 2)).round(3).tolist(),
-                       "imagined_far": (m_imag * far_cells).max((1, 2)).round(3).tolist()}
+                       "imagined_far": (m_imag * far).max((1, 2)).round(3).tolist(),
+                       "imagined_near": (m_imag * near).max((1, 2)).round(3).tolist(),
+                       **{f"{k}_one_ball_{side}": v for k, m in (("real", m_real[cs:]), ("imagined", m_imag),
+                                                                 ("imagined_encoder_space", m_alt))
+                          for side, v in one_ball_readouts(m, far, near).items()}}
         print(f"\r  fold {fold + 1}/{args.folds} scored", end="", flush=True)
     print()
 
@@ -172,14 +206,27 @@ def main(argv: list[str] | None = None) -> int:
     t_arr = {k: np.array([t[k] for t in timings]) for k in (timings[0] if timings else {})}
     metrics = {
         "model_id": args.model_id, "device": device, "n_clips": len(rows),
-        "n_through": int(y_out.sum()), "n_hidden": int(len(y_out) - y_out.sum()), "folds": args.folds,
+        "predictor_run": str(args.predictor_run) if args.predictor_run else "pretrained",
+        **{f"n_{o}": sum(r["outcome"] == o for r in rows) for o in OUTCOMES}, "folds": args.folds,
         "real_cell_auroc": round(float(roc_auc_score(rl, rm)), 3),
         "future_cell_auroc_imagined": round(float(roc_auc_score(fl, fi)), 3),
         "future_cell_auroc_hold_last_context": round(float(roc_auc_score(fl, fh)), 3),
+        "future_cell_auroc_imagined_encoder_space": round(float(roc_auc_score(fl, np.concatenate(fut_alt))), 3),
         "outcome_auroc_real": round(float(roc_auc_score(y_out, score_real)), 3),
         "outcome_auroc_imagined": round(float(roc_auc_score(y_out, score_imag)), 3),
-        "imagined_far_peak_mean": {o: round(float(score_imag[y_out == (o == "through")].mean()), 3)
-                                   for o in ("through", "hidden")},
+        "imagined_far_peak_mean": {o: round(float(score_imag[[r["outcome"] == o for r in rows]].mean()), 3)
+                                   for o in OUTCOMES if any(r["outcome"] == o for r in rows)},
+        **{f"outcomes_{kind}": outcome_metrics([{"outcome": r["outcome"], "far": r[f"{kind}_far"],
+                                                 "near": r[f"{kind}_near"]} for r in rows])
+           for kind in ("real", "imagined")},
+        **{f"ball_{kind}": ball_track_metrics(track_maps[kind], track_centres) for kind in ("real", "imagined")},
+        # Threshold-free, assuming one ball: outcome from the share of the ball beyond / back on the
+        # near side, and position from the most likely cell at every step (no 0.5 cut-off).
+        **{f"outcomes_{kind}_one_ball": outcome_metrics([{"outcome": r["outcome"], "far": r[f"{kind}_one_ball_far"],
+                                                          "near": r[f"{kind}_one_ball_near"]} for r in rows])
+           for kind in ("real", "imagined", "imagined_encoder_space")},
+        **{f"ball_{kind}_argmax": ball_track_metrics(track_maps[kind], track_centres, confident=0.0)
+           for kind in ("real", "imagined", "imagined_encoder_space")},
         "timing_seconds_per_clip": {k: {"mean": round(float(v.mean()), 2), "median": round(float(np.median(v)), 2),
                                         "n": int(len(v))} for k, v in t_arr.items()},
         "model_load_seconds": round(t_load, 1),
@@ -197,6 +244,21 @@ def main(argv: list[str] | None = None) -> int:
           f"(hold last context: {metrics['future_cell_auroc_hold_last_context']})")
     print(f"  outcome from max P(beyond plank): real {metrics['outcome_auroc_real']}, "
           f"imagined {metrics['outcome_auroc_imagined']}; imagined peak mean {metrics['imagined_far_peak_mean']}")
+    oi, bi = metrics["outcomes_imagined"], metrics["ball_imagined"]
+    print(f"  imagined: P(correct outcome) {oi.get('p_correct')} (balanced {oi.get('p_correct_balanced')}), "
+          f"balanced accuracy {oi.get('balanced_accuracy')}; ball hit rate {bi['hit_rate']}, "
+          f"error {bi['error_px']} px, phantom rate {bi['phantom_rate']}")
+    ob, ab = metrics["outcomes_imagined_one_ball"], metrics["ball_imagined_argmax"]
+    oe, ae = metrics["outcomes_imagined_encoder_space_one_ball"], metrics["ball_imagined_encoder_space_argmax"]
+    print(f"  threshold-free (one ball): through-vs-blocked AUROC {ob['outcome_auroc']}, P(correct) balanced "
+          f"{ob.get('p_correct_balanced')}, argmax ball within 48 px {ab['hit_rate']} (median {ab['error_px']} px)")
+    print(f"  encoder-space alternative (gamma*pred+beta, raw decoder): cell AUROC "
+          f"{metrics['future_cell_auroc_imagined_encoder_space']}, through-vs-blocked AUROC {oe['outcome_auroc']}, "
+          f"argmax ball within 48 px {ae['hit_rate']}")
+    if "bounce_auroc" in metrics["outcomes_imagined"]:
+        print(f"  bounce vs hidden (ball back on the near side): real {metrics['outcomes_real']['bounce_auroc']}, "
+              f"imagined {metrics['outcomes_imagined']['bounce_auroc']}; three-way accuracy imagined "
+              f"{metrics['outcomes_imagined']['outcome3_accuracy']}")
     if timings:
         tt = metrics["timing_seconds_per_clip"]
         print("  seconds per clip on " + device + ": " +
