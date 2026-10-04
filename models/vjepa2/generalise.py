@@ -41,7 +41,8 @@ from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, f
                                     roc_auc_score_safe, source_indices)
 
 CLIPS = REPO / "data" / "processed" / "clips"
-MANIFEST = CLIPS / "manifest.jsonl"
+# Training clips: the right-entry segment (whole.mp4 pipeline); older single-video data has manifest.jsonl.
+MANIFEST = CLIPS / "manifest_right.jsonl" if (CLIPS / "manifest_right.jsonl").exists() else CLIPS / "manifest.jsonl"
 SEEN = REPO / "outputs" / "vjepa2" / "plan" / "manifest_seen.jsonl"   # on Drive in Colab, so it survives restarts
 HELDOUT_CFG = REPO / "configs" / "heldout.json"
 OUT = REPO / "outputs" / "vjepa2" / "plan" / "generalise"
@@ -59,16 +60,19 @@ def tracking(video: str):
 
 
 def side_in(clip: dict) -> str | None:
+    if clip.get("side_in"):
+        return clip["side_in"]
     return tracking(stem(clip))[1][clip["pass_id"]].get("side_in")
 
 
-def split(clips: list[dict], holdout_videos: list[str]) -> tuple[list[dict], dict[str, list[dict]], str]:
-    """-> (seen clips, held-out clips by group, training direction)."""
+def split(clips: list[dict], holdout_videos: list[str], others: list[dict] = ()) -> tuple[list[dict], dict[str, list[dict]], str]:
+    """clips: the training manifest's; others: other segments' (e.g. manifest_left.jsonl), always held out.
+    -> (seen clips, held-out clips by group, training direction)."""
     held = {v for v in holdout_videos}
     sides = Counter(side_in(c) for c in clips if stem(c) not in held)
     train_side = sides.most_common(1)[0][0] if sides else None
     seen, groups = [], {}
-    for c in clips:
+    for c in [*clips, *others]:
         if stem(c) in held:
             groups.setdefault(f"new ball ({stem(c)})", []).append(c)
         elif side_in(c) != train_side:
@@ -83,6 +87,16 @@ def included(manifest: Path) -> list[dict]:
     return [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
 
 
+def other_segments(manifest: Path) -> list[dict]:
+    """Included clips of every other segment manifest next to the training one (manifest_<segment>.jsonl)."""
+    seen = {c["clip_id"] for c in included(manifest)}
+    out = []
+    for m in sorted(manifest.parent.glob("manifest_*.jsonl")):
+        if m.resolve() != manifest.resolve():
+            out += [c for c in included(m) if c["clip_id"] not in seen]
+    return out
+
+
 def holdout_videos(arg: list[str] | None) -> list[str]:
     if arg is not None:
         return arg
@@ -91,7 +105,7 @@ def holdout_videos(arg: list[str] | None) -> list[str]:
 
 def cmd_split(args) -> int:
     clips = included(args.manifest)
-    seen, groups, train_side = split(clips, holdout_videos(args.holdout_videos))
+    seen, groups, train_side = split(clips, holdout_videos(args.holdout_videos), other_segments(args.manifest))
     SEEN.parent.mkdir(parents=True, exist_ok=True)
     SEEN.write_text("".join(json.dumps(c) + "\n" for c in seen))
     args.out.mkdir(parents=True, exist_ok=True)
@@ -103,8 +117,9 @@ def cmd_split(args) -> int:
     for g, v in info["held_out"].items():
         print(f"held out: {g}: {v}")
     if not groups:
-        print("no held-out clips yet: record the ball from the other side, or list a new-ball video in "
-              "configs/heldout.json, then rerun")
+        print("no held-out clips yet: pack the left segment (scripts/pack_clips.py --manifest "
+              "data/processed/clips/manifest_left.jsonl --out outputs/robustworld_clips_left.zip) and put it on Drive, "
+              "or list a new-ball video in configs/heldout.json, then rerun")
         return WAITING
     return 0
 
@@ -124,7 +139,7 @@ def cmd_score(args) -> int:
     from run import MODEL_ID, SIZE, pick_device
 
     clips = included(args.manifest)
-    seen, groups, _ = split(clips, holdout_videos(args.holdout_videos))
+    seen, groups, _ = split(clips, holdout_videos(args.holdout_videos), other_segments(args.manifest))
     if not groups:
         print("no held-out clips yet")
         return WAITING

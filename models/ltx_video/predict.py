@@ -1,9 +1,9 @@
 """LTX-Video 2B distilled (0.9.8): predict the target half of each eval clip, fast.
 
 LTX's VAE compresses time 8x, so conditioning videos must be 8k+1 frames long, and the
-pipeline trims longer ones from the *start*. The model is therefore given the last 9
-context frames (clip frames 7-15) and generates 25 frames (clip frames 7-31);
-generated frames 9-24 line up with the ground-truth target frames 16-31.
+pipeline trims longer ones from the *start*. The model is therefore given the last 17
+context frames (clip frames 7-23) and generates 41 frames (clip frames 7-47);
+generated frames 17-40 line up with the ground-truth target frames 24-47.
 
 The distilled model needs no classifier-free guidance and 8 fixed timesteps, so a clip
 takes seconds rather than minutes. Its weights ship as one file holding the transformer
