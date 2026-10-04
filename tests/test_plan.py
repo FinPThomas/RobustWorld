@@ -183,11 +183,11 @@ def test_backs_up_to_drive_after_every_step_and_survives_a_drop(fake, tmp_path, 
     real = drive_sync.sync
     calls = {"n": 0}
 
-    def flaky(src, dst):                           # Drive is down for the first backup
+    def flaky(src, dst, exclude=()):               # Drive is down for the first backup
         calls["n"] += 1
         if calls["n"] <= 2:
             raise OSError(107, "Transport endpoint is not connected")
-        return real(src, dst)
+        return real(src, dst, exclude)
     monkeypatch.setattr(drive_sync, "sync", flaky)
     plan.main(["run", "--stage", "1", "--only", "encode", "pretrained"])
     steps = json.loads(plan.STATE.read_text())["steps"]

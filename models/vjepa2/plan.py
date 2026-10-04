@@ -226,6 +226,19 @@ def step_encode(args, state, log):
         must([PY, HERE / "posttrain.py", "encode", "--manifest", m], log)
 
 
+def cache_complete() -> bool:
+    """Every included clip of every manifest has encoded features on this disk (they aren't backed up to Drive)."""
+    from robust_world.eval.ball import OUTCOMES
+    cached = {p.stem for p in (REPO / "outputs" / "vjepa2" / "cache").glob("*/*.pt")}
+    for m in [MANIFEST, *MANIFEST.parent.glob("manifest_*.jsonl")]:
+        if m.exists():
+            for line in m.open():
+                c = json.loads(line)
+                if c.get("include") and c["outcome"] in OUTCOMES and c["clip_id"] not in cached:
+                    return False
+    return True
+
+
 def step_pretrained(args, state, log):
     must([PY, HERE / "ball_probe_cv.py", "--manifest", manifest(), "--out", SCORES / "pretrained"], log)
     blocker_figs("pretrained", None, log)
@@ -547,7 +560,8 @@ def backup(why: str = "") -> bool:
     import drive_sync
     with _backup_lock:
         try:
-            n = sum(drive_sync.sync(REPO / d, Path(dest) / d) for d in ("outputs", "checkpoints"))
+            n = sum(drive_sync.sync(REPO / d, Path(dest) / d, drive_sync.NOT_BACKED_UP)
+                    for d in ("outputs", "checkpoints"))
         except OSError as e:
             print(f"!! backup to Google Drive failed ({e}); the work is safe on Colab's disk and the next backup "
                   "tries again. If Drive stays down, rerun cell 1 once this cell finishes or stops.", flush=True)
@@ -583,6 +597,9 @@ def _run(args) -> None:
     if state["steps"].get("split", {}).get("state") == "done" and not SEEN.exists():
         print("== the seen-clips manifest is missing: recreating it", flush=True)
         step_split(args, state, None)
+    if state["steps"].get("encode", {}).get("state") == "done" and not cache_complete():
+        print("== the encoded features aren't on this disk (a new runtime): encoding again", flush=True)
+        step_encode(args, state, PLAN / "logs" / "encode.txt")
     stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
     todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
     cut_off = [s for s in STEPS if s.stage < min(stages) and state["steps"].get(s.name, {}).get("state") == "running"]
