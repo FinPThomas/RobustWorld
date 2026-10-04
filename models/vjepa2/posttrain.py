@@ -30,6 +30,17 @@ Inference modes, stored in each checkpoint and used by ball_probe_cv.py:
                Trained the same way, with the fed-back predictions detached.
     (default)  all target steps in one pass, as in V-JEPA 2.
 
+Architecture additions (label-free, trained with the predictor; both start as the pretrained output):
+    --copy-gate      a per-token gate mixes each predicted token with the last context step's token,
+                     so the static table and plank can be copied exactly and the predictor's capacity
+                     and loss go to what moves (a "clean" background).
+    --hypotheses K   K futures from one prediction (low-rank per-token adapters) and a picker that
+                     scores them from the predicted change. Trained winner-takes-all: the hypothesis
+                     nearest the real future gets the loss and the picker learns which one wins, so
+                     hypotheses specialise ("comes through" / "stays hidden") instead of averaging.
+                     At inference the picker's choice is the imagined future; the real future is
+                     never looked at. Like L1, it learns only from the training clips' own video.
+
 `--epochs 0` saves the pretrained predictor with a run's inference mode (and codebook): the "before"
 for that variant. experiments.py runs the whole before/after grid.
 
@@ -133,10 +144,72 @@ def to_encoder_space(pred: torch.Tensor, like: torch.Tensor) -> torch.Tensor:
 
 def load_predictor(model, checkpoint: Path):
     """Load a post-trained predictor into `model` (in place); returns the checkpoint's metadata,
-    including its inference mode ("rollout", "codebook")."""
+    including its inference mode ("rollout", "codebook", "heads")."""
     ck = torch.load(checkpoint, map_location="cpu")
     model.predictor.load_state_dict(ck["predictor"])
-    return {k: v for k, v in ck.items() if k != "predictor"}
+    meta = {k: v for k, v in ck.items() if k not in ("predictor", "heads", "heads_cfg")}
+    meta["heads"] = None
+    if ck.get("heads") is not None:
+        meta["heads"] = Heads(**ck["heads_cfg"])
+        meta["heads"].load_state_dict(ck["heads"])
+        meta["heads"].eval()
+    return meta
+
+
+def saved_mode(mode: dict) -> dict:
+    """A run's inference mode as stored in a checkpoint (the heads as weights + settings)."""
+    heads = mode.get("heads")
+    return {"rollout": mode.get("rollout", False), "codebook": mode.get("codebook"),
+            "heads": heads.state_dict() if heads is not None else None,
+            "heads_cfg": heads.cfg if heads is not None else None}
+
+
+class Heads(torch.nn.Module):
+    """Optional additions on the predictor's output (--copy-gate, --hypotheses; see the docstring).
+    Near-identity at the start: the gate is shut (bias -8) and the hypotheses' adapters are ~0."""
+
+    def __init__(self, d: int, copy_gate: bool = False, hypotheses: int = 1, rank: int = 64):
+        super().__init__()
+        self.cfg = {"d": d, "copy_gate": copy_gate, "hypotheses": hypotheses, "rank": rank}
+        self.k = hypotheses
+        self.gate = torch.nn.Linear(d, 1) if copy_gate else None
+        if self.gate is not None:
+            torch.nn.init.zeros_(self.gate.weight)
+            torch.nn.init.constant_(self.gate.bias, -8.0)
+        if hypotheses > 1:
+            g = torch.Generator().manual_seed(0)       # small, different starts break the symmetry
+            self.down = torch.nn.Parameter(torch.randn(hypotheses, d, rank, generator=g) / math.sqrt(d))
+            self.up = torch.nn.Parameter(torch.randn(hypotheses, rank, d, generator=g) * 1e-3)
+            self.picker = torch.nn.Linear(d, hypotheses)
+            torch.nn.init.zeros_(self.picker.weight)
+            torch.nn.init.zeros_(self.picker.bias)
+
+    def forward(self, pred: torch.Tensor, last: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+        """pred [B, T, g, g, D] and the last context step [B, g, g, D], both in target space
+        -> hypotheses [K, B, T, g, g, D] and picker logits [B, K] (None with one hypothesis)."""
+        x, last = pred.float(), last.float()[:, None]
+        hyps, logits = x[None], None
+        if self.k > 1:
+            low = torch.einsum("btxyd,kdr->kbtxyr", x, self.down.float())
+            hyps = x[None] + torch.einsum("kbtxyr,krd->kbtxyd", low, self.up.float())
+            logits = self.picker((x - last).mean((1, 2, 3)))          # from the predicted change
+        if self.gate is not None:
+            a = torch.sigmoid(self.gate(hyps))
+            hyps = hyps + a * (last[None] - hyps)
+        return hyps, logits
+
+
+def pick(hyps: torch.Tensor, logits: torch.Tensor | None) -> torch.Tensor:
+    """The picker's choice per clip: [K, B, ...] -> [B, ...]."""
+    if logits is None:
+        return hyps[0]
+    idx = logits.argmax(-1)
+    return hyps[idx, torch.arange(hyps.shape[1], device=hyps.device)]
+
+
+def apply_heads(heads, pred: torch.Tensor, context: torch.Tensor):
+    """-> (hypotheses [K, B, ...], logits) for a raw prediction; the last context step is the copy source."""
+    return heads.to(pred.device)(pred, target_space(context[:, -1].float()))
 
 
 def snap(x: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
@@ -164,9 +237,11 @@ def rollout(predictor, context: torch.Tensor, target_steps: int, codebook=None) 
 
 def imagine_mode(predictor, context: torch.Tensor, target_steps: int, mode: dict) -> torch.Tensor:
     """The imagined target as a checkpoint's inference mode produces it (what the evaluation reads)."""
-    codebook = mode.get("codebook")
+    codebook, heads = mode.get("codebook"), mode.get("heads")
     pred = (rollout(predictor, context, target_steps, codebook) if mode.get("rollout")
             else imagine(predictor, context, target_steps))
+    if heads is not None:
+        pred = pick(*apply_heads(heads, pred, context))
     return snap(pred, codebook) if codebook is not None else pred
 
 
@@ -228,6 +303,26 @@ def contrast(pred, target, negatives, w, tau: float) -> torch.Tensor:
     d = torch.stack([((pred[i:i + 1] - cands).abs().mean(-1) * w[i]).sum((1, 2, 3)) / w[i].sum()
                      for i in range(len(pred))])                                         # [B, C]
     return torch.nn.functional.cross_entropy(-d / tau, torch.arange(len(pred), device=pred.device))
+
+
+def heads_objective(args, hyps, logits, target, last_real, negatives=None, codebook=None):
+    """Winner-takes-all over hypotheses, per clip: the hypothesis nearest the real future gets the
+    loss (the others a small share, so none is abandoned) and the picker learns to choose it."""
+    if logits is None:
+        return objective(args, hyps[0], target, last_real, negatives, codebook)
+    total, parts, wins = 0.0, [], []
+    for b in range(target.shape[0]):
+        per = [objective(args, hyps[k, b:b + 1], target[b:b + 1], last_real[b:b + 1], negatives, codebook)
+               for k in range(len(hyps))]
+        vals = torch.stack([v for v, _ in per])
+        win = int(vals.detach().argmin())
+        pick_ce = torch.nn.functional.cross_entropy(logits[b:b + 1].float(), torch.tensor([win], device=vals.device))
+        total = total + vals[win] + args.wta_relax * vals.mean() + pick_ce
+        parts.append({**per[win][1], "pick_ce": pick_ce.item(), "winner": win})
+        wins.append(win)
+    part = {k: float(np.mean([p[k] for p in parts])) for k in parts[0] if k != "winner"}
+    part["winner_spread"] = len(set(wins)) / len(hyps)
+    return total / target.shape[0], part
 
 
 def objective(args, pred, target, last_real, negatives=None, codebook=None) -> tuple[torch.Tensor, dict]:
@@ -300,6 +395,8 @@ class Cached(torch.utils.data.Dataset):
 def held_out_l1(predictor, data: Cached, device, autocast, mode: dict) -> list[float]:
     """L1 between the imagined target, in the run's inference mode, and the real one (label-free)."""
     predictor.eval()
+    if mode.get("heads") is not None:
+        mode["heads"].eval()
     out = []
     for i in range(len(data)):
         ctx, tgt, _, _ = data[i]
@@ -361,11 +458,18 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     model.predictor.load_state_dict(base_state)
     pred = model.predictor
     train, val = split_validation(train, getattr(args, "val_frac", 0.1), args.seed)
+    if getattr(args, "train_frac", 1.0) < 1.0:     # data-efficiency runs: a seeded share of the training clips
+        order = list(range(len(train)))
+        random.Random(args.seed + 1).shuffle(order)
+        train = [train[i] for i in sorted(order[:max(2, int(round(len(train) * args.train_frac)))])]
     tr, te = Cached(train, cache), Cached(test, cache) if test else None
     va = Cached(val, cache) if val else None
     tr_probe = Cached(train[:max(len(val), 2)], cache) if val else None    # same-size sample of training clips
     codebook = (fit_codebook(tr, args.codes, args.seed, device=device) if args.loss == "codes" else None)
-    mode = {"rollout": bool(getattr(args, "rollout", False)), "codebook": codebook}
+    heads = None
+    if getattr(args, "copy_gate", False) or getattr(args, "hypotheses", 1) > 1:
+        heads = Heads(tr[0][1].shape[-1], getattr(args, "copy_gate", False), getattr(args, "hypotheses", 1)).to(device)
+    mode = {"rollout": bool(getattr(args, "rollout", False)), "codebook": codebook, "heads": heads}
 
     use_amp = device == "cuda"
     # bf16 only where it is native (A100/L4 and newer). On a T4 bf16 is emulated and attention falls
@@ -385,7 +489,10 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         before = held_out_l1(pred, te, device, autocast, mode)
         log["held_out_l1_pretrained"] = by_outcome(test, before)
 
-    opt = torch.optim.AdamW(pred.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    groups = [{"params": list(pred.parameters())}]
+    if heads is not None:                     # new weights start from scratch: a higher learning rate
+        groups.append({"params": list(heads.parameters()), "lr": args.lr * 30, "weight_decay": 0.0})
+    opt = torch.optim.AdamW(groups, lr=args.lr, weight_decay=args.weight_decay)
     loader = torch.utils.data.DataLoader(tr, batch_size=args.batch_size, shuffle=True, drop_last=False,
                                          num_workers=args.workers, generator=torch.Generator().manual_seed(args.seed))
     total = max(1, args.epochs * math.ceil(len(loader) / args.accum))
@@ -402,13 +509,15 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     log["train_loss"], log["train_parts"], log["val_l1"], log["train_clip_l1"] = [], [], [], []
     log["epochs"] = []                            # one detailed record per epoch (see epoch_record)
     log["val_clip_ids"] = [c["clip_id"] for c in val]
-    best = (float(np.mean(held_out_l1(pred, va, device, autocast, mode))), 0, None) if va else None
+    best = (float(np.mean(held_out_l1(pred, va, device, autocast, mode))), 0, None, None) if va else None
     if va:
         log["val_l1_pretrained"] = round(best[0], 5)
     patience = getattr(args, "patience", 3)
     t0 = time.perf_counter()
     for epoch in range(args.epochs):
         pred.train()
+        if heads is not None:
+            heads.train()
         losses, parts, grads = [], [], []
         t_epoch = time.perf_counter()
         if device == "cuda":
@@ -423,12 +532,16 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             with autocast():
                 imagined = (rollout(pred, ctx, tgt.shape[1], codebook) if mode["rollout"]
                             else imagine(pred, ctx, tgt.shape[1]))
-            loss, part = objective(args, imagined, tgt, last, neg, codebook)
+            if heads is not None:
+                hyps, logits = apply_heads(heads, imagined, ctx)
+                loss, part = heads_objective(args, hyps, logits, tgt, last, neg, codebook)
+            else:
+                loss, part = objective(args, imagined, tgt, last, neg, codebook)
             parts.append(part)
             scaler.scale(loss / args.accum).backward()
             if (step + 1) % args.accum == 0 or step + 1 == len(loader):
                 scaler.unscale_(opt)
-                grads.append(float(torch.nn.utils.clip_grad_norm_(pred.parameters(), 1.0)))
+                grads.append(float(torch.nn.utils.clip_grad_norm_([q for g in groups for q in g["params"]], 1.0)))
                 scaler.step(opt)
                 scaler.update()
                 opt.zero_grad(set_to_none=True)
@@ -453,7 +566,8 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             rec["val_l1"], rec["train_clip_l1"] = round(v, 5), round(t, 5)
             print(f"  [{tag}]   validation L1 {v:.4f} (training clips {t:.4f})", flush=True)
             if v < best[0]:
-                best = (v, epoch + 1, {k: x.detach().to("cpu", copy=True) for k, x in pred.state_dict().items()})
+                best = (v, epoch + 1, {k: x.detach().to("cpu", copy=True) for k, x in pred.state_dict().items()},
+                        {k: x.detach().to("cpu", copy=True) for k, x in heads.state_dict().items()} if heads else None)
             elif patience and epoch + 1 - best[1] >= patience:
                 print(f"  [{tag}]   no validation gain for {patience} epochs: stopping early", flush=True)
                 break
@@ -461,6 +575,8 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         log["best_epoch"] = best[1]
         if best[2] is not None and getattr(args, "keep_best", True):
             pred.load_state_dict(best[2])             # weights from the best validation epoch
+            if heads is not None:
+                heads.load_state_dict(best[3])
         elif best[1] == 0 and getattr(args, "keep_best", True):
             pred.load_state_dict(base_state)          # never beat the pretrained predictor
         log["overfit"] = overfit_report(log["val_l1"], log["train_clip_l1"], best[0], best[1])
@@ -511,6 +627,19 @@ def scale_check(predictor, enc: dict, device) -> dict:
             "l1_vs_ln": round(float((pred - target_space(real)).abs().mean()), 4)}
 
 
+RESUME_KEYS = ("epochs", "loss", "lr", "rollout", "copy_gate", "hypotheses", "train_frac", "codes", "seed")
+
+
+def resumable(path: Path, args, train: list[dict]) -> dict | None:
+    """With --resume: the saved log of a split already trained with the same settings and clips."""
+    if not path.exists():
+        return None
+    ck = torch.load(path, map_location="cpu")
+    saved = ck.get("args", {})
+    same = all(saved.get(k) == getattr(args, k, None) for k in RESUME_KEYS)
+    return ck.get("log") if same and ck.get("train_clip_ids") == [c["clip_id"] for c in train] else None
+
+
 def train_all(args) -> None:
     from transformers import VJEPA2Model
     from run import pick_device
@@ -548,10 +677,15 @@ def train_all(args) -> None:
     logs = []
     for tag, tr, te in splits:
         train, test = [clips[i] for i in tr], [clips[i] for i in te]
-        log, mode = train_one(model, base_state, train, test, args, device, tag)
-        torch.save({"predictor": model.predictor.state_dict(), **mode, "model_id": args.model_id, "split": tag,
-                    "train_clip_ids": [c["clip_id"] for c in train], "args": vars(args) | {"manifest": str(args.manifest)},
-                    "log": log}, out / f"{tag}.pt")
+        done = resumable(out / f"{tag}.pt", args, train) if args.resume else None
+        if done is not None:
+            print(f"  [{tag}] already trained with these settings: skipping (--resume)", flush=True)
+            log = done
+        else:
+            log, mode = train_one(model, base_state, train, test, args, device, tag)
+            torch.save({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
+                        "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
+                        "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
         logs.append(log)
         (out / "log.json").write_text(json.dumps(logs, indent=1))
         info["folds"].append({"split": tag, "seconds": log["seconds"], "best_epoch": log.get("best_epoch"),
@@ -591,6 +725,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-keep-best", dest="keep_best", action="store_false",
                    help="keep the last epoch instead of the best validation epoch")
     p.add_argument("--rollout", action="store_true", help="predict one step at a time, feeding predictions back")
+    p.add_argument("--copy-gate", action="store_true", help="per-token gate that can copy the last context step")
+    p.add_argument("--hypotheses", type=int, default=1, help="K futures, trained winner-takes-all, with a picker")
+    p.add_argument("--wta-relax", type=float, default=0.05, help="hypotheses: share of the loss for non-winners")
+    p.add_argument("--train-frac", type=float, default=1.0, help="use this share of each fold's training clips")
+    p.add_argument("--resume", action="store_true", help="skip splits already trained with the same settings")
     p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
     p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")
     p.add_argument("--motion-alpha", type=float, default=4.0, help="commit: extra weight on moving tokens")
