@@ -1,0 +1,11 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  18%|█▊        | 107/587 [00:00<00:00, 1047.16it/s]
+Loading weights:  36%|███▌      | 212/587 [00:00<00:00, 1041.77it/s]
+Loading weights:  56%|█████▌    | 329/587 [00:00<00:00, 1084.15it/s]
+Loading weights:  75%|███████▍  | 438/587 [00:00<00:00, 1084.10it/s]
+Loading weights:  94%|█████████▍| 553/587 [00:00<00:00, 1090.77it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 1104.24it/s]
+code version c2bc906
+scale check: predicted token spread 0.6176, real target 3.2694 raw / 1.0005 layer-normalised (training and scoring use the layer-normalised space)
