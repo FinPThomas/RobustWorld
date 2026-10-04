@@ -17,6 +17,21 @@ Objectives (`--loss`), all learned purely from the video:
               - in-batch contrast (InfoNCE): the imagined future must be nearer its own real
                 future than other training clips' real futures (motion-weighted distance). An
                 average of "through" and "hidden" is equally far from both, so hedging costs.
+    codes   discrete targets: a codebook (k-means, `--codes` entries) is fitted on each split's
+            training clips' real target tokens (half sampled uniformly, half from the tokens that
+            change most between steps, so the ball gets codes; no labels). The predictor is trained
+            with cross-entropy to pick each target token's code, and at inference every imagined
+            token is snapped to its most likely code. A categorical choice can't average "ball" and
+            "no ball", so the prediction has to commit.
+
+Inference modes, stored in each checkpoint and used by ball_probe_cv.py:
+    --rollout  predict one V-JEPA step (2 frames) at a time, feeding each prediction back in as
+               context (snapped to codes with --loss codes), instead of all target steps at once.
+               Trained the same way, with the fed-back predictions detached.
+    (default)  all target steps in one pass, as in V-JEPA 2.
+
+`--epochs 0` saves the pretrained predictor with a run's inference mode (and codebook): the "before"
+for that variant. experiments.py runs the whole before/after grid.
 
 Splits: one predictor per cross-validation fold (robust_world.eval.ball.cv_folds, the same
 folds the evaluation uses), each trained only on that fold's training clips. Each checkpoint
@@ -100,10 +115,68 @@ def imagine(predictor, context: torch.Tensor, target_steps: int) -> torch.Tensor
 
 
 def load_predictor(model, checkpoint: Path):
-    """Load a post-trained predictor into `model` (in place); returns the checkpoint's metadata."""
+    """Load a post-trained predictor into `model` (in place); returns the checkpoint's metadata,
+    including its inference mode ("rollout", "codebook")."""
     ck = torch.load(checkpoint, map_location="cpu")
     model.predictor.load_state_dict(ck["predictor"])
     return {k: v for k, v in ck.items() if k != "predictor"}
+
+
+def snap(x: torch.Tensor, codebook: torch.Tensor) -> torch.Tensor:
+    """Replace every token [..., D] with its most likely code's centroid (cosine)."""
+    idx = code_logits(x, codebook, 1.0).argmax(-1)
+    return codebook.to(x.device, x.dtype)[idx]
+
+
+def code_logits(x: torch.Tensor, codebook: torch.Tensor, tau: float) -> torch.Tensor:
+    c = torch.nn.functional.normalize(codebook.to(x.device, torch.float32), dim=-1)
+    return torch.nn.functional.normalize(x.float(), dim=-1) @ c.T / tau
+
+
+def rollout(predictor, context: torch.Tensor, target_steps: int, codebook=None) -> torch.Tensor:
+    """Predict one step at a time, feeding each (detached, snapped if a codebook is given) prediction
+    back in as context. Returns the raw per-step predictions [B, target_steps, g, g, D]."""
+    out, seen = [], context
+    for _ in range(target_steps):
+        step = imagine(predictor, seen, 1)
+        out.append(step)
+        fed = snap(step.detach(), codebook) if codebook is not None else step.detach()
+        seen = torch.cat([seen, fed.to(seen.dtype)], 1)
+    return torch.cat(out, 1)
+
+
+def imagine_mode(predictor, context: torch.Tensor, target_steps: int, mode: dict) -> torch.Tensor:
+    """The imagined target as a checkpoint's inference mode produces it (what the evaluation reads)."""
+    codebook = mode.get("codebook")
+    pred = (rollout(predictor, context, target_steps, codebook) if mode.get("rollout")
+            else imagine(predictor, context, target_steps))
+    return snap(pred, codebook) if codebook is not None else pred
+
+
+def fit_codebook(data, k: int, seed: int, n_tokens: int = 50_000, iters: int = 15, device="cpu") -> torch.Tensor:
+    """Spherical k-means on real target tokens of `data` (a Cached set): half drawn uniformly, half
+    from the tokens that change most from the previous step. -> centroids [k, D] in feature space."""
+    g = torch.Generator().manual_seed(seed)
+    per_clip = max(1, n_tokens // (2 * len(data)))
+    picks = []
+    for i in range(len(data)):
+        _, tgt, last, _ = data[i]
+        flat = tgt.reshape(-1, tgt.shape[-1])
+        motion = step_change(tgt[None], last[None])[0].reshape(-1)
+        picks.append(flat[torch.randperm(len(flat), generator=g)[:per_clip]])
+        picks.append(flat[motion.topk(min(per_clip, len(flat))).indices])
+    x = torch.cat(picks).to(device)
+    xn = torch.nn.functional.normalize(x, dim=-1)
+    c = xn[torch.randperm(len(xn), generator=g)[:k].to(device)].clone()
+    for _ in range(iters):
+        assign = (xn @ c.T).argmax(-1)
+        for j in range(len(c)):
+            m = assign == j
+            if m.any():
+                c[j] = torch.nn.functional.normalize(xn[m].mean(0), dim=0)
+    assign = (xn @ c.T).argmax(-1)
+    cent = torch.stack([x[assign == j].mean(0) if (assign == j).any() else x[j] for j in range(len(c))])
+    return cent.cpu()
 
 
 def loss_fn(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -140,8 +213,13 @@ def contrast(pred, target, negatives, w, tau: float) -> torch.Tensor:
     return torch.nn.functional.cross_entropy(-d / tau, torch.arange(len(pred), device=pred.device))
 
 
-def objective(args, pred, target, last_real, negatives=None) -> tuple[torch.Tensor, dict]:
+def objective(args, pred, target, last_real, negatives=None, codebook=None) -> tuple[torch.Tensor, dict]:
     pred = pred.float()
+    if args.loss == "codes":
+        logits = code_logits(pred, codebook, args.code_tau)
+        labels = code_logits(target, codebook, 1.0).argmax(-1)
+        ce = torch.nn.functional.cross_entropy(logits.reshape(-1, logits.shape[-1]), labels.reshape(-1))
+        return ce, {"ce": ce.item(), "l1": loss_fn(pred, target).item()}
     if args.loss == "l1":
         loss = loss_fn(pred, target)
         return loss, {"l1": loss.item()}
@@ -199,13 +277,14 @@ class Cached(torch.utils.data.Dataset):
 
 
 @torch.no_grad()
-def held_out_l1(predictor, data: Cached, device, autocast) -> list[float]:
+def held_out_l1(predictor, data: Cached, device, autocast, mode: dict) -> list[float]:
+    """L1 between the imagined target, in the run's inference mode, and the real one (label-free)."""
     predictor.eval()
     out = []
     for i in range(len(data)):
         ctx, tgt, _, _ = data[i]
         with autocast():
-            pred = imagine(predictor, ctx[None].to(device), tgt.shape[0])
+            pred = imagine_mode(predictor, ctx[None].to(device), tgt.shape[0], mode)
         out.append(float(loss_fn(pred.float(), tgt[None].to(device))))
     return out
 
@@ -215,11 +294,14 @@ def by_outcome(clips, values) -> dict:
             for o in OUTCOMES if any(c["outcome"] == o for c in clips)}
 
 
-def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str) -> dict:
+def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str) -> tuple[dict, dict]:
+    """Train one split. Returns (log, inference mode {"rollout", "codebook"})."""
     cache = cache_dir(args.model_id)
     model.predictor.load_state_dict(base_state)
     pred = model.predictor
     tr, te = Cached(train, cache), Cached(test, cache) if test else None
+    codebook = (fit_codebook(tr, args.codes, args.seed, device=device) if args.loss == "codes" else None)
+    mode = {"rollout": bool(getattr(args, "rollout", False)), "codebook": codebook}
 
     use_amp = device == "cuda"
     amp_dtype = torch.bfloat16 if use_amp and torch.cuda.is_bf16_supported() else torch.float16
@@ -230,13 +312,13 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp and amp_dtype == torch.float16)
     log = {"tag": tag, "n_train": len(train), "n_test": len(test)}
     if te:
-        before = held_out_l1(pred, te, device, autocast)
+        before = held_out_l1(pred, te, device, autocast, mode)
         log["held_out_l1_pretrained"] = by_outcome(test, before)
 
     opt = torch.optim.AdamW(pred.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     loader = torch.utils.data.DataLoader(tr, batch_size=args.batch_size, shuffle=True, drop_last=False,
                                          num_workers=args.workers, generator=torch.Generator().manual_seed(args.seed))
-    total = args.epochs * math.ceil(len(loader) / args.accum)
+    total = max(1, args.epochs * math.ceil(len(loader) / args.accum))
     warm = max(1, int(0.1 * total))
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lambda s: min(1.0, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / total))))
@@ -260,8 +342,9 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
                 idx = others[torch.randperm(len(others), generator=rng)[:args.negatives]]
                 neg = bank[idx].to(device).float()
             with autocast():
-                imagined = imagine(pred, ctx, tgt.shape[1])
-            loss, part = objective(args, imagined, tgt, last, neg)
+                imagined = (rollout(pred, ctx, tgt.shape[1], codebook) if mode["rollout"]
+                            else imagine(pred, ctx, tgt.shape[1]))
+            loss, part = objective(args, imagined, tgt, last, neg, codebook)
             parts.append(part)
             scaler.scale(loss / args.accum).backward()
             if (step + 1) % args.accum == 0 or step + 1 == len(loader):
@@ -273,16 +356,17 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
                 sched.step()
             losses.append(loss.item())
         log["train_loss"].append(round(float(np.mean(losses)), 5))
-        log["train_parts"].append({k: round(float(np.mean([p[k] for p in parts])), 5) for k in parts[0]})
+        if parts:
+            log["train_parts"].append({k: round(float(np.mean([p[k] for p in parts])), 5) for k in parts[0]})
         print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: loss {log['train_loss'][-1]:.4f} "
-              + " ".join(f"{k} {v:.4f}" for k, v in log["train_parts"][-1].items())
+              + " ".join(f"{k} {v:.4f}" for k, v in (log["train_parts"][-1] if parts else {}).items())
               + f" ({time.perf_counter() - t0:.0f}s)", flush=True)
     if te:
-        log["held_out_l1_posttrained"] = by_outcome(test, held_out_l1(pred, te, device, autocast))
+        log["held_out_l1_posttrained"] = by_outcome(test, held_out_l1(pred, te, device, autocast, mode))
         print(f"  [{tag}] held-out L1 pretrained {log['held_out_l1_pretrained']} -> "
               f"post-trained {log['held_out_l1_posttrained']}")
     log["seconds"] = round(time.perf_counter() - t0, 1)
-    return log
+    return log, mode
 
 
 def train_all(args) -> None:
@@ -307,8 +391,8 @@ def train_all(args) -> None:
     logs = []
     for tag, tr, te in splits:
         train, test = [clips[i] for i in tr], [clips[i] for i in te]
-        log = train_one(model, base_state, train, test, args, device, tag)
-        torch.save({"predictor": model.predictor.state_dict(), "model_id": args.model_id, "split": tag,
+        log, mode = train_one(model, base_state, train, test, args, device, tag)
+        torch.save({"predictor": model.predictor.state_dict(), **mode, "model_id": args.model_id, "split": tag,
                     "train_clip_ids": [c["clip_id"] for c in train], "args": vars(args) | {"manifest": str(args.manifest)},
                     "log": log}, out / f"{tag}.pt")
         logs.append(log)
@@ -334,7 +418,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--weight-decay", type=float, default=0.04)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--loss", choices=["l1", "commit"], default="l1")
+    p.add_argument("--loss", choices=["l1", "commit", "codes"], default="l1")
+    p.add_argument("--rollout", action="store_true", help="predict one step at a time, feeding predictions back")
+    p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
+    p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")
     p.add_argument("--motion-alpha", type=float, default=4.0, help="commit: extra weight on moving tokens")
     p.add_argument("--contrast-weight", type=float, default=0.1, help="commit: weight of the InfoNCE term")
     p.add_argument("--tau", type=float, default=0.02, help="commit: InfoNCE temperature (in L1 units)")

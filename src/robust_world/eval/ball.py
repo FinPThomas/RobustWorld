@@ -132,6 +132,61 @@ def predicted_outcome(row: dict) -> str:
     return "bounce" if "near" in row and returned(row["near"]) > 0.5 else "hidden"
 
 
+def outcome_probs(row: dict) -> dict:
+    """P(through, bounce, hidden) from a clip's readouts: through = peak P(ball beyond the plank);
+    bounce = not through and back on the near side; hidden = the rest."""
+    p_through = max(row["far"])
+    p_bounce = (1 - p_through) * (returned(row["near"]) if "near" in row else 0.0)
+    return {"through": p_through, "bounce": p_bounce, "hidden": 1 - p_through - p_bounce}
+
+
+def three_way_metrics(rows: list[dict]) -> dict:
+    """Headline outcome scores, each outcome counting equally however many clips it has:
+    p_correct      mean P(true outcome), per outcome and averaged over outcomes
+    recall         share of clips whose most likely outcome is the true one, per outcome and averaged
+                   (balanced accuracy)"""
+    present = [o for o in OUTCOMES if any(r["outcome"] == o for r in rows)]
+    pc, rec = {}, {}
+    for o in present:
+        grp = [r for r in rows if r["outcome"] == o]
+        probs = [outcome_probs(r) for r in grp]
+        pc[o] = round(float(np.mean([p[o] for p in probs])), 3)
+        rec[o] = round(float(np.mean([max(p, key=p.get) == o for p in probs])), 3)
+    return {"p_correct": pc, "p_correct_balanced": round(float(np.mean(list(pc.values()))), 3),
+            "recall": rec, "balanced_accuracy": round(float(np.mean(list(rec.values()))), 3)}
+
+
+HIT_PX = 48        # a predicted ball within 1.5 cells of the real centre counts as on the ball
+
+
+def ball_track_metrics(maps: list[np.ndarray], centres: list[list], confident: float = 0.5) -> dict:
+    """Where the decoder puts the ball versus where it really is, over the target steps of all clips.
+    maps[i]: [steps, grid, grid] probabilities; centres[i]: per step (x, y) in clip px, or None.
+    hit_rate      share of steps with a real ball where the predicted ball (most confident cell,
+                  if >= confident) is within HIT_PX of it
+    error_px      median distance on steps where both are present
+    phantom_rate  share of steps without a real ball where a ball is predicted"""
+    cell = CLIP_SIZE / maps[0].shape[-1]
+    hits, real, errs, phantom, empty = 0, 0, [], 0, 0
+    for m, cs in zip(maps, centres):
+        for s, c in enumerate(cs):
+            seen = m[s].max() >= confident
+            if c is None:
+                empty += 1
+                phantom += seen
+                continue
+            real += 1
+            if seen:
+                y, x = np.unravel_index(m[s].argmax(), m[s].shape)
+                d = float(np.hypot((x + 0.5) * cell - c[0], (y + 0.5) * cell - c[1]))
+                errs.append(d)
+                hits += d <= HIT_PX
+    return {"hit_rate": round(hits / max(real, 1), 3),
+            "error_px": round(float(np.median(errs)), 1) if errs else None,
+            "phantom_rate": round(phantom / max(empty, 1), 3), "steps_with_ball": real,
+            "steps_without_ball": empty}
+
+
 def outcome_metrics(rows: list[dict]) -> dict:
     """Outcome scores from per-clip readouts ("far", optionally "near") and true outcomes."""
     y = np.array([r["outcome"] == "through" for r in rows], int)
@@ -147,4 +202,6 @@ def outcome_metrics(rows: list[dict]) -> dict:
         yb = [r["outcome"] == "bounce" for r in blocked]
         m["bounce_auroc"] = round(float(roc_auc_score_safe(yb, [returned(r["near"]) for r in blocked])), 3)
         m["outcome3_accuracy"] = round(float(np.mean([predicted_outcome(r) == r["outcome"] for r in rows])), 3)
+    if all("near" in r for r in rows):
+        m.update(three_way_metrics(rows))
     return m
