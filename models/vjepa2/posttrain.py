@@ -5,10 +5,18 @@ That keeps the measuring stick fixed (CLAUDE.md): the evaluation decoder is fitt
 context-half features, so it is bit-for-bit the same before and after post-training. It also
 makes training cheap, because every clip's encoder features are computed once and cached.
 
-Objective (the default; other directions plug in at `loss_fn`): the V-JEPA latent prediction
-loss restricted to the future half. The predictor sees the context half's tokens (encoded on
-their own, so nothing leaks from the future) and predicts the encoder's tokens of the real
-target half; L1, as in V-JEPA 2.
+Objectives (`--loss`), all learned purely from the video:
+    l1      the V-JEPA latent prediction loss restricted to the future half. The predictor sees the
+            context half's tokens (encoded on their own, so nothing leaks from the future) and
+            predicts the encoder's tokens of the real target half; L1, as in V-JEPA 2.
+    commit  "commit to a ball": L1 averages over possible futures and is dominated by the static
+            table (the ball is ~1.5% of tokens), so the pretrained predictor hedges to "no ball".
+              - motion weighting: each target token's L1 is weighted up where the features change
+                from one step to the next, in the real future OR in the prediction (so a phantom
+                ball is as costly as a missed one). No tracker, no labels.
+              - in-batch contrast (InfoNCE): the imagined future must be nearer its own real
+                future than other training clips' real futures (motion-weighted distance). An
+                average of "through" and "hidden" is equally far from both, so hedging costs.
 
 Splits: one predictor per cross-validation fold (robust_world.eval.ball.cv_folds, the same
 folds the evaluation uses), each trained only on that fold's training clips. Each checkpoint
@@ -18,6 +26,7 @@ the fold it scores. `--all` trains one predictor on every clip, for scoring new 
 Steps:
     python models/vjepa2/posttrain.py encode               # cache encoder features (GPU, once)
     python models/vjepa2/posttrain.py train --run l1       # checkpoints/vjepa2/l1/fold{k}.pt
+    python models/vjepa2/posttrain.py train --run commit --loss commit
     python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
     python models/vjepa2/blocker_figs.py --per-clip outputs/vjepa2/ball_probe_cv/l1/per_clip.json --label l1
 
@@ -102,6 +111,47 @@ def loss_fn(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     return (pred - target).abs().mean()
 
 
+def step_change(seq: torch.Tensor, first: torch.Tensor) -> torch.Tensor:
+    """Per-token feature change from the previous step, [B, T, g, g, D] -> [B, T, g, g];
+    `first` [B, g, g, D] is the step before seq[:, 0]."""
+    prev = torch.cat([first[:, None], seq[:, :-1]], 1)
+    return (seq - prev).abs().mean(-1)
+
+
+def motion_weights(target, pred, last_real, alpha: float) -> torch.Tensor:
+    """1 + alpha * (token motion / its mean over the clip), motion = max of real and predicted change.
+    Detached: the weights say where to look, they are not themselves optimised."""
+    with torch.no_grad():
+        m = torch.maximum(step_change(target, last_real), step_change(pred.float(), last_real))
+        return 1 + alpha * m / m.mean((1, 2, 3), keepdim=True).clamp_min(1e-6)
+
+
+def weighted_l1(pred, target, w) -> torch.Tensor:
+    return ((pred - target).abs().mean(-1) * w).sum() / w.sum()
+
+
+def contrast(pred, target, negatives, w, tau: float) -> torch.Tensor:
+    """InfoNCE over motion-weighted L1 distances: row i's positive is its own real future, the rest
+    are the other clips in the batch plus `negatives` [K, T, g, g, D] (real futures of other
+    training clips)."""
+    cands = torch.cat([target, negatives], 0) if negatives is not None else target       # [C, T, g, g, D]
+    d = torch.stack([((pred[i:i + 1] - cands).abs().mean(-1) * w[i]).sum((1, 2, 3)) / w[i].sum()
+                     for i in range(len(pred))])                                         # [B, C]
+    return torch.nn.functional.cross_entropy(-d / tau, torch.arange(len(pred), device=pred.device))
+
+
+def objective(args, pred, target, last_real, negatives=None) -> tuple[torch.Tensor, dict]:
+    pred = pred.float()
+    if args.loss == "l1":
+        loss = loss_fn(pred, target)
+        return loss, {"l1": loss.item()}
+    w = motion_weights(target, pred, last_real, args.motion_alpha)
+    wl1 = weighted_l1(pred, target, w)
+    nce = contrast(pred, target, negatives, w, args.tau)
+    return wl1 + args.contrast_weight * nce, {"l1": loss_fn(pred, target).item(), "wl1": wl1.item(),
+                                              "nce": nce.item()}
+
+
 # ---------------------------------------------------------------------------------------------
 
 def encode_all(args) -> None:
@@ -145,7 +195,7 @@ class Cached(torch.utils.data.Dataset):
     def __getitem__(self, i):
         enc = load_cached(self.cache, self.clips[i])
         cs = enc["context"].shape[0]
-        return enc["context"].float(), enc["real"][cs:].float()
+        return enc["context"].float(), enc["real"][cs:].float(), enc["real"][cs - 1].float(), i
 
 
 @torch.no_grad()
@@ -153,7 +203,7 @@ def held_out_l1(predictor, data: Cached, device, autocast) -> list[float]:
     predictor.eval()
     out = []
     for i in range(len(data)):
-        ctx, tgt = data[i]
+        ctx, tgt, _, _ = data[i]
         with autocast():
             pred = imagine(predictor, ctx[None].to(device), tgt.shape[0])
         out.append(float(loss_fn(pred.float(), tgt[None].to(device))))
@@ -190,15 +240,29 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     warm = max(1, int(0.1 * total))
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lambda s: min(1.0, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / total))))
-    log["train_loss"] = []
+    bank = None
+    if args.loss == "commit" and args.negatives:
+        # Real futures of every training clip, kept in fp16 on the CPU; K are drawn per step.
+        bank = torch.stack([tr[i][1].half() for i in range(len(tr))])
+        if len(bank) <= args.batch_size:
+            bank = None                           # too few clips for outside negatives
+    rng = torch.Generator().manual_seed(args.seed)
+    log["train_loss"], log["train_parts"] = [], []
     t0 = time.perf_counter()
     for epoch in range(args.epochs):
         pred.train()
-        losses = []
-        for step, (ctx, tgt) in enumerate(loader):
-            ctx, tgt = ctx.to(device), tgt.to(device)
+        losses, parts = [], []
+        for step, (ctx, tgt, last, ids) in enumerate(loader):
+            ctx, tgt, last = ctx.to(device), tgt.to(device), last.to(device)
+            neg = None
+            if bank is not None:                  # other clips only: never a clip's own future
+                others = torch.tensor([j for j in range(len(bank)) if j not in set(ids.tolist())])
+                idx = others[torch.randperm(len(others), generator=rng)[:args.negatives]]
+                neg = bank[idx].to(device).float()
             with autocast():
-                loss = loss_fn(imagine(pred, ctx, tgt.shape[1]).float(), tgt)
+                imagined = imagine(pred, ctx, tgt.shape[1])
+            loss, part = objective(args, imagined, tgt, last, neg)
+            parts.append(part)
             scaler.scale(loss / args.accum).backward()
             if (step + 1) % args.accum == 0 or step + 1 == len(loader):
                 scaler.unscale_(opt)
@@ -209,8 +273,10 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
                 sched.step()
             losses.append(loss.item())
         log["train_loss"].append(round(float(np.mean(losses)), 5))
-        print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: train L1 {log['train_loss'][-1]:.4f} "
-              f"({time.perf_counter() - t0:.0f}s)", flush=True)
+        log["train_parts"].append({k: round(float(np.mean([p[k] for p in parts])), 5) for k in parts[0]})
+        print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: loss {log['train_loss'][-1]:.4f} "
+              + " ".join(f"{k} {v:.4f}" for k, v in log["train_parts"][-1].items())
+              + f" ({time.perf_counter() - t0:.0f}s)", flush=True)
     if te:
         log["held_out_l1_posttrained"] = by_outcome(test, held_out_l1(pred, te, device, autocast))
         print(f"  [{tag}] held-out L1 pretrained {log['held_out_l1_pretrained']} -> "
@@ -268,6 +334,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--weight-decay", type=float, default=0.04)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--loss", choices=["l1", "commit"], default="l1")
+    p.add_argument("--motion-alpha", type=float, default=4.0, help="commit: extra weight on moving tokens")
+    p.add_argument("--contrast-weight", type=float, default=0.1, help="commit: weight of the InfoNCE term")
+    p.add_argument("--tau", type=float, default=0.02, help="commit: InfoNCE temperature (in L1 units)")
+    p.add_argument("--negatives", type=int, default=8, help="commit: other clips' futures per step")
     args = p.parse_args(argv)
     encode_all(args) if args.stage == "encode" else train_all(args)
     return 0

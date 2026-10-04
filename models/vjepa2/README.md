@@ -48,9 +48,13 @@ before and after, and features are encoded once and cached.
 python scripts/pack_clips.py                                 # on your computer, for Colab
 python models/vjepa2/posttrain.py encode                     # cache encoder features
 python models/vjepa2/posttrain.py train --run l1             # one predictor per CV fold
+python models/vjepa2/posttrain.py train --run commit --loss commit   # "commit to a ball" (below)
 python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
 ```
-Each fold's predictor trains only on that fold's training clips (`cv_folds`), and
+`--loss commit` adds two label-free terms to the L1, so the predictor stops hedging towards "no
+ball": tokens whose features change between steps, in the real future or the prediction, get more
+weight; and an InfoNCE term makes each imagined future closer to its own real future than to other
+training clips' futures. Each fold's predictor trains only on that fold's training clips (`cv_folds`), and
 `ball_probe_cv.py` refuses a checkpoint that saw the clips it scores. Held-out prediction error
 before and after, per outcome, is in `checkpoints/vjepa2/<run>/log.json`.
 
