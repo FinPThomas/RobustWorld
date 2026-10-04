@@ -263,3 +263,19 @@ def test_learnable_task_is_not_flagged_and_patience_stops(tmp_path, monkeypatch)
                                  "cpu", "fold0")
     assert not log["overfit"]["flag"] and log["best_epoch"] > 0
     assert min(log["val_l1"]) < log["val_l1_pretrained"]
+
+
+def test_train_all_writes_logs(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 25)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    monkeypatch.setattr(posttrain, "training_clips", lambda manifest: clips)
+    monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
+    posttrain.main(["train", "--run", "t", "--fold", "0", "--epochs", "2", "--workers", "0", "--lr", "3e-3"])
+    log = json.loads((tmp_path / "ck" / "t" / "log.json").read_text())[0]
+    rec = log["epochs"][-1]
+    assert {"grad_norm_mean", "weight_change", "lr", "seconds", "val_l1", "train_clip_l1"} <= set(rec)
+    assert rec["weight_change"] > 0 and log["final_weight_change"] >= 0
+    info = json.loads((tmp_path / "ck" / "t" / "run_info.json").read_text())
+    assert info["scale_check"]["target_spread_ln"] == pytest.approx(1.0, abs=0.05)
+    assert info["folds"][0]["split"] == "fold0" and info["code_version"]

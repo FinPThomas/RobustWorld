@@ -2,8 +2,8 @@
 earlier run, and optionally commit and push them to GitHub (used at the end of the Colab notebook).
 
 What is saved: every .json, .md and .png under outputs/vjepa2/ (scores, per-clip readouts,
-summary table and figures; not the feature cache) and each run's checkpoints/vjepa2/<run>/log.json
-(training curves; not the weights). A README.md in the folder records when, which commit, the grid's
+summary table and figures; not the feature cache) and each run's checkpoints/vjepa2/<run>/log.json and run_info.json
+(training curves, per-epoch logs and run settings; not the weights). A README.md in the folder records when, which commit, the grid's
 config and the headline table. results/README.md is the index, rebuilt from the folders.
 
     python scripts/save_results.py --name grid                       # save locally
@@ -38,7 +38,7 @@ def collect(dest: Path, repo: Path = REPO) -> list[Path]:
     saved = []
     sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / "outputs" / "vjepa2").rglob("*")
                if p.suffix in (".json", ".md", ".png") and "cache" not in p.parts]
-    sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/log.json")]
+    sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/*.json")]
     for src, rel in sources:
         if src.is_file() and src.stat().st_size <= MAX_BYTES:
             (dest / rel).parent.mkdir(parents=True, exist_ok=True)
