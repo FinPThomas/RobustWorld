@@ -10,12 +10,11 @@
    "finished": "2026-10-04 21:10"
   },
   "encode": {
-   "state": "failed",
-   "started": "2026-10-04 21:25",
-   "code": "c2bc906",
-   "minutes": 0.9,
-   "finished": "2026-10-04 21:26",
-   "error": "[Errno 107] Transport endpoint is not connected"
+   "state": "done",
+   "started": "2026-10-04 21:44",
+   "code": "9083c06",
+   "minutes": 27.1,
+   "finished": "2026-10-04 22:11"
   },
   "gate-after": {
    "state": "running",
@@ -34,9 +33,28 @@
    "state": "running",
    "started": "2026-10-04 21:24",
    "code": "c2bc906"
+  },
+  "pretrained": {
+   "state": "running",
+   "started": "2026-10-04 21:26",
+   "code": "c2bc906"
+  },
+  "plain-before": {
+   "state": "running",
+   "started": "2026-10-04 21:29",
+   "code": "c2bc906"
+  },
+  "interpret": {
+   "state": "failed",
+   "started": "2026-10-04 21:32",
+   "code": "c2bc906",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:32",
+   "error": "no stage 2/3 run has been scored yet: run those first"
   }
  },
  "choices": {
   "held_out": {}
- }
+ },
+ "last_push": "2026-10-04 21:26"
 }
