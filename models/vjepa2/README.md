@@ -39,6 +39,11 @@ python models/vjepa2/run.py                              # surprise, all include
 python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip sample
 ```
 
+**Kinematic reference** (`kinematic.py`): fits a constant velocity to the tracked ball over the
+last 1/3 s of context and extrapolates, hidden while its centre is under the plank or out of
+frame. It is hard-coded (it learns nothing from outcomes), so it is a reference model, not an
+evaluation tool. It is not wired into `ball_probe_cv.py` yet.
+
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
 **Post-training** (`posttrain.py`, or `notebooks/colab_vjepa2_posttrain.ipynb` on Colab).
