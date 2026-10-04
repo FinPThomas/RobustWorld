@@ -153,7 +153,8 @@ rule above stays.
 - The TAPNext baseline runs on every included clip. Once held-out clips exist, its folds differ slightly
   from the V-JEPA runs.
 - Drive needs about 8 GB: features of about 2 GB, plus about 0.5 GB per post-trained run. Before-runs'
-  weights are deleted after scoring.
+  weights are deleted after scoring. This is working space only: every score, figure and log is on GitHub, and the
+  notebook's last cell frees it (optionally keeping the best run's weights) once the plan is finished.
 
 ## Next ideas (not in this plan)
 
