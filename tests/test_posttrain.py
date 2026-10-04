@@ -155,6 +155,7 @@ def test_codes_rollout_trains(tmp_path, monkeypatch):
                            workers=0, seed=0, loss="codes", codes=8, code_tau=0.05, rollout=True)
     log, mode = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
     assert mode["rollout"] and mode["codebook"].shape == (8, D)
+    assert all(layer.gradient_checkpointing for layer in model.predictor.layer)     # saves GPU memory
     assert log["train_loss"][-1] < log["train_loss"][0]
 
     args.epochs = 0                                                 # "before": the pretrained predictor

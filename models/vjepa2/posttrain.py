@@ -277,6 +277,7 @@ class Cached(torch.utils.data.Dataset):
 
 
 @torch.no_grad()
+@torch.no_grad()
 def held_out_l1(predictor, data: Cached, device, autocast, mode: dict) -> list[float]:
     """L1 between the imagined target, in the run's inference mode, and the real one (label-free)."""
     predictor.eval()
@@ -304,7 +305,13 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     mode = {"rollout": bool(getattr(args, "rollout", False)), "codebook": codebook}
 
     use_amp = device == "cuda"
-    amp_dtype = torch.bfloat16 if use_amp and torch.cuda.is_bf16_supported() else torch.float16
+    # bf16 only where it is native (A100/L4 and newer). On a T4 bf16 is emulated and attention falls
+    # back to a kernel that stores the full token-by-token matrix, which runs out of memory.
+    amp_dtype = torch.bfloat16 if use_amp and torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+    if getattr(args, "grad_checkpoint", True):
+        # Recompute each layer's activations in the backward pass instead of keeping them: a little
+        # slower, far less memory (3 s clips are 6,144 predictor tokens).
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 
     def autocast():
         return torch.autocast("cuda", dtype=amp_dtype, enabled=use_amp)
@@ -419,6 +426,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--loss", choices=["l1", "commit", "codes"], default="l1")
+    p.add_argument("--no-grad-checkpoint", dest="grad_checkpoint", action="store_false",
+                   help="keep activations instead of recomputing them (faster, needs a big GPU)")
     p.add_argument("--rollout", action="store_true", help="predict one step at a time, feeding predictions back")
     p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
     p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")
