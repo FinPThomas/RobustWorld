@@ -477,7 +477,26 @@ def save_and_push(state: dict, block: str, args) -> None:
               flush=True)
 
 
+def storage_ok() -> str | None:
+    """None if the plan's folder (on Drive in Colab) can be written and read back, else the reason."""
+    probe = PLAN / f".write_test_{os.getpid()}"
+    try:
+        PLAN.mkdir(parents=True, exist_ok=True)
+        probe.write_bytes(b"ok")
+        ok = probe.read_bytes() == b"ok"
+        probe.unlink()
+        return None if ok else "read back different bytes"
+    except OSError as e:
+        return str(e)
+
+
 def run(args) -> None:
+    if Path("/content").exists() and not (REPO / "outputs").is_symlink():
+        print("!! outputs/ is not on Google Drive: progress is lost if Colab stops. Run the Drive and Setup "
+              "cells first.", flush=True)
+    problem = storage_ok()
+    if problem:
+        raise SystemExit(f"!! can't write to {PLAN} ({problem}): rerun the Google Drive cell, then this one")
     state = load_state()
     stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
     todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
@@ -486,6 +505,11 @@ def run(args) -> None:
         if st.get("state") == "done" and not args.redo:
             print(f"== {s.name}: done already ({st.get('finished')}), skipping", flush=True)
             continue
+        problem = storage_ok()
+        if problem:                                   # e.g. Drive dropped: stop cleanly, nothing is marked failed
+            print(f"!! storage stopped working ({problem}); stopping. Rerun the Google Drive cell, then this "
+                  f"cell: it carries on from {s.name}.", flush=True)
+            break
         if st.get("state") == "running":
             print(f"== {s.name}: was cut off last time, running it again", flush=True)
         print(f"\n== stage {s.stage}, {s.name}: {s.title}", flush=True)
