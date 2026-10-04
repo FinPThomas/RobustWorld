@@ -173,10 +173,12 @@ def test_experiment_summary(tmp_path, monkeypatch):
     for name in ("plain-before", "plain-after"):
         (tmp_path / "scores" / name).mkdir(parents=True)
         (tmp_path / "scores" / name / "metrics.json").write_text(json.dumps(
-            {"outcomes_imagined": outcomes, "ball_imagined": ball, "outcomes_real": outcomes, "ball_real": ball}))
+            {"outcomes_imagined": outcomes, "ball_imagined": ball, "outcomes_real": outcomes, "ball_real": ball,
+             "outcomes_imagined_one_ball": outcomes, "ball_imagined_argmax": ball, "future_cell_auroc_imagined": 0.6}))
     experiments.summary(SimpleNamespace(variants=["plain", "codes"]))
     rows = json.loads((tmp_path / "out" / "summary.json").read_text())
     assert [r["phase"] for r in rows] == ["before", "after", "-"]
+    assert rows[0]["one_ball_p_correct"] == 0.5 and rows[0]["cell_auroc"] == 0.6
     assert (tmp_path / "out" / "summary.png").exists()
 
 
@@ -188,3 +190,20 @@ def test_targets_in_prediction_space_and_fed_back_in_encoder_space(tmp_path):
     fed = posttrain.to_encoder_space(torch.randn(2, 1, G, G, D), like)
     assert torch.allclose(fed.mean(-1)[:, 0], like.mean(-1), atol=1e-4)
     assert torch.allclose(fed.std(-1)[:, 0], like.std(-1), atol=1e-3)
+
+
+def test_scale_check_runs(tmp_path, monkeypatch):
+    import numpy as np
+    import scale_check
+    clips, cache = fake_clips(tmp_path)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    data = []
+    for i, c in enumerate(clips):
+        lab = np.zeros((ALL, G, G), bool)
+        lab[:CTX, 1, i % G] = True
+        data.append({"clip": c, "enc": torch.load(cache / f"{c['clip_id']}.pt"), "lab": lab})
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=2,
+                           workers=0, seed=0, loss="l1", rollout=False, grad_checkpoint=False)
+    res = scale_check.check(tiny_model(), data[:8], data[8:], args, "cpu")
+    assert set(res["before"]) == set(res["after"]) and res["relative_weight_change"] > 0
+    assert abs(res["before"]["spread_target_ln"] - 1) < 0.05

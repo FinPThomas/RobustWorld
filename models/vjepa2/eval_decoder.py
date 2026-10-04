@@ -22,7 +22,9 @@ It reads every token after a fixed, parameter-free layer norm (`token_space`). V
 predictor was pretrained to output layer-normalised encoder features, while the encoder itself
 returns un-normalised ones; without this the decoder would read real and imagined tokens on
 different scales (about 5x apart) and see no ball in any prediction. The norm has no fitted
-parameters and is the same before and after post-training.
+parameters and is the same before and after post-training. `fit_raw_features` is the same decoder
+without that norm (the original instrument), for the alternative of mapping predictions into encoder space instead
+(gamma * prediction + beta, with the encoder's own final layer norm).
 
 Even so, it finds the ball beyond the plank in real target frames (AUROC ~0.997), so it is
 not blind to the region the outcome is read from.
@@ -57,12 +59,15 @@ def token_space(tokens: torch.Tensor) -> torch.Tensor:
 class EvalDecoder:
     """Calibrated linear map from a token's features to P(ball in this cell)."""
 
-    def __init__(self, linear: torch.nn.Linear, mu: torch.Tensor, sd: torch.Tensor):
-        self.linear, self.mu, self.sd = linear, mu, sd
+    def __init__(self, linear: torch.nn.Linear, mu: torch.Tensor, sd: torch.Tensor, normalise: bool = True):
+        self.linear, self.mu, self.sd, self.normalise = linear, mu, sd, normalise
+
+    def _space(self, tokens: torch.Tensor) -> torch.Tensor:
+        return token_space(tokens) if self.normalise else tokens.float()
 
     @torch.no_grad()
     def __call__(self, tokens: torch.Tensor) -> torch.Tensor:          # [..., D] -> [...]
-        return torch.sigmoid(self.linear((token_space(tokens) - self.mu) / self.sd).squeeze(-1))
+        return torch.sigmoid(self.linear((self._space(tokens) - self.mu) / self.sd).squeeze(-1))
 
     def state(self) -> dict:
         return {"weight": self.linear.weight.detach().clone(), "bias": self.linear.bias.detach().clone(),
@@ -71,10 +76,20 @@ class EvalDecoder:
 
 def fit(examples: list[EvalExample], seed: int = 0, epochs: int = 20) -> EvalDecoder:
     """Fit on context-half examples only. Plain BCE keeps outputs calibrated (background ~0)."""
+    return _fit(examples, seed, epochs, normalise=True)
+
+
+def fit_raw_features(examples: list[EvalExample], seed: int = 0, epochs: int = 20) -> EvalDecoder:
+    """The same decoder on raw encoder features (no layer norm): reads encoder-space tokens only."""
+    return _fit(examples, seed, epochs, normalise=False)
+
+
+def _fit(examples: list[EvalExample], seed: int, epochs: int, normalise: bool) -> EvalDecoder:
     if not examples or not all(isinstance(e, EvalExample) for e in examples):
         raise TypeError("fit() takes EvalExample objects built with examples_from()")
     d = examples[0].context_features.shape[-1]
-    x = token_space(torch.cat([e.context_features.reshape(-1, d) for e in examples]))
+    x = torch.cat([e.context_features.reshape(-1, d) for e in examples])
+    x = token_space(x) if normalise else x.float()
     y = torch.cat([torch.from_numpy(e.context_labels.reshape(-1)) for e in examples]).float()
 
     torch.manual_seed(seed)
@@ -91,4 +106,4 @@ def fit(examples: list[EvalExample], seed: int = 0, epochs: int = 20) -> EvalDec
             opt.zero_grad()
             loss_fn(lin((x[idx] - mu) / sd).squeeze(1), y[idx]).backward()
             opt.step()
-    return EvalDecoder(lin, mu, sd)
+    return EvalDecoder(lin, mu, sd, normalise)

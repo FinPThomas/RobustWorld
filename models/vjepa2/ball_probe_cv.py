@@ -41,9 +41,10 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
 from ball_probe import encode  # noqa: E402
-from posttrain import cache_dir, imagine_mode, load_cached, load_predictor  # noqa: E402
+from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
 from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
-                                    far_cells, load_tracking, near_cells, outcome_metrics, source_indices)
+                                    far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
+                                    source_indices)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
 
@@ -144,13 +145,19 @@ def main(argv: list[str] | None = None) -> int:
 
     y_out = np.array([d["clip"]["outcome"] == "through" for d in data], int)
     rows = [None] * len(data)
-    fut_lab, fut_imag, fut_hold, real_lab, real_map = [], [], [], [], []
-    track_maps = {"real": [], "imagined": []}
+    fut_lab, fut_imag, fut_hold, fut_alt, real_lab, real_map = [], [], [], [], [], []
+    track_maps = {"real": [], "imagined": [], "imagined_encoder_space": []}
+    # Alternative to layer-normalising the decoder's input: map predictions into encoder space with
+    # the encoder's own final layer norm (gamma * prediction + beta) and read them with the decoder
+    # fitted on raw features. Both decoders are fitted on the same real context features only.
+    gamma = model.encoder.layernorm.weight.detach().float().cpu()
+    beta = model.encoder.layernorm.bias.detach().float().cpu()
     track_centres = []
     D = model.config.hidden_size
     for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
-        decoder = eval_decoder.fit([eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr],
-                                   seed=args.seed)
+        examples = [eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr]
+        decoder = eval_decoder.fit(examples, seed=args.seed)
+        decoder_raw = eval_decoder.fit_raw_features(examples, seed=args.seed)
         if args.predictor_run:
             meta = load_predictor(model, args.predictor_run / f"fold{fold}.pt")
             test_ids = {data[i]["clip"]["clip_id"] for i in te}
@@ -169,6 +176,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 imag = d["enc"]["imagined"]
             m_imag = decoder(imag).numpy()
+            m_alt = decoder_raw(target_space(imag.float()) * gamma + beta).numpy()
+            fut_alt.append(m_alt.reshape(-1))
+            track_maps["imagined_encoder_space"].append(m_alt)
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
@@ -181,7 +191,10 @@ def main(argv: list[str] | None = None) -> int:
                        "real_near": (m_real[cs:] * near).max((1, 2)).round(3).tolist(),
                        "imagined_visible": m_imag.max((1, 2)).round(3).tolist(),
                        "imagined_far": (m_imag * far).max((1, 2)).round(3).tolist(),
-                       "imagined_near": (m_imag * near).max((1, 2)).round(3).tolist()}
+                       "imagined_near": (m_imag * near).max((1, 2)).round(3).tolist(),
+                       **{f"{k}_one_ball_{side}": v for k, m in (("real", m_real[cs:]), ("imagined", m_imag),
+                                                                 ("imagined_encoder_space", m_alt))
+                          for side, v in one_ball_readouts(m, far, near).items()}}
         print(f"\r  fold {fold + 1}/{args.folds} scored", end="", flush=True)
     print()
 
@@ -198,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
         "real_cell_auroc": round(float(roc_auc_score(rl, rm)), 3),
         "future_cell_auroc_imagined": round(float(roc_auc_score(fl, fi)), 3),
         "future_cell_auroc_hold_last_context": round(float(roc_auc_score(fl, fh)), 3),
+        "future_cell_auroc_imagined_encoder_space": round(float(roc_auc_score(fl, np.concatenate(fut_alt))), 3),
         "outcome_auroc_real": round(float(roc_auc_score(y_out, score_real)), 3),
         "outcome_auroc_imagined": round(float(roc_auc_score(y_out, score_imag)), 3),
         "imagined_far_peak_mean": {o: round(float(score_imag[[r["outcome"] == o for r in rows]].mean()), 3)
@@ -206,6 +220,13 @@ def main(argv: list[str] | None = None) -> int:
                                                  "near": r[f"{kind}_near"]} for r in rows])
            for kind in ("real", "imagined")},
         **{f"ball_{kind}": ball_track_metrics(track_maps[kind], track_centres) for kind in ("real", "imagined")},
+        # Threshold-free, assuming one ball: outcome from the share of the ball beyond / back on the
+        # near side, and position from the most likely cell at every step (no 0.5 cut-off).
+        **{f"outcomes_{kind}_one_ball": outcome_metrics([{"outcome": r["outcome"], "far": r[f"{kind}_one_ball_far"],
+                                                          "near": r[f"{kind}_one_ball_near"]} for r in rows])
+           for kind in ("real", "imagined", "imagined_encoder_space")},
+        **{f"ball_{kind}_argmax": ball_track_metrics(track_maps[kind], track_centres, confident=0.0)
+           for kind in ("real", "imagined", "imagined_encoder_space")},
         "timing_seconds_per_clip": {k: {"mean": round(float(v.mean()), 2), "median": round(float(np.median(v)), 2),
                                         "n": int(len(v))} for k, v in t_arr.items()},
         "model_load_seconds": round(t_load, 1),
@@ -227,6 +248,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  imagined: P(correct outcome) {oi.get('p_correct')} (balanced {oi.get('p_correct_balanced')}), "
           f"balanced accuracy {oi.get('balanced_accuracy')}; ball hit rate {bi['hit_rate']}, "
           f"error {bi['error_px']} px, phantom rate {bi['phantom_rate']}")
+    ob, ab = metrics["outcomes_imagined_one_ball"], metrics["ball_imagined_argmax"]
+    oe, ae = metrics["outcomes_imagined_encoder_space_one_ball"], metrics["ball_imagined_encoder_space_argmax"]
+    print(f"  threshold-free (one ball): through-vs-blocked AUROC {ob['outcome_auroc']}, P(correct) balanced "
+          f"{ob.get('p_correct_balanced')}, argmax ball within 48 px {ab['hit_rate']} (median {ab['error_px']} px)")
+    print(f"  encoder-space alternative (gamma*pred+beta, raw decoder): cell AUROC "
+          f"{metrics['future_cell_auroc_imagined_encoder_space']}, through-vs-blocked AUROC {oe['outcome_auroc']}, "
+          f"argmax ball within 48 px {ae['hit_rate']}")
     if "bounce_auroc" in metrics["outcomes_imagined"]:
         print(f"  bounce vs hidden (ball back on the near side): real {metrics['outcomes_real']['bounce_auroc']}, "
               f"imagined {metrics['outcomes_imagined']['bounce_auroc']}; three-way accuracy imagined "

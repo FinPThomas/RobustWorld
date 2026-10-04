@@ -13,8 +13,8 @@ def fake_repo(tmp_path):
     repo = tmp_path / "repo"
     exp = repo / "outputs" / "vjepa2" / "experiments"
     exp.mkdir(parents=True)
-    (exp / "summary.json").write_text(json.dumps([{"variant": "codes", "phase": "after", "p_correct": 0.7,
-                                                   "ball_hit_rate": 0.5}]))
+    (exp / "summary.json").write_text(json.dumps([{"variant": "codes", "phase": "after", "one_ball_p_correct": 0.7,
+                                                   "argmax_hit_rate": 0.5}]))
     (exp / "summary.md").write_text("| variant |\n|---|\n| codes |\n")
     (exp / "summary.png").write_bytes(b"png")
     (exp / "config.json").write_text(json.dumps({"variants": ["codes"], "epochs": 2, "extra": []}))
@@ -37,7 +37,7 @@ def test_saves_never_overwrite(tmp_path):
     assert not list(a.rglob("*.pt")) and not (a / "vjepa2" / "cache").exists()
     assert "first try" in (a / "README.md").read_text()
     index = (repo / "results" / "README.md").read_text()
-    assert a.name in index and b.name in index and "codes P(correct) 0.7" in index
+    assert a.name in index and b.name in index and "codes P(correct, one ball) 0.7" in index
 
 
 def test_push_to_branch(tmp_path):

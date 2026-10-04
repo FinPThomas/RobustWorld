@@ -72,11 +72,13 @@ def headline(folder: Path) -> str:
     path = folder / "vjepa2" / "experiments" / "summary.json"
     if not path.exists():
         return ""
-    rows = [r for r in json.loads(path.read_text()) if r.get("phase") == "after" and r.get("p_correct") is not None]
+    key = "one_ball_p_correct"
+    rows = [r for r in json.loads(path.read_text()) if r.get("phase") == "after" and r.get(key) is not None]
     if not rows:
         return ""
-    best = max(rows, key=lambda r: r["p_correct"])
-    return f"best after: {best['variant']} P(correct) {best['p_correct']}, hit rate {best['ball_hit_rate']}"
+    best = max(rows, key=lambda r: r[key])
+    return (f"best after: {best['variant']} P(correct, one ball) {best[key]}, "
+            f"most likely cell within 48 px {best.get('argmax_hit_rate')}")
 
 
 def write_index(root: Path) -> None:

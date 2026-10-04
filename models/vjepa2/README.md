@@ -82,6 +82,14 @@ outcome weighted equally (through passes outnumber the others), and the ball hit
 ball within 48 px of the tracker's ball), median error and phantom-ball rate. The decoder on the
 real future frames is the ceiling.
 
+Threshold-free scores (in the summary first): they assume one ball and normalise each imagined
+step's cell probabilities, so a blurred but well-placed prediction still counts: P(correct outcome)
+and through-vs-blocked AUROC from the share of the ball beyond the plank, the most likely cell's
+distance to the real ball, and ball cell AUROC. `enc_space_*` reads the same predictions mapped
+into encoder space (gamma * prediction + beta, the encoder's own final layer norm) with the decoder
+fitted on raw features, as a check on the layer-norm decoder. `scale_check.py` is a 16-clip
+reproduction of the scale mismatch and its fix.
+
 `python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
 `results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the
 end. `results/README.md` indexes every saved run.
