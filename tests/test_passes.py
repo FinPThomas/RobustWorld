@@ -66,6 +66,37 @@ def test_bounce():
     assert p["outcome"] == "bounce"
 
 
+def test_touch_bounce_never_hidden():
+    # Rolls in, outline overlaps the bar (x 260 + r 20 = 280) but the ball stays detected, rolls back out.
+    xs = [None] * 5 + list(range(500, 270, -10)) + list(range(270, 520, 10)) + [None] * 5
+    xs = [x if x is None or x <= SIZE else None for x in xs]
+    (p,) = find(roll(xs), FPS, SCENE, SIZE)
+    assert p["outcome"] == "bounce" and p["touch_only"] and p["hidden_frame"] is None
+    assert p["reappear_frame"] > p["occlusion_start_frame"]
+
+
+def test_emerging_ball_is_not_a_touch_bounce():
+    # Only the far-side run: starts under the bar and rolls away. Not a pass on its own.
+    xs = [None] * 5 + list(range(190, -20, -10)) + [None] * 5
+    xs = [x if x is None or x >= 0 else None for x in xs]
+    assert find(roll(xs), FPS, SCENE, SIZE) == []
+
+
+def test_stuck_at_edge_is_hidden_not_bounce():
+    # Goes under, then a sliver flickers back into view at the bar's edge but never rolls clear.
+    xs = [None] * 5 + visible_where(list(range(500, 240, -10))) + [None] * 10 + [275] * 20 + [None] * 60
+    (p,) = find(roll(xs), FPS, SCENE, SIZE)
+    assert p["outcome"] == "hidden"
+
+
+def test_rests_at_edge_then_picked_up_is_hidden():
+    # Rolls up, overlaps the bar and rests there for 3 s, then is carried away: blocked, not a bounce.
+    xs = [None] * 5 + list(range(500, 270, -10)) + [275] * 90 + list(range(300, 520, 20)) + [None] * 5
+    xs = [x if x is None or x <= SIZE else None for x in xs]
+    (p,) = find(roll(xs), FPS, SCENE, SIZE)
+    assert p["outcome"] == "hidden" and not p["touch_only"]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

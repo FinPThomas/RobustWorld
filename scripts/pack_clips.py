@@ -1,8 +1,10 @@
 """Zip the processed clips and tracking for training on another machine (e.g. Colab).
 
-Packs every included clip with its hand mask, the merged and per-video manifests, and each
-video's track.csv and passes.json (needed for the ball labels the evaluation scores with).
-Scene files are in the repo already. Unzip at the repo root on the other machine.
+Packs one segment's merged manifest (default: right, rolled in from the right) with every
+included clip in it, that segment's per-video manifests, and each video's track.csv and
+passes.json (needed for the ball labels the evaluation scores with). Clips set aside (hand in
+shot) or excluded, and other segments (left is held out), are not packed. Scene files are in the
+repo already. Unzip at the repo root on the other machine.
 
     python scripts/pack_clips.py                     # -> outputs/robustworld_clips.zip
 """
@@ -19,13 +21,14 @@ REPO = Path(__file__).resolve().parents[1]
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "robustworld_clips.zip")
     args = p.parse_args(argv)
 
     clips = [json.loads(line) for line in args.manifest.open()]
     kept = [c for c in clips if c.get("include")]
-    files = {args.manifest} | set(args.manifest.parent.glob("*/manifest.jsonl"))
+    segment = args.manifest.stem.removeprefix("manifest_")
+    files = {args.manifest} | set(args.manifest.parent.glob(f"*/{segment}/manifest.jsonl"))
     for c in kept:
         files.add(REPO / c["path"])
         if c.get("hand_mask_path"):
@@ -42,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
         for f in sorted(files):
             z.write(f, f.relative_to(REPO))
     mb = args.out.stat().st_size / 1e6
-    print(f"{len(kept)} included clips of {len(clips)} -> {args.out.relative_to(REPO)} ({mb:.0f} MB)")
+    print(f"{len(kept)} included clips of {len(clips)} ({segment}) -> {args.out.relative_to(REPO)} ({mb:.0f} MB)")
     return 0
 
 
