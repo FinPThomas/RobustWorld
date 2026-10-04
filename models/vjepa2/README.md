@@ -77,6 +77,10 @@ outcome weighted equally (through passes outnumber the others), and the ball hit
 ball within 48 px of the tracker's ball), median error and phantom-ball rate. The decoder on the
 real future frames is the ceiling.
 
+`python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
+`results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the
+end. `results/README.md` indexes every saved run.
+
 **Blocker figures.** `python models/vjepa2/blocker_figs.py` (after `ball_probe_cv.py`) asks whether
 V-JEPA knows *where* the hidden blocker is. It fits nothing: it reads `per_clip.json` from
 `ball_probe_cv.py` and places each pass by where its straight-line path from the context enters and
