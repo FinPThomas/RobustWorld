@@ -1,0 +1,42 @@
+{
+ "results_folder": "2026-10-04_2110_twoday",
+ "started": "2026-10-04_2110",
+ "steps": {
+  "split": {
+   "state": "done",
+   "started": "2026-10-04 21:10",
+   "code": "cedc57e",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:10"
+  },
+  "encode": {
+   "state": "failed",
+   "started": "2026-10-04 21:25",
+   "code": "c2bc906",
+   "minutes": 0.9,
+   "finished": "2026-10-04 21:26",
+   "error": "[Errno 107] Transport endpoint is not connected"
+  },
+  "gate-after": {
+   "state": "running",
+   "started": "2026-10-04 21:24",
+   "code": "c2bc906"
+  },
+  "long-1": {
+   "state": "failed",
+   "started": "2026-10-04 21:24",
+   "code": "c2bc906",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:24",
+   "error": "no stage 2/3 run has been scored yet: run those first"
+  },
+  "generalise": {
+   "state": "running",
+   "started": "2026-10-04 21:24",
+   "code": "c2bc906"
+  }
+ },
+ "choices": {
+  "held_out": {}
+ }
+}
