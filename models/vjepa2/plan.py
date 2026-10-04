@@ -534,6 +534,7 @@ def storage_ok() -> str | None:
         return str(e)
 
 
+MIN_FREE_GB = 5                              # a step writes at most ~1 GB (a run's checkpoints); the whole plan ~8 GB
 BACKUP_EVERY = 600                           # seconds between backups to Drive while a step runs
 _backup_lock = threading.Lock()
 
@@ -593,6 +594,12 @@ def _run(args) -> None:
         if st.get("state") == "done" and not args.redo:
             print(f"== {s.name}: done already ({st.get('finished')}), skipping", flush=True)
             continue
+        free = shutil.disk_usage(REPO).free / 2**30
+        if free < MIN_FREE_GB:                        # Colab's disk: stop before a write fails half-way
+            print(f"!! only {free:.1f} GB free on this disk (a step needs up to {MIN_FREE_GB} GB); stopping before "
+                  f"{s.name}. Free space (e.g. Runtime > Disconnect and delete runtime, then cells 1, 2 and this one: "
+                  "Setup brings the work back from Drive).", flush=True)
+            break
         problem = storage_ok()
         if problem:                                   # e.g. Drive dropped: stop cleanly, nothing is marked failed
             print(f"!! storage stopped working ({problem}); stopping. Rerun the Google Drive cell, then this "
