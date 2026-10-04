@@ -39,7 +39,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 from robust_world.eval.io import read_video  # noqa: E402
 from robust_world.media import write_video  # noqa: E402
-from robust_world.eval.ball import ball_labels, load_tracking, source_indices  # noqa: E402
+from robust_world.eval.ball import ball_labels, load_tracking, source_indices, video_of  # noqa: E402
 from robust_world.passes import side_fn  # noqa: E402
 import eval_decoder  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device, to_pixels  # noqa: E402
@@ -172,7 +172,7 @@ def summary_plot(rows: list[dict], path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--sample", type=Path, default=REPO / "data" / "eval" / "sample5")
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--train-clips", type=int, default=30)
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe")
     p.add_argument("--model-id", default=MODEL_ID)
@@ -186,10 +186,9 @@ def main(argv: list[str] | None = None) -> int:
     proc = AutoVideoProcessor.from_pretrained(args.model_id)
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
-    track, passes, scene = load_tracking()
-    side = side_fn(scene["occluder_polygon"])
-
     sample = json.loads((args.sample / "sample.json").read_text())
+    track, passes, scene = load_tracking(video_of(sample["clips"]))
+    side = side_fn(scene["occluder_polygon"])
     eval_ids = {c["clip_id"] for c in sample["clips"]}
     pool = [json.loads(line) for line in args.manifest.open()]
     pool = [r for r in pool if r.get("include") and r["clip_id"] not in eval_ids]

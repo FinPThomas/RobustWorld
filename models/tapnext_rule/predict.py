@@ -41,7 +41,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 from robust_world.eval.ball import (CLIP_SIZE, GRID, STEP, ball_labels, cv_folds, far_cells, near_cells,  # noqa: E402
                                     included_clips, load_tracking, readouts, source_indices,
-                                    summary_metrics)
+                                    summary_metrics, video_of)
 from robust_world.eval.io import read_video, write_prediction  # noqa: E402
 from robust_world.scene import detect_ball, load_scene  # noqa: E402
 
@@ -238,10 +238,11 @@ def main(argv: list[str] | None = None) -> int:
     t0 = time.perf_counter()
     model = load_tapnext(device)
     t_load = time.perf_counter() - t0
-    scene_cfg = load_scene(REPO / "configs" / "scenes" / "start.json")
-    track_gt, passes, scene_json = load_tracking()
-    far, near = far_cells(scene_json), near_cells(scene_json)
     clips = included_clips()
+    video = video_of(clips)
+    scene_cfg = load_scene(REPO / "configs" / "scenes" / f"{video}.json")
+    track_gt, passes, scene_json = load_tracking(video)
+    far, near = far_cells(scene_json), near_cells(scene_json)
     n_ctx = clips[0]["context_frames"][1] + 1
     n_target = clips[0]["target_frames"][1] - clips[0]["target_frames"][0] + 1
     print(f"TAPNext + rules on {device}: {len(clips)} clips, model load {t_load:.1f}s")

@@ -123,12 +123,13 @@ If time runs short, the order is the priority: stage 2's `plain`, `commit` and `
 
 ### Generalisation tests (stage 5)
 
-- **Other side.** Record one session with the ball rolled from the other side. It is not trained on. The
-  split is automatic: `passes.json` `side_in` differs from the main direction. For those clips, "far" and
-  "near" are swapped.
+- **Other side.** This is the `left` segment of `whole.mp4`: the ball rolled in from the left, from 1708 s
+  on. Training and stages 1–4 use only the right segment (`manifest_right.jsonl`). To run the test, pack
+  the left segment with `python scripts/pack_clips.py --manifest data/processed/clips/manifest_left.jsonl
+  --out outputs/robustworld_clips_left.zip` and put the zip in `MyDrive/RobustWorld/`. Setup unpacks every
+  `robustworld_clips*.zip` it finds there. For left clips, "far" and "near" are swapped.
 - **New ball.** Add the video's name to `configs/heldout.json`, e.g. `{"videos": ["newball1"]}`.
-- Pack the new clips into `robustworld_clips.zip` as usual. The next run of stage 5 (or of "Run
-  everything left") picks them up.
+- The next run of stage 5, or of "Run everything left", picks the new clips up.
 
 ### Interpretation (stage 6)
 
@@ -163,9 +164,9 @@ nothing unless that push succeeds.
 
 ## Known limits
 
-- Stages 1–4 read ball tracking for the `start` video only (`load_tracking`). Extra sessions *in the
-  training direction* need that generalised before they can join training. Held-out sessions already
-  work in stage 5.
+- Stages 1–4 read ball tracking for one video at a time (`video_of`), currently `whole`. Extra sessions
+  *in the training direction* need that generalised before they can join training. Held-out sessions
+  already work in stage 5.
 - The TAPNext baseline runs on every included clip. Once held-out clips exist, its folds differ slightly
   from the V-JEPA runs.
 - Drive needs about 8 GB: features of about 2 GB, plus about 0.5 GB per post-trained run. Before-runs'

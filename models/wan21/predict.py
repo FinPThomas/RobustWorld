@@ -1,8 +1,8 @@
 """Wan 2.1 VACE: predict the target half of each eval clip from its context half.
 
-VACE does video extension natively: the 16 context frames go in as-is, the frames to
+VACE does video extension natively: the context frames go in as-is, the frames to
 generate are grey with a white mask, and the model fills them in. The clip is padded to
-the next 4n+1 length Wan needs (16 context + 17 generated = 33); the first 16 generated
+the next 4n+1 length Wan needs (24 context + 25 generated = 49); the first 24 generated
 frames line up with the ground-truth target.
 
 Memory: every clip shares one text prompt, so the UMT5-XXL text encoder (~11 GB) is

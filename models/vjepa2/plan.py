@@ -52,7 +52,10 @@ SCORES = PLAN / "scores"
 CKPT = REPO / "checkpoints" / "vjepa2" / "plan"
 STATE = PLAN / "state.json"
 DOC = "docs/experiment_plan.md"
-MANIFEST = REPO / "data" / "processed" / "clips" / "manifest.jsonl"
+CLIPS = REPO / "data" / "processed" / "clips"
+# Training clips: the right-entry segment (whole.mp4 pipeline); older single-video data has manifest.jsonl.
+# Other segments (manifest_left.jsonl) are held out for stage 5.
+MANIFEST = CLIPS / "manifest_right.jsonl" if (CLIPS / "manifest_right.jsonl").exists() else CLIPS / "manifest.jsonl"
 SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; on Drive, so it survives restarts
 PY = sys.executable
 
@@ -188,7 +191,9 @@ def step_split(args, state, log):
 
 
 def step_encode(args, state, log):
-    must([PY, HERE / "posttrain.py", "encode", "--manifest", MANIFEST], log)
+    """Every clip once: the training manifest and any other segment's (held out for stage 5)."""
+    for m in [MANIFEST, *sorted(p for p in MANIFEST.parent.glob("manifest_*.jsonl") if p != MANIFEST)]:
+        must([PY, HERE / "posttrain.py", "encode", "--manifest", m], log)
 
 
 def step_pretrained(args, state, log):
@@ -241,6 +246,7 @@ def step_generalise(args, state, log):
         step_split(args, state, log)                # recordings may have arrived since stage 1
         if not state["choices"].get("held_out"):
             raise Waiting("no clips from the other side or a new ball yet")
+    step_encode(args, state, log)                   # held-out clips that arrived later (cached ones are skipped)
     v = best_variants(state)[0]
     must([PY, HERE / "posttrain.py", "train", "--all", "--run", f"plan/{v}-all", "--epochs", str(EPOCHS),
           "--manifest", SEEN, "--resume", *VARIANTS[v][0], *T4, *args.extra], log)

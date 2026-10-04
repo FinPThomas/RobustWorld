@@ -19,12 +19,21 @@ DEFAULTS = {
     "ball_hsv_lo": [90, 70, 40],     # OpenCV HSV (H 0-179): blue
     "ball_hsv_hi": [140, 255, 255],
     "ball_min_area": 60,             # px; smaller blue blobs are noise
+    # Optional second colour range for a striped ball. When set, the ball is the blue core plus
+    # touching stripe pixels, so its centre and radius cover the whole ball, not one blue band.
+    "ball_stripe_hsv_lo": None,
+    "ball_stripe_hsv_hi": None,
     "background_breaks_s": "auto",   # or a list of times where the static scene changed
     "ignore_regions": [],            # polygons of clutter (e.g. furniture) never treated as a hand
     "blocker_polygon": None,         # outline of the hidden blocker under the occluder; "none" if
                                      # there is no blocker; unset (None) if not recorded
+    "hand_min_px": 2500,             # foreground pixels in a frame that count as a hand in shot
 }
+# Settings that change tracking output (track.csv, backgrounds.npz); editing any reruns tracking.
+TRACK_KEYS = ["occluder_polygon", "ball_hsv_lo", "ball_hsv_hi", "ball_min_area", "ball_stripe_hsv_lo",
+              "ball_stripe_hsv_hi", "background_breaks_s", "ignore_regions"]
 KERNEL = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+BALL_PX_DILATE = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
 
 BG_SAMPLES = 150        # frames sampled per scene segment for its median background
 FG_THRESH = 35          # per-channel abs difference from the brightness-matched background
@@ -82,13 +91,23 @@ def write_scene_template(path: Path, video: Path, calibration_png: Path) -> None
 
 
 def detect_ball(rgb: np.ndarray, scene: dict) -> dict:
-    """Largest blue blob, with its signed distance to the occluder edge (>0 = overlapping)."""
+    """Largest blue blob (with its stripes, if configured), and its signed distance to the
+    occluder edge (>0 = overlapping)."""
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
-    mask = cv2.inRange(hsv, tuple(scene["ball_hsv_lo"]), tuple(scene["ball_hsv_hi"]))
+    blue = cv2.inRange(hsv, tuple(scene["ball_hsv_lo"]), tuple(scene["ball_hsv_hi"]))
+    striped = bool(scene.get("ball_stripe_hsv_lo"))
+    mask = blue
+    if striped:
+        mask = blue | cv2.inRange(hsv, tuple(scene["ball_stripe_hsv_lo"]), tuple(scene["ball_stripe_hsv_hi"]))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, KERNEL)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, KERNEL)
-    n, _, stats, cents = cv2.connectedComponentsWithStats(mask)
-    blobs = [i for i in range(1, n) if stats[i, cv2.CC_STAT_AREA] >= scene["ball_min_area"]]
+    n, labels, stats, cents = cv2.connectedComponentsWithStats(mask)
+    if not striped:
+        blobs = [i for i in range(1, n) if stats[i, cv2.CC_STAT_AREA] >= scene["ball_min_area"]]
+    else:
+        # A blob is the ball only if enough of it is blue; stripe colours alone are other objects.
+        blue_px = np.bincount(labels[blue > 0], minlength=n)
+        blobs = [i for i in range(1, n) if blue_px[i] >= scene["ball_min_area"]]
     if not blobs:
         return {"visible": 0, "n_blobs": 0}
     i = max(blobs, key=lambda j: stats[j, cv2.CC_STAT_AREA])
@@ -164,6 +183,13 @@ def foreground_mask(rgb: np.ndarray, bg: np.ndarray, ball: dict, scene: dict) ->
     mask = cv2.morphologyEx((diff > FG_THRESH).astype(np.uint8), cv2.MORPH_OPEN, KERNEL)
     if ball["visible"]:
         cv2.circle(mask, (int(ball["x"]), int(ball["y"])), int(ball["radius"] * BALL_EXCLUDE), 0, -1)
+    if scene.get("ball_stripe_hsv_lo"):
+        # Ball-coloured pixels are never a hand. This also removes the edge of a ball half out
+        # of frame, which the circle above misses because its centre and radius are off.
+        hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+        ball_px = (cv2.inRange(hsv, tuple(scene["ball_hsv_lo"]), tuple(scene["ball_hsv_hi"]))
+                   | cv2.inRange(hsv, tuple(scene["ball_stripe_hsv_lo"]), tuple(scene["ball_stripe_hsv_hi"])))
+        mask[cv2.dilate(ball_px, BALL_PX_DILATE) > 0] = 0
     if scene["ignore"]:
         cv2.fillPoly(mask, scene["ignore"], 0)
     return mask
