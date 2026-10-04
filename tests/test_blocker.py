@@ -127,3 +127,12 @@ def test_three_way_and_ball_track_metrics():
     m[2, 0, 0] = 0.9                                   # ball invented where there is none
     t = ball_track_metrics([m], [[((3.5) * cell, 2.5 * cell), (0.5 * cell, 0.5 * cell), None]])
     assert t["hit_rate"] == 0.5 and t["phantom_rate"] == 1.0 and t["steps_with_ball"] == 2
+
+
+def test_one_ball_readouts_ignore_overall_confidence():
+    from robust_world.eval.ball import one_ball_readouts
+    far = np.zeros((4, 4), bool); far[:, :2] = True
+    near = np.zeros((4, 4), bool); near[:, 3] = True
+    m = np.full((1, 4, 4), 0.001); m[0, 1, 0] = 0.03          # faint, but the ball is beyond the plank
+    r = one_ball_readouts(m, far, near)
+    assert r["far"][0] > 0.6 and r["far"] == one_ball_readouts(m * 10, far, near)["far"]
