@@ -101,6 +101,13 @@ Unattended (overnight on Colab): `experiments.py run --resume --save-as overnigh
 saves and pushes `results/<date>_<time>_overnight/` after every run, logs and skips a run that
 fails, and with `--resume` skips runs already done (state in `outputs/vjepa2/experiments/grid.json`).
 
+**Two-day plan.** `plan.py` runs the whole plan in `docs/experiment_plan.md` stage by stage (Colab:
+`notebooks/colab_two_day_plan.ipynb`): baselines, the post-training grid, architecture options
+(`posttrain.py --copy-gate`, `--hypotheses K`), longer and data-fraction runs, held-out generalisation
+(`generalise.py`) and interpretation (`interpret.py`: change maps, layer patching). Progress is kept in
+`outputs/vjepa2/plan/state.json`, so it resumes after a disconnect; after every step it pushes
+`results/<date>_<time>_twoday/` and the status block in the plan file.
+
 `python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
 `results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the
 end. `results/README.md` indexes every saved run.
