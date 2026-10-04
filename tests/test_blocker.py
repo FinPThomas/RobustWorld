@@ -68,3 +68,40 @@ def test_pass_row_reads_far_side_peak():
     row = blocker_figs.pass_row(clip, probe, roll(250, n=200), passes, OCCLUDER, BLOCKER)
     assert row["true"] == 1 and row["real"] == 0.9 and row["imagined"] == 0.3
     assert row["known_blocker"] == 1 and abs(row["exit_along"] - 250) < 1
+
+
+# Bounce as a third outcome in the shared evaluation.
+from robust_world.eval import ball  # noqa: E402
+
+
+def test_returned_needs_gone_then_back():
+    assert ball.returned([0.9, 0.9, 0.9, 0.9]) < 0.5         # still rolling in at the start of the target
+    assert ball.returned([0.9, 0.2, 0.0, 0.0]) < 0.5         # went under and stayed (hidden or through)
+    assert ball.returned([0.9, 0.1, 0.0, 0.9]) > 0.5         # gone, then back out: bounce
+
+
+def test_outcome_metrics_with_bounce():
+    rows = [{"outcome": "through", "far": [0, 0.9], "near": [0.9, 0]},
+            {"outcome": "hidden", "far": [0, 0], "near": [0.9, 0]},
+            {"outcome": "bounce", "far": [0, 0], "near": [0.9, 0, 0.8]},
+            {"outcome": "through", "far": [0, 0.8], "near": [0.9, 0]}]
+    m = ball.outcome_metrics(rows)
+    assert m["outcome_auroc"] == 1.0 and m["blocked_called_through"] == 0
+    assert m["bounce_auroc"] == 1.0 and m["outcome3_accuracy"] == 1.0
+    m2 = ball.outcome_metrics([{k: v for k, v in r.items() if k != "near"} for r in rows])
+    assert "bounce_auroc" not in m2                           # no near readouts: binary only
+
+
+def test_near_and_far_cells_are_opposite_sides():
+    scene = {"occluder_polygon": OCCLUDER}
+    far, near = ball.far_cells(scene), ball.near_cells(scene)
+    assert far[8, 0] and near[8, 15] and not (far & near).any()
+
+
+def test_cv_folds_unchanged_for_two_outcomes():
+    from sklearn.model_selection import StratifiedKFold
+    clips = [{"outcome": o} for o in ["through"] * 14 + ["hidden"] * 6]
+    y = np.array([c["outcome"] == "through" for c in clips], int)
+    old = list(StratifiedKFold(5, shuffle=True, random_state=0).split(y, y))
+    new = ball.cv_folds(clips)
+    assert all((a[1] == b[1]).all() for a, b in zip(old, new))

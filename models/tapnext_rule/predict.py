@@ -39,7 +39,7 @@ import torch
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
-from robust_world.eval.ball import (CLIP_SIZE, GRID, STEP, ball_labels, cv_folds, far_cells,  # noqa: E402
+from robust_world.eval.ball import (CLIP_SIZE, GRID, STEP, ball_labels, cv_folds, far_cells, near_cells,  # noqa: E402
                                     included_clips, load_tracking, readouts, source_indices,
                                     summary_metrics)
 from robust_world.eval.io import read_video, write_prediction  # noqa: E402
@@ -161,7 +161,8 @@ def apply_rules(path: dict, radius: float, scene: dict, blockade: tuple[float, f
 
 
 def fit_blockade(train: list[dict]) -> tuple[float, float] | None:
-    """Interval of centre-line crossing heights that best separates hidden from through on training clips."""
+    """Interval of centre-line crossing heights that best separates blocked (hidden or bounce) from
+    through on training clips."""
     ys = sorted({r["crossing_y"] for r in train if r["crossing_y"] is not None})
     if not ys:
         return None
@@ -170,7 +171,7 @@ def fit_blockade(train: list[dict]) -> tuple[float, float] | None:
     for i, lo in enumerate(cands):
         for hi in cands[i + 1:]:
             pred = [r["crossing_y"] is not None and lo <= r["crossing_y"] <= hi for r in train]
-            acc = np.mean([p == (r["outcome"] == "hidden") for p, r in zip(pred, train)])
+            acc = np.mean([p == (r["outcome"] != "through") for p, r in zip(pred, train)])
             if acc > best_acc:
                 best, best_acc = (lo, hi), acc
     return best
@@ -239,7 +240,7 @@ def main(argv: list[str] | None = None) -> int:
     t_load = time.perf_counter() - t0
     scene_cfg = load_scene(REPO / "configs" / "scenes" / "start.json")
     track_gt, passes, scene_json = load_tracking()
-    far = far_cells(scene_json)
+    far, near = far_cells(scene_json), near_cells(scene_json)
     clips = included_clips()
     n_ctx = clips[0]["context_frames"][1] + 1
     n_target = clips[0]["target_frames"][1] - clips[0]["target_frames"][0] + 1
@@ -277,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
                 rec = records[i]
                 frames_pred = apply_rules(rec["path"], rec["track"]["radius"], scene_json, blockade)
                 maps = cell_maps(frames_pred, n_ctx)
-                ro = readouts(maps, far)
+                ro = readouts(maps, far, near)
                 rows[i] = {"clip_id": rec["clip"]["clip_id"], "outcome": rec["outcome"],
                            "crossing_y": rec["crossing_y"], **ro}
                 fut_lab[i], fut_map[i] = rec["labels"][n_ctx // STEP:], maps

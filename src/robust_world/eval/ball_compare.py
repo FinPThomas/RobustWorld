@@ -4,11 +4,14 @@ which can't learn the blockade; any outcome knowledge in its row comes from the 
 The TAPNext rule baseline, by design, fits its blockade range on training-fold outcomes.
 
   future cell AUROC   where the ball really is in the target half, scored per 32 px cell
-  outcome AUROC/acc   through vs hidden, from the peak P(ball beyond the occluder)
+  outcome AUROC/acc   through vs blocked (hidden or bounce), from the peak P(ball beyond the occluder)
+  bounce AUROC        among blocked clips, bounce vs hidden from the ball coming back to the near
+                      side (eval.ball.returned); only for models with "near" readouts, when there
+                      are bounce clips
   curves              mean P(ball visible) and P(ball beyond the occluder) over the target,
                       split by true outcome
 
-Each entry points at a per-clip JSON of rows with per-step "visible" and "far" lists.
+Each entry points at a per-clip JSON of rows with per-step "visible" and "far" (optionally "near") lists.
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from ..paths import REPO_ROOT, rel
+from .ball import OUTCOMES, outcome_metrics
 
 OUT = REPO_ROOT / "outputs" / "ball_eval"
 
@@ -26,7 +30,8 @@ OUT = REPO_ROOT / "outputs" / "ball_eval"
 def _vjepa(kind: str):
     rows = json.loads((REPO_ROOT / "outputs/vjepa2/ball_probe_cv/per_clip.json").read_text())
     return [{"clip_id": r["clip_id"], "outcome": r["outcome"], "visible": r[f"{kind}_visible"],
-             "far": r[f"{kind}_far"]} for r in rows]
+             "far": r[f"{kind}_far"], **({"near": r[f"{kind}_near"]} if f"{kind}_near" in r else {})}
+            for r in rows]
 
 
 def _tapnext(variant: str):
@@ -51,7 +56,6 @@ METHODS = [
 
 
 def compare(out: Path = OUT) -> Path:
-    from sklearn.metrics import roc_auc_score
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -63,18 +67,18 @@ def compare(out: Path = OUT) -> Path:
             rows = load()
         except FileNotFoundError:
             continue
-        y = np.array([r["outcome"] == "through" for r in rows], int)
-        peak = np.array([max(r["far"]) for r in rows])
+        om = outcome_metrics(rows)
         table.append({"method": label, "clips": len(rows),
                       "where_ball_goes_cell_auroc": _metrics(key)["future_cell_auroc"],
-                      "outcome_auroc": round(float(roc_auc_score(y, peak)), 3),
-                      "outcome_accuracy": round(float(((peak > 0.5) == y).mean()), 3),
-                      "hidden_called_through": int(((peak > 0.5) & (y == 0)).sum()),
-                      "through_called_hidden": int(((peak <= 0.5) & (y == 1)).sum())})
+                      **{k: om.get(k, "-") for k in ("outcome_auroc", "outcome_accuracy", "blocked_called_through",
+                                                     "through_called_blocked", "bounce_auroc")}})
         curves[label] = (rows, colour, style)
 
-    fig, axes = plt.subplots(2, 2, figsize=(11, 7), dpi=120, sharex=True, sharey=True)
-    for j, outcome in enumerate(("through", "hidden")):
+    first = next(iter(curves.values()))[0]
+    present = [o for o in OUTCOMES if any(r["outcome"] == o for r in first)]
+    fig, axes = plt.subplots(2, len(present), figsize=(5.5 * len(present), 7), dpi=120, sharex=True, sharey=True,
+                             squeeze=False)
+    for j, outcome in enumerate(present):
         for i, key in enumerate(("visible", "far")):
             ax = axes[i, j]
             for label, (rows, colour, style) in curves.items():
@@ -83,7 +87,7 @@ def compare(out: Path = OUT) -> Path:
                 ax.plot(t, m.mean(0), style, color=colour, lw=2, label=label)
                 ax.fill_between(t, m.mean(0) - m.std(0) / np.sqrt(len(m)), m.mean(0) + m.std(0) / np.sqrt(len(m)),
                                 color=colour, alpha=0.12)
-            n = sum(r["outcome"] == outcome for r in next(iter(curves.values()))[0])
+            n = sum(r["outcome"] == outcome for r in first)
             ax.set_title(f"true outcome: {outcome} ({n} clips)")
             ax.set_ylim(-0.02, 1.02)
             if j == 0:
@@ -97,7 +101,9 @@ def compare(out: Path = OUT) -> Path:
     plt.close(fig)
 
     head = ["method", "clips", "where_ball_goes_cell_auroc", "outcome_auroc", "outcome_accuracy",
-            "hidden_called_through", "through_called_hidden"]
+            "blocked_called_through", "through_called_blocked"]
+    if any(r["bounce_auroc"] != "-" for r in table):
+        head.append("bounce_auroc")
     md = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     md += ["| " + " | ".join(str(r[h]) for h in head) + " |" for r in table]
     (out / "comparison.md").write_text("\n".join(md) + "\n")
