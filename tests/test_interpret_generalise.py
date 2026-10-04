@@ -35,7 +35,7 @@ def world(tmp_path, monkeypatch):
     g = torch.Generator().manual_seed(0)
     clips, passes, track = [], {}, []
     for i in range(20):
-        side = "L" if i >= 16 else "R"                       # four clips come from the other side
+        side = "L" if i >= 16 else "R"                       # four clips come from the other side (left segment)
         outcome = "through" if i % 2 else "hidden"
         start = len(track)
         for k in range(ALL * 2):                             # ball moves across the frame
@@ -44,11 +44,12 @@ def world(tmp_path, monkeypatch):
         real = torch.randn(ALL, G, G, D, generator=g)
         torch.save({"real": real.half(), "context": real[:CTX].half(), "imagined": real[CTX:].half()},
                    cache / f"c{i}.pt")
-        clips.append({"clip_id": f"c{i}", "source_video": "data/interim/start/start_512.mp4", "pass_id": i,
+        clips.append({"clip_id": f"c{i}", "source_video": "data/interim/start/start_512.mp4", "pass_id": i, "side_in": side,
                       "outcome": outcome, "include": True, "n_frames": ALL * 2, "fps": 16, "source_fps": 16,
                       "context_frames": [0, CTX * 2 - 1], "path": "x.mp4"})
-    manifest = tmp_path / "manifest.jsonl"
-    manifest.write_text("".join(json.dumps(c) + "\n" for c in clips))
+    manifest = tmp_path / "manifest_right.jsonl"                 # the training segment
+    manifest.write_text("".join(json.dumps(c) + "\n" for c in clips[:16]))
+    (tmp_path / "manifest_left.jsonl").write_text("".join(json.dumps(dict(c, segment="left")) + "\n" for c in clips[16:]))
     def fake_tracking(name="start"):
         assert name == "start", f"tracking looked up for {name!r}, not the video's name"
         return track, passes, SCENE
@@ -92,7 +93,6 @@ def test_split_score_and_interpret(world):
 
 def test_no_held_out_clips_means_waiting(world):
     tmp_path, manifest = world
-    clips = [json.loads(line) for line in manifest.open()][:16]
-    manifest.write_text("".join(json.dumps(c) + "\n" for c in clips))
+    (tmp_path / "manifest_left.jsonl").unlink()                  # no left segment packed yet
     assert generalise.main(["split", "--manifest", str(manifest), "--out", str(tmp_path / "g")]) == generalise.WAITING
     assert len((tmp_path / "seen.jsonl").read_text().splitlines()) == 16

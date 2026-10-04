@@ -39,7 +39,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 from robust_world.eval.ball import (CLIP_SIZE, OUTCOMES, ball_labels, cv_folds, far_cells,  # noqa: E402
                                     load_tracking, near_cells, one_ball_readouts, outcome_metrics,
-                                    source_indices)
+                                    source_indices, video_of)
 
 
 def group_of(key: str) -> str:
@@ -98,10 +98,10 @@ def main(argv: list[str] | None = None) -> int:
     model.to(device).eval()
     base = {k: v.detach().clone() for k, v in model.predictor.state_dict().items()}
     groups = sorted({group_of(k) for k in base})
-    track, passes, scene = load_tracking()
+    clips = training_clips(args.manifest)
+    track, passes, scene = load_tracking(video_of(clips))
     far, near, plank = far_cells(scene, grid), near_cells(scene, grid), plank_mask(scene, grid)
     cache = cache_dir(args.model_id)
-    clips = training_clips(args.manifest)
 
     data = []
     for c in clips:

@@ -44,7 +44,7 @@ from ball_probe import encode  # noqa: E402
 from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
 from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
                                     far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
-                                    source_indices)
+                                    source_indices, video_of)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
 
@@ -95,7 +95,7 @@ def plots(rows: list[dict], out: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--folds", type=int, default=5)
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe_cv")
     p.add_argument("--model-id", default=MODEL_ID)
@@ -115,12 +115,12 @@ def main(argv: list[str] | None = None) -> int:
     t_load = time.perf_counter() - t_load
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
-    track, passes, scene = load_tracking()
     cache = cache_dir(args.model_id)
     cache.mkdir(parents=True, exist_ok=True)
 
     clips = [json.loads(line) for line in args.manifest.open()]
     clips = [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
+    track, passes, scene = load_tracking(video_of(clips))
     print(f"V-JEPA 2 ball probe (cross-validated) on {device}: {len(clips)} clips, model load {t_load:.1f}s")
 
     data, timings = [], []

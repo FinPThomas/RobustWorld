@@ -23,7 +23,11 @@ STEP = 2           # frames per step (V-JEPA 2 tubelet)
 OUTCOMES = ("through", "hidden", "bounce")   # far side / never reappears / back out on the near side
 
 
-def included_clips(manifest: Path = REPO_ROOT / "data" / "processed" / "clips" / "manifest.jsonl") -> list[dict]:
+# Right-entry clips only. Segments (right/left) are never mixed; pass --manifest for another one.
+MANIFEST = REPO_ROOT / "data" / "processed" / "clips" / "manifest_right.jsonl"
+
+
+def included_clips(manifest: Path = MANIFEST) -> list[dict]:
     """Included clips with a known outcome (through, hidden or bounce), in manifest order (fixes the CV folds)."""
     clips = [json.loads(line) for line in manifest.open()]
     return [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
@@ -35,7 +39,16 @@ def cv_folds(clips: list[dict], folds: int = 5, seed: int = 0):
     return list(StratifiedKFold(folds, shuffle=True, random_state=seed).split(y, y))
 
 
-def load_tracking(name: str = "start"):
+def video_of(clips: list[dict]) -> str:
+    """The one source video these clips come from (data/interim/<name>/<name>_512.mp4 -> <name>)."""
+    names = {Path(c["source_video"]).parent.name for c in clips}
+    if len(names) != 1:
+        raise SystemExit(f"clips come from {len(names)} videos ({sorted(names)}); expected exactly one")
+    return names.pop()
+
+
+def load_tracking(name: str):
+    """Tracker positions, passes and scene file for one source video (see video_of)."""
     interim = REPO_ROOT / "data" / "interim" / name
     track = []
     for r in csv.DictReader((interim / "track.csv").open()):

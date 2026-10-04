@@ -80,7 +80,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 from robust_world.eval.ball import OUTCOMES, cv_folds  # noqa: E402
 
-MANIFEST = REPO / "data" / "processed" / "clips" / "manifest.jsonl"
+MANIFEST = REPO / "data" / "processed" / "clips" / "manifest_right.jsonl"
 CKPT_ROOT = REPO / "checkpoints" / "vjepa2"
 
 

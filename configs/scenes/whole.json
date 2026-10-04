@@ -1,0 +1,13 @@
+{
+  "_comment": "Scene for whole.mp4 (1440x1440 -> 512x512, fixed overhead camera). Pixel coords (x, y), origin top-left. The occluder includes the upright at the plank's top end. Ball is blue with yellow/green/white stripes; wood is H 5-20, so stripes are H 22+. Unset keys use robust_world.scene.DEFAULTS.",
+  "occluder_polygon": [[201, 0], [237, 0], [237, 30], [270, 30], [259, 448], [103, 448]],
+  "ball_stripe_hsv_lo": [22, 35, 40],
+  "ball_stripe_hsv_hi": [140, 255, 255],
+  "_hand_comment": "Ball-coloured pixels are removed from the hand mask, so fingertips at the frame edge (about 1000 px) are caught while the ball's own edge (300 px or less) is not.",
+  "hand_min_px": 600,
+  "_segments_comment": "Ball rolled in from the right until the last right pass at 1705.2s, and from the left from 1711.5s. A clip's whole window must lie inside its segment, so right and left share no frames. Right is for training/eval now; left is held out for testing later.",
+  "segments": [
+    {"name": "right", "side_in": "R", "start_s": 0, "end_s": 1708},
+    {"name": "left", "side_in": "L", "start_s": 1708, "end_s": null}
+  ]
+}

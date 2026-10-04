@@ -1,9 +1,9 @@
 """NVIDIA Cosmos-Predict2 Video2World: predict the target half of each eval clip.
 
 Cosmos-Predict2 conditions on the last 5 frames of the input video (its trained multi-frame
-mode) and rolls the world forward. It is given context frames 11-15 and generates
---num-frames in total (93 = its native 5.8 s at 16 fps); generated frames 5..20 line up with
-the ground-truth target frames 16..31.
+mode) and rolls the world forward. It is given context frames 19-23 and generates
+--num-frames in total (93 = its native 5.8 s at 16 fps); generated frames 5..28 line up with
+the ground-truth target frames 24..47.
 
 The checkpoint is 720p. Square clips are upscaled to 960x960 (its 1:1 720p shape), predicted,
 and downscaled back to 512.
