@@ -9,7 +9,7 @@ Each pass's tracked ball over the last 1/3 s of context gives a constant-velocit
 Followed straight, it enters the plank at one point and would leave it at another; both are
 measured along the plank's long axis (px from the top-edge midpoint). Against them, P(blocked),
 the chance the ball never shows up beyond the plank in the target half:
-    true          1 for hidden passes, 0 for through
+    true          1 for hidden or bounce passes, 0 for through
     real          1 - max P(ball beyond the plank) read from real target frames (upper bound)
     imagined      the same, read from V-JEPA's imagined target
     known blocker reference only: 1 if the straight line touches the scene file's
@@ -130,7 +130,7 @@ def pass_row(clip: dict, probe_row: dict, track, passes, occluder, blocker) -> d
         return None
     entry, exit_ = cr
     axis = plank_axis(occluder)
-    row = {"clip_id": clip["clip_id"], "outcome": clip["outcome"], "true": int(clip["outcome"] == "hidden"),
+    row = {"clip_id": clip["clip_id"], "outcome": clip["outcome"], "true": int(clip["outcome"] != "through"),
            "real": round(1 - max(probe_row["real_far"]), 3),
            "imagined": round(1 - max(probe_row["imagined_far"]), 3),
            "entry_along": round(along(entry, axis), 1), "exit_along": round(along(exit_, axis), 1),
