@@ -107,3 +107,16 @@ def test_bootstrap_detects_a_real_gain_only():
     s0 = np.random.default_rng(0).random(60)
     assert plan.bootstrap_auroc(y, y + 0.1 * s0, s0)["p_no_gain"] < 0.01
     assert plan.bootstrap_auroc(y, s0, s0)["p_no_gain"] == 1.0
+
+
+def test_stops_cleanly_when_storage_fails(fake, monkeypatch):
+    calls, _ = fake
+    monkeypatch.setattr(plan, "storage_ok", lambda: "Transport endpoint is not connected")
+    with pytest.raises(SystemExit):
+        plan.main(["run", "--stage", "1"])
+    assert not calls
+    seq = iter([None, None, "Transport endpoint is not connected"])      # Drive drops after the first step
+    monkeypatch.setattr(plan, "storage_ok", lambda: next(seq, "gone"))
+    plan.main(["run", "--stage", "1", "--only", "encode", "pretrained"])
+    steps = json.loads(plan.STATE.read_text())["steps"]
+    assert steps["encode"]["state"] == "done" and "pretrained" not in steps
