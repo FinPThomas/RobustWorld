@@ -61,7 +61,7 @@ def test_training_lowers_held_out_l1_and_checkpoint_round_trips(tmp_path, monkey
     model = tiny_model()
     base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
     args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=15,
-                           workers=0, seed=0)
+                           workers=0, seed=0, loss="l1")
     log = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
     before = sum(log["held_out_l1_pretrained"].values())
     after = sum(log["held_out_l1_posttrained"].values())
@@ -89,10 +89,39 @@ def test_training_never_touches_the_eval_decoder_inputs(tmp_path, monkeypatch):
     base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
     enc_before = {k: v.clone() for k, v in model.encoder.state_dict().items()}
     args = SimpleNamespace(model_id="tiny", lr=1e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=2,
-                           workers=0, seed=0)
+                           workers=0, seed=0, loss="l1")
     posttrain.train_one(model, base, clips[:3], clips[3:], args, "cpu", "fold0")
     for c in clips:
         after = torch.load(cache / f"{c['clip_id']}.pt")
         assert torch.equal(after["context"], before[c["clip_id"]]["context"])
     assert all(torch.equal(v, model.encoder.state_dict()[k]) for k, v in enc_before.items())
     json.dumps(posttrain.by_outcome(clips, [1.0] * 4))
+
+
+def test_commit_loss_trains_and_prefers_its_own_future(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=10,
+                           workers=0, seed=0, loss="commit", motion_alpha=4.0, contrast_weight=0.1,
+                           tau=0.02, negatives=3)
+    log = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    assert set(log["train_parts"][0]) == {"l1", "wl1", "nce"}
+    assert sum(log["held_out_l1_posttrained"].values()) < sum(log["held_out_l1_pretrained"].values())
+
+    # The contrast term is low when a prediction matches its own future, high when it matches another's.
+    t = torch.randn(2, ALL - CTX, G, G, D)
+    w = torch.ones(2, ALL - CTX, G, G)
+    right = posttrain.contrast(t.clone(), t, None, w, 0.02)
+    swapped = posttrain.contrast(t.flip(0), t, None, w, 0.02)
+    assert right < 0.01 < swapped
+
+
+def test_motion_weights_flag_phantom_balls():
+    last = torch.zeros(1, G, G, D)
+    target = torch.zeros(1, ALL - CTX, G, G, D)                  # nothing moves in the real future
+    pred = torch.zeros(1, ALL - CTX, G, G, D)
+    pred[0, 1, 2, 3] = 5.0                                        # the prediction invents a moving ball
+    w = posttrain.motion_weights(target, pred, last, alpha=4.0)
+    assert w[0, 1, 2, 3] > w[0, 0, 0, 0] and w.min() >= 1
