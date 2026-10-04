@@ -12,10 +12,11 @@ CLIPS_ROOT = REPO_ROOT / "data" / "processed" / "clips"
 
 
 def rel(p: Path) -> str:
-    """Repo-relative path for logs and manifests."""
+    """Repo-relative path for logs and manifests, with forward slashes so manifests written on
+    Windows still work on Linux (e.g. Colab)."""
     p = Path(p).resolve()
     try:
-        return str(p.relative_to(REPO_ROOT))
+        return p.relative_to(REPO_ROOT).as_posix()
     except ValueError:
         return str(p)
 
