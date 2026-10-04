@@ -63,6 +63,13 @@ Targets are layer-normalised per token, the space V-JEPA 2's predictor was pretr
 reads every token after the same parameter-free layer norm, so real and imagined tokens are on one
 scale. Predictions fed back in a rollout are rescaled to the last context step's per-token mean and spread.
 
+Guards against overfitting and leakage: each fold's train and held-out clips may not share a clip
+or a pass (`check_split`); 10% of the training clips (`--val-frac`) are held back and scored every
+epoch, the best validation epoch's weights are kept (`--patience 3` stops early), and `log.json`
+flags overfitting when validation L1 ends more than 2% above its best or is more than 1.25x the
+L1 on training clips. The fold's held-out clips are never used to pick epochs. The experiment
+summary lists flagged folds and kept epochs per run.
+
 Two more options, each worth trying with and without:
 - `--loss codes`: a spherical k-means codebook (`--codes 256`) is fitted on each fold's real
   training features (label-free; half the tokens are drawn from where features move). The
