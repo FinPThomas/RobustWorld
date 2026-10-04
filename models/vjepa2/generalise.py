@@ -49,7 +49,8 @@ WAITING = 3          # exit code: no held-out clips yet
 
 
 def stem(clip: dict) -> str:
-    return Path(clip["source_video"]).stem
+    """The video's name: source_video is data/interim/<name>/<name>_512.mp4 (as in pack_clips.py)."""
+    return Path(clip["source_video"]).parent.name
 
 
 @lru_cache(maxsize=None)
