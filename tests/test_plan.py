@@ -120,3 +120,28 @@ def test_stops_cleanly_when_storage_fails(fake, monkeypatch):
     plan.main(["run", "--stage", "1", "--only", "encode", "pretrained"])
     steps = json.loads(plan.STATE.read_text())["steps"]
     assert steps["encode"]["state"] == "done" and "pretrained" not in steps
+
+
+def test_everything_important_is_in_the_results_folder(tmp_path):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import save_results
+    src = tmp_path / "outputs" / "vjepa2" / "plan"
+    for rel in ("state.json", "status.md", "summary.md", "summary.json", "summary.png", "logs/codes-after.txt",
+                "scores/codes-after/metrics.json", "scores/codes-after/per_clip.json", "scores/codes-after/train_log.json",
+                "scores/codes-after/curves.png", "blocker/codes-after/crossing.json", "baselines/tapnext/metrics.json",
+                "generalise/metrics.json", "generalise/split.json", "interpret/codes-after/interpret.json",
+                "interpret/codes-after/change_map.png"):
+        (src / rel).parent.mkdir(parents=True, exist_ok=True)
+        (src / rel).write_text("x")
+    (src / "cache").mkdir()
+    (src / "cache" / "big.pt").write_text("x")
+    saved = {str(p) for p in save_results.collect(tmp_path / "dest", tmp_path, "outputs/vjepa2/plan")}
+    assert len(saved) == 16 and "vjepa2/plan/logs/codes-after.txt" in saved
+    assert not any("cache" in p or p.endswith(".pt") for p in saved)
+
+
+def test_report_push_failure_is_reported(fake, monkeypatch):
+    monkeypatch.setattr(plan, "save_and_push", lambda state, block, args: False)
+    assert plan.main(["report", "--push"]) == 1
+    monkeypatch.setattr(plan, "save_and_push", lambda state, block, args: True)
+    assert plan.main(["report", "--push"]) == 0
