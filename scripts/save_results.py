@@ -102,10 +102,13 @@ def new_id(root: Path, name: str) -> str:
     return run_id
 
 
-def save(name: str, note: str = "", repo: Path = REPO) -> Path:
+def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None) -> Path:
+    """New folder per call; with `into`, (re)write that one folder instead (a grid saving as it goes)."""
     root = repo / RESULTS
     root.mkdir(exist_ok=True)
-    dest = root / new_id(root, name)
+    dest = root / (into or new_id(root, name))
+    if into and dest.exists():
+        shutil.rmtree(dest)
     dest.mkdir()
     saved = collect(dest, repo)
     if not saved:
@@ -117,9 +120,9 @@ def save(name: str, note: str = "", repo: Path = REPO) -> Path:
     return dest
 
 
-def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4) -> None:
+def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4, update: bool = False) -> None:
     """Commit dest to `branch` from a fresh shallow clone, so local code edits are never pushed.
-    Retries if someone else pushed in between."""
+    Retries if someone else pushed in between. `update` replaces that same folder (an unfinished grid)."""
     for attempt in range(1, tries + 1):
         with tempfile.TemporaryDirectory() as tmp:
             clone = Path(tmp) / "repo"
@@ -127,11 +130,15 @@ def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4) -> 
             root = clone / RESULTS
             root.mkdir(exist_ok=True)
             target = root / dest.name
-            if target.exists():
+            if target.exists() and not update:
                 raise SystemExit(f"{RESULTS}/{dest.name} is already on {branch}; not overwriting")
+            shutil.rmtree(target, ignore_errors=True)
             shutil.copytree(dest, target)
             write_index(root)
-            git("add", RESULTS, cwd=clone)
+            git("add", "-A", RESULTS, cwd=clone)
+            if not git("status", "--porcelain", cwd=clone):
+                print(f"{RESULTS}/{dest.name} unchanged on {branch}")
+                return
             git("-c", "user.name=RobustWorld Colab", "-c", "user.email=colab@robustworld.local",
                 "commit", "-q", "-m", f"Results: {dest.name}", cwd=clone)
             r = subprocess.run(["git", "push", "origin", f"HEAD:{branch}"], cwd=clone, capture_output=True, text=True)
@@ -150,16 +157,18 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--note", default="", help="one line saying what was tried")
     p.add_argument("--push", action="store_true", help="commit and push to GitHub (needs GITHUB_TOKEN)")
     p.add_argument("--branch", default=None, help="branch to push to (default: the current one)")
+    p.add_argument("--into", default=None, help="write into this results folder, replacing it (used by "
+                                                 "experiments.py to save a grid after every run)")
     args = p.parse_args(argv)
     if args.name != "".join(c for c in args.name if c.isalnum() or c in "-_"):
         raise SystemExit("--name: letters, digits, - and _ only")
-    dest = save(args.name, args.note)
+    dest = save(args.name, args.note, into=args.into)
     if args.push:
         token = os.environ.get("GITHUB_TOKEN")
         if not token:
             raise SystemExit("--push needs GITHUB_TOKEN (a token with write access to the repo)")
         push(dest, args.branch or git("rev-parse", "--abbrev-ref", "HEAD"),
-             f"https://x-access-token:{token}@{GITHUB}", token)
+             f"https://x-access-token:{token}@{GITHUB}", token, update=bool(args.into))
     return 0
 
 

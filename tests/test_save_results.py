@@ -58,3 +58,27 @@ def test_push_to_branch(tmp_path):
     files = subprocess.run(["git", "--git-dir", str(remote), "ls-tree", "-r", "--name-only", "exp"],
                            capture_output=True, text=True).stdout
     assert f"results/{dest.name}/README.md" in files and "results/README.md" in files
+
+
+def test_grid_folder_updates_in_place(tmp_path):
+    remote = tmp_path / "remote.git"
+    work = tmp_path / "work"
+    run = lambda *a, cwd=tmp_path: subprocess.run(a, cwd=cwd, check=True, capture_output=True)  # noqa: E731
+    run("git", "init", "-q", "--bare", str(remote))
+    run("git", "init", "-q", "-b", "exp", str(work))
+    (work / "f.txt").write_text("x")
+    run("git", "add", ".", cwd=work)
+    run("git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init", cwd=work)
+    run("git", "push", "-q", str(remote), "exp", cwd=work)
+
+    repo = fake_repo(tmp_path)
+    a = save_results.save("night", "", repo, into="2026-10-04_2200_night")
+    save_results.push(a, "exp", f"file://{remote}", update=True)
+    (repo / "outputs" / "vjepa2" / "experiments" / "summary.md").write_text("| more runs |\n")
+    b = save_results.save("night", "", repo, into="2026-10-04_2200_night")
+    save_results.push(b, "exp", f"file://{remote}", update=True)
+    assert a == b and len([p for p in (repo / "results").iterdir() if p.is_dir()]) == 1
+    show = subprocess.run(["git", "--git-dir", str(remote), "show",
+                           "exp:results/2026-10-04_2200_night/vjepa2/experiments/summary.md"],
+                          capture_output=True, text=True).stdout
+    assert "more runs" in show
