@@ -131,6 +131,7 @@ def run(name: str, video: Path, scene: dict, track: list[dict], passes: list[dic
             "hand_in_target": any(k >= CTX_FRAMES for k in hand_frames),
             "hand_touch_frames": touch,
             "other_ball_in_target": ps["next_ball_frame"] is not None and ps["next_ball_frame"] <= last,
+            "blocker_polygon": scene.get("blocker_polygon"),
             "source_frames": [first, last],
             "source_fps": fps,
         }
