@@ -53,7 +53,7 @@ CKPT = REPO / "checkpoints" / "vjepa2" / "plan"
 STATE = PLAN / "state.json"
 DOC = "docs/experiment_plan.md"
 MANIFEST = REPO / "data" / "processed" / "clips" / "manifest.jsonl"
-SEEN = REPO / "data" / "processed" / "clips" / "manifest_seen.jsonl"
+SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; on Drive, so it survives restarts
 PY = sys.executable
 
 EPOCHS, LONG_EPOCHS = 10, 30
@@ -506,6 +506,9 @@ def run(args) -> None:
     if problem:
         raise SystemExit(f"!! can't write to {PLAN} ({problem}): rerun the Google Drive cell, then this one")
     state = load_state()
+    if state["steps"].get("split", {}).get("state") == "done" and not SEEN.exists():
+        print("== the seen-clips manifest is missing: recreating it", flush=True)
+        step_split(args, state, None)
     stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
     todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
     for s in todo:

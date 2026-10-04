@@ -8,7 +8,7 @@ Held-out clips are never trained on or used to pick anything:
                  (or --holdout-videos).
 Everything else is "seen" and is what the plan's cross-validated stages train and score on.
 
-`split` writes the seen manifest (data/processed/clips/manifest_seen.jsonl) and split.json, and
+`split` writes the seen manifest (outputs/vjepa2/plan/manifest_seen.jsonl) and split.json, and
 exits with code 3 when there are no held-out clips yet (the plan then waits for the recordings).
 `score` reads every held-out clip with the frozen evaluation decoder, fitted (as always) on real
 context-half features of seen clips only, labelled with same-frame ball positions
@@ -42,7 +42,7 @@ from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, f
 
 CLIPS = REPO / "data" / "processed" / "clips"
 MANIFEST = CLIPS / "manifest.jsonl"
-SEEN = CLIPS / "manifest_seen.jsonl"
+SEEN = REPO / "outputs" / "vjepa2" / "plan" / "manifest_seen.jsonl"   # on Drive in Colab, so it survives restarts
 HELDOUT_CFG = REPO / "configs" / "heldout.json"
 OUT = REPO / "outputs" / "vjepa2" / "plan" / "generalise"
 WAITING = 3          # exit code: no held-out clips yet
@@ -91,6 +91,7 @@ def holdout_videos(arg: list[str] | None) -> list[str]:
 def cmd_split(args) -> int:
     clips = included(args.manifest)
     seen, groups, train_side = split(clips, holdout_videos(args.holdout_videos))
+    SEEN.parent.mkdir(parents=True, exist_ok=True)
     SEEN.write_text("".join(json.dumps(c) + "\n" for c in seen))
     args.out.mkdir(parents=True, exist_ok=True)
     info = {"training_direction": train_side, "n_seen": len(seen),
