@@ -18,6 +18,12 @@ tests/test_eval_isolation.py checks this: scrambling outcomes, target-half label
 imagined features or full-clip features must leave the fitted decoder bit-for-bit
 unchanged.
 
+It reads every token after a fixed, parameter-free layer norm (`token_space`). V-JEPA 2's
+predictor was pretrained to output layer-normalised encoder features, while the encoder itself
+returns un-normalised ones; without this the decoder would read real and imagined tokens on
+different scales (about 5x apart) and see no ball in any prediction. The norm has no fitted
+parameters and is the same before and after post-training.
+
 Even so, it finds the ball beyond the plank in real target frames (AUROC ~0.997), so it is
 not blind to the region the outcome is read from.
 """
@@ -43,6 +49,11 @@ def examples_from(encoding: dict, labels: np.ndarray) -> EvalExample:
     return EvalExample(context_features=ctx, context_labels=np.asarray(labels[:ctx.shape[0]], bool))
 
 
+def token_space(tokens: torch.Tensor) -> torch.Tensor:
+    """Layer-normalise each token (no learned scale): the space V-JEPA 2's predictor outputs."""
+    return torch.nn.functional.layer_norm(tokens.float(), tokens.shape[-1:])
+
+
 class EvalDecoder:
     """Calibrated linear map from a token's features to P(ball in this cell)."""
 
@@ -51,7 +62,7 @@ class EvalDecoder:
 
     @torch.no_grad()
     def __call__(self, tokens: torch.Tensor) -> torch.Tensor:          # [..., D] -> [...]
-        return torch.sigmoid(self.linear((tokens.float() - self.mu) / self.sd).squeeze(-1))
+        return torch.sigmoid(self.linear((token_space(tokens) - self.mu) / self.sd).squeeze(-1))
 
     def state(self) -> dict:
         return {"weight": self.linear.weight.detach().clone(), "bias": self.linear.bias.detach().clone(),
@@ -63,7 +74,7 @@ def fit(examples: list[EvalExample], seed: int = 0, epochs: int = 20) -> EvalDec
     if not examples or not all(isinstance(e, EvalExample) for e in examples):
         raise TypeError("fit() takes EvalExample objects built with examples_from()")
     d = examples[0].context_features.shape[-1]
-    x = torch.cat([e.context_features.reshape(-1, d) for e in examples]).float()
+    x = token_space(torch.cat([e.context_features.reshape(-1, d) for e in examples]))
     y = torch.cat([torch.from_numpy(e.context_labels.reshape(-1)) for e in examples]).float()
 
     torch.manual_seed(seed)

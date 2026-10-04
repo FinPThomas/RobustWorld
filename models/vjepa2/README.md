@@ -58,6 +58,11 @@ training clips' futures. Each fold's predictor trains only on that fold's traini
 `ball_probe_cv.py` refuses a checkpoint that saw the clips it scores. Held-out prediction error
 before and after, per outcome, is in `checkpoints/vjepa2/<run>/log.json`.
 
+Targets are layer-normalised per token, the space V-JEPA 2's predictor was pretrained to output
+(the Hugging Face encoder returns un-normalised features, about 5x larger). The evaluation decoder
+reads every token after the same parameter-free layer norm, so real and imagined tokens are on one
+scale. Predictions fed back in a rollout are rescaled to the last context step's per-token mean and spread.
+
 Two more options, each worth trying with and without:
 - `--loss codes`: a spherical k-means codebook (`--codes 256`) is fitted on each fold's real
   training features (label-free; half the tokens are drawn from where features move). The
