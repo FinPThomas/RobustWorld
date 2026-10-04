@@ -37,7 +37,7 @@ def collect(dest: Path, repo: Path = REPO) -> list[Path]:
     """Copy result files (not caches or weights) from outputs/ and checkpoints/ into dest."""
     saved = []
     sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / "outputs" / "vjepa2").rglob("*")
-               if p.suffix in (".json", ".md", ".png") and "cache" not in p.parts]
+               if p.suffix in (".json", ".md", ".png") and not any("cache" in part for part in p.parts)]
     sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/*.json")]
     for src, rel in sources:
         if src.is_file() and src.stat().st_size <= MAX_BYTES:
@@ -61,6 +61,10 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
     if summary.exists():
         lines += ["", "## Headline", "", summary.read_text().strip(), "",
                   "![summary](vjepa2/experiments/summary.png)"]
+    probing = dest / "vjepa2" / "probing" / "summary.md"
+    if probing.exists():
+        lines += ["", "## Encoder probing", "", f"See [vjepa2/probing/summary.md](vjepa2/probing/summary.md)"
+                  + (" and [the findings](vjepa2/probing/FINDINGS.md)." if (dest / "vjepa2" / "probing" / "FINDINGS.md").exists() else ".")]
     figs = sorted(p.relative_to(dest) for p in dest.rglob("*.png"))
     if figs:
         lines += ["", "## Figures", ""] + [f"- [{p}]({p})" for p in figs]
@@ -70,6 +74,14 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
 def headline(folder: Path) -> str:
     """One line for the index: best balanced P(correct) after post-training, if there is a summary."""
     path = folder / "vjepa2" / "experiments" / "summary.json"
+    probing = folder / "vjepa2" / "probing" / "summary.json"
+    if not path.exists() and probing.exists():
+        rows = [r for r in json.loads(probing.read_text()) if r.get("target", {}).get("far_cell_auroc") is not None]
+        if not rows:
+            return ""
+        top = max(rows, key=lambda r: r["target"]["far_cell_auroc"])
+        return (f"encoder probing, {len(rows)} probes: best far-side cell AUROC {top['target']['far_cell_auroc']} "
+                f"({top['name']}), real-frame outcome AUROC {top['target']['outcome_auroc']}")
     if not path.exists():
         return ""
     key = "one_ball_p_correct"

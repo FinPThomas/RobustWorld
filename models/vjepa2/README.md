@@ -130,6 +130,22 @@ is drawn dashed.
 - per-token change against V-JEPA's own output for an empty-scene clip
 - `trajectories.png`: real versus imagined paths through feature space
 
+**Encoder probing** (`probing.py`, CPU-friendly, resumable). Which readout of the frozen encoder
+best locates the ball: encoder layer (4, 8, 12, 16, 20, output) x linear / small MLP x per-token /
+3x3 neighbourhood / pooled over the frame x raw / layer-normed x per-cell sigmoid / one-ball softmax
+(with a "no ball" option). Every probe is fitted like the evaluation decoder (real context half
+encoded alone, same-frame labels, via `eval_decoder.examples_from`; `tests/test_eval_isolation.py`
+covers it) and scored on held-out clips (`cv_folds`): context frames, real target frames (including
+far-side cells, where no probe ever saw a ball) and, for the output layer, the pretrained predictor's
+imagined target. It also runs the tracker + plank/blockade-rule reference (blockade fitted on outcomes)
+and label-free blockade figures (P(blocked) against where the path crosses the plank, per-cell
+distinctiveness of static context features, surprise by outcome).
+```bash
+python models/vjepa2/probing.py all          # encode, baseline, sweep, blockade, report, publish
+```
+Encodings take ~70 s a clip on a laptop CPU and ~80 MB a clip in `outputs/vjepa2/probe_cache/`;
+results go to `outputs/vjepa2/probing/` and are saved to `results/<date>_<time>_vjepa-probing/`.
+
 **Outputs** go to `outputs/vjepa2/`:
 - `summary.json`: mean surprise curves per outcome (label-free)
 - `per_clip.json`: per-clip surprise
