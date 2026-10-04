@@ -145,3 +145,30 @@ def test_report_push_failure_is_reported(fake, monkeypatch):
     assert plan.main(["report", "--push"]) == 1
     monkeypatch.setattr(plan, "save_and_push", lambda state, block, args: True)
     assert plan.main(["report", "--push"]) == 0
+
+
+def test_drive_drop_inside_a_step_stops_without_marking_it_failed(fake, monkeypatch):
+    calls, _ = fake
+    monkeypatch.setattr(plan, "DRIVE_RETRY_WAIT", 0)
+    real_sh = plan.sh
+
+    def dropping_sh(cmd, log=None):                # encode dies with the error Colab's Drive mount gives
+        if "encode" in [str(c) for c in cmd]:
+            calls.append([str(c) for c in cmd])
+            plan.TAIL.append("OSError: [Errno 107] Transport endpoint is not connected\n")
+            return 1
+        return real_sh(cmd, log)
+    monkeypatch.setattr(plan, "sh", dropping_sh)
+    plan.main(["run", "--stage", "1"])
+    steps = json.loads(plan.STATE.read_text())["steps"]
+    assert steps["encode"]["state"] == "running"   # not failed, not done: redone next time
+    assert "pretrained" not in steps and "tapnext" not in steps
+    assert sum("encode" in c for c in calls) == 2  # tried once more first
+
+
+def test_cut_off_earlier_step_runs_first(fake):
+    plan.save_state({"results_folder": "x", "started": "x", "choices": {}, "steps": {"encode": {"state": "running"}}})
+    plan.main(["run", "--stage", "2", "--only", "plain-before"])   # --only: just that step
+    assert json.loads(plan.STATE.read_text())["steps"]["encode"]["state"] == "running"
+    plan.main(["run", "--stage", "2"])
+    assert json.loads(plan.STATE.read_text())["steps"]["encode"]["state"] == "done"
