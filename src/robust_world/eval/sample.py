@@ -24,7 +24,7 @@ PROMPT = (
 )
 
 
-def make_sample(name: str, n: int, seed: int, manifest: Path = CLIPS_ROOT / "manifest.jsonl") -> Path:
+def make_sample(name: str, n: int, seed: int, manifest: Path = CLIPS_ROOT / "manifest_right.jsonl") -> Path:
     records = [json.loads(line) for line in manifest.open()]
     rng = random.Random(seed)
     by_outcome = {}

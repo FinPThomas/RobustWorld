@@ -1,10 +1,14 @@
 """Stage: group the ball track into passes at the occluder -> passes.json.
 
-A pass is a visible run that ends against the occluder. Its outcome depends on
-what is seen next: "through" (reappears on the far side), "bounce" (reappears on
-the same side) or "hidden" (no reappearance within max_hidden_s, e.g. blocked).
-occlusion_start_frame is the first frame of the final approach where the ball's
-outline touches the occluder polygon. All frames are source-video frames.
+A pass is a visible run that starts clear of the occluder and reaches it: the ball's outline
+overlaps the occluder polygon (occlusion_start_frame, the onset), or the ball vanishes right at
+it. The outcome is what the ball does by itself within BOUNCE_S of the onset:
+    "through"  vanishes and reappears on the far side (within max_hidden_s of vanishing)
+    "bounce"   rolls clear again on the entry side, either straight back without ever fully
+               vanishing (touch_only) or after briefly going under
+    "hidden"   neither: it stays under the occluder, or rests against its edge (with a sliver
+               showing) until it is picked up. The blocked case.
+All frames are source-video frames.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ EDGE_MARGIN = 30      # px from the frame border that counts as "at the edge"
 TOUCH_TOL = 15        # px slack when deciding a run starts/ends at the occluder
 MIN_RUN = 5           # frames; shorter visible runs are not a real approach
 MAX_GAP = 2           # missed detections tolerated inside one run
+BOUNCE_S = 1.5        # s after the onset by which a bouncing ball must be clear of the occluder
 
 
 def split_runs(track: list[dict]) -> list[list[dict]]:
@@ -54,39 +59,61 @@ def find(track: list[dict], fps: float, scene: dict, frame_size: int,
     def at_edge(r):
         return min(r["x"], r["y"], frame_size - r["x"], frame_size - r["y"]) < EDGE_MARGIN + r["radius"]
 
+    def first_clear(run, start=0):
+        return next((r for r in run[start:] if r["occ_dist"] < -TOUCH_TOL), None)
+
     runs = split_runs(track)
     passes = []
     for i, a in enumerate(runs):
         end = a[-1]
-        if end["occ_dist"] < -TOUCH_TOL or len(a) < MIN_RUN:
+        if len(a) < MIN_RUN or a[0]["occ_dist"] >= -TOUCH_TOL:
+            # Too short, or starts at the occluder (a ball emerging, or one stuck at the edge
+            # flickering in and out of view): not an approach.
             continue
-        k = len(a) - 1
-        while k > 0 and a[k - 1]["occ_dist"] >= 0:
-            k -= 1
+        k = next((k for k, r in enumerate(a) if r["occ_dist"] >= 0), None)
+        if k is None:
+            if end["occ_dist"] < -TOUCH_TOL:
+                continue                       # never reached the occluder
+            k = len(a) - 1                     # vanished right at it before overlapping
         onset = a[k]
+        deadline = onset["frame"] + BOUNCE_S * fps
+        back = first_clear(a, k + 1)
         nxt = runs[i + 1] if i + 1 < len(runs) else None
-        b = None
-        if nxt and (nxt[0]["frame"] - end["frame"]) / fps <= max_hidden_s:
+        vanished = back is None                # still at the occluder when the run ended
+        b = reappear = None
+        outcome = "hidden"
+        if back is not None:
+            # Rolled clear without vanishing: a bounce if quick, else it rested at the edge and
+            # was moved (picked up) later, so it was blocked.
+            if back["frame"] <= deadline:
+                outcome, reappear = "bounce", back
+        elif nxt and (nxt[0]["frame"] - end["frame"]) / fps <= max_hidden_s:
             # Far side: the ball came through, even if it's first detected some way out
             # (supports/shadow under the occluder can hide it as it emerges).
-            # Same side: only a bounce if it reappears right at the occluder.
-            far_side = side(nxt[0]["x"], nxt[0]["y"]) != side(end["x"], end["y"])
-            if far_side or nxt[0]["occ_dist"] >= -TOUCH_TOL:
-                b = nxt
-        outcome = "hidden" if b is None else (
-            "through" if side(b[0]["x"], b[0]["y"]) != side(end["x"], end["y"]) else "bounce")
+            # Same side: a bounce only if it reappears at the occluder and rolls clear in time.
+            # A sliver at the edge that never gets clear (or only when picked up) is blocked.
+            if side(nxt[0]["x"], nxt[0]["y"]) != side(end["x"], end["y"]):
+                outcome, b = "through", nxt
+            elif nxt[0]["occ_dist"] >= -TOUCH_TOL:
+                clear = first_clear(nxt)
+                if clear is not None and clear["frame"] <= deadline:
+                    outcome, b = "bounce", nxt
+            if b:
+                reappear = b[0]
         after = (runs[i + 2] if i + 2 < len(runs) else None) if b else nxt
+        exit_run = b if b else (a if outcome == "bounce" else None)
         passes.append({
             "id": len(passes),
             "outcome": outcome,
+            "touch_only": outcome == "bounce" and not vanished,
             "side_in": side(a[0]["x"], a[0]["y"]),
             "entry_frame": a[0]["frame"],
             "entry_at_edge": at_edge(a[0]),
             "occlusion_start_frame": onset["frame"],
-            "hidden_frame": end["frame"] + 1,
-            "reappear_frame": b[0]["frame"] if b else None,
-            "exit_frame": b[-1]["frame"] if b else None,
-            "exit_at_edge": at_edge(b[-1]) if b else None,
+            "hidden_frame": end["frame"] + 1 if vanished else None,
+            "reappear_frame": reappear["frame"] if reappear else None,
+            "exit_frame": exit_run[-1]["frame"] if exit_run else None,
+            "exit_at_edge": at_edge(exit_run[-1]) if exit_run else None,
             "onset_xy": [onset["x"], onset["y"]],
             "prev_ball_frame": runs[i - 1][-1]["frame"] if i > 0 else None,
             "next_ball_frame": after[0]["frame"] if after else None,
@@ -104,6 +131,8 @@ def run(track: list[dict], fps: float, scene: dict, frame_size: int, out: Path) 
 
     counts = {o: sum(p["outcome"] == o for p in passes) for o in ("through", "hidden", "bounce")}
     print(f"  {len(passes)} passes: " + ", ".join(f"{n} {o}" for o, n in counts.items()))
+    print(f"  bounces without ever vanishing: {sum(p['touch_only'] for p in passes)}; "
+          f"rolled in from R {sum(p['side_in'] == 'R' for p in passes)}, L {sum(p['side_in'] == 'L' for p in passes)}")
     print(f"  entry -> occlusion start: {secs([p['occlusion_start_frame'] - p['entry_frame'] for p in passes])}")
     thr = [p for p in passes if p["outcome"] == "through"]
     print(f"  occlusion start -> reappear (through): "
