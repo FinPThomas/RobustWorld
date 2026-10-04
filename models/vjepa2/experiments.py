@@ -11,7 +11,10 @@ only thing that differs between "before" and "after" is the predictor's weights.
     codes_rollout  --loss codes --rollout
     commit         --loss commit (motion-weighted L1 + contrast: commit to a ball)
 
-Headline metrics (robust_world.eval.ball), from V-JEPA's imagined future:
+Headline metrics (robust_world.eval.ball), from V-JEPA's imagined future. Threshold-free ones
+assume one ball: each step's cell probabilities are normalised to sum to 1, so a blurred but
+well-placed prediction still counts (columns one_ball_*, argmax_*, cell_auroc). The original
+0.5-threshold scores (*_0.5) stay near their floor until predictions get sharp:
     P(correct)         mean probability of the true outcome (through / bounce / hidden), averaged
                        over outcomes so each counts equally however many clips it has
     balanced accuracy  share of clips whose most likely outcome is right, averaged over outcomes
@@ -57,11 +60,22 @@ def run(args) -> None:
     summary(args)
 
 
-def headline(outcomes: dict, ball: dict) -> dict:
-    return {"p_correct": outcomes.get("p_correct_balanced"), "balanced_accuracy": outcomes.get("balanced_accuracy"),
-            **{f"p_correct_{k}": v for k, v in outcomes.get("p_correct", {}).items()},
-            "ball_hit_rate": ball["hit_rate"], "ball_error_px": ball["error_px"], "phantom_rate": ball["phantom_rate"],
-            "through_vs_blocked_auroc": outcomes.get("outcome_auroc")}
+def headline(m: dict, kind: str) -> dict:
+    """Threshold-free scores first (they show progress while predictions are still blurred), then
+    the 0.5-threshold ones, then the encoder-space alternative (imagined only)."""
+    one, arg = m.get(f"outcomes_{kind}_one_ball", {}), m.get(f"ball_{kind}_argmax", {})
+    thr, ball = m.get(f"outcomes_{kind}", {}), m.get(f"ball_{kind}", {})
+    row = {"cell_auroc": m.get("future_cell_auroc_imagined" if kind == "imagined" else "real_cell_auroc"),
+           "one_ball_p_correct": one.get("p_correct_balanced"), "one_ball_auroc": one.get("outcome_auroc"),
+           "argmax_hit_rate": arg.get("hit_rate"), "argmax_error_px": arg.get("error_px"),
+           "p_correct_0.5": thr.get("p_correct_balanced"), "balanced_accuracy_0.5": thr.get("balanced_accuracy"),
+           "ball_hit_rate_0.5": ball.get("hit_rate")}
+    if kind == "imagined":
+        enc = m.get("outcomes_imagined_encoder_space_one_ball", {})
+        row |= {"enc_space_cell_auroc": m.get("future_cell_auroc_imagined_encoder_space"),
+                "enc_space_one_ball_auroc": enc.get("outcome_auroc"),
+                "enc_space_argmax_hit_rate": m.get("ball_imagined_encoder_space_argmax", {}).get("hit_rate")}
+    return row
 
 
 def summary(args) -> None:
@@ -70,11 +84,11 @@ def summary(args) -> None:
         path = SCORES / name / "metrics.json"
         if path.exists():
             last = json.loads(path.read_text())
-            rows.append({"variant": v, "phase": phase, **headline(last["outcomes_imagined"], last["ball_imagined"])})
+            rows.append({"variant": v, "phase": phase, **headline(last, "imagined")})
     if last is None:
         raise SystemExit(f"no scores under {SCORES}; run `experiments.py run` first")
     # the decoder on the real future frames: the ceiling any imagined future can reach
-    rows.append({"variant": "real frames (ceiling)", "phase": "-", **headline(last["outcomes_real"], last["ball_real"])})
+    rows.append({"variant": "real frames (ceiling)", "phase": "-", **headline(last, "real")})
     OUT.mkdir(parents=True, exist_ok=True)
     head = list(dict.fromkeys(k for r in rows for k in r))
     md = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
@@ -95,13 +109,13 @@ def figure(rows: list[dict]) -> None:
     grid = [r for r in rows if r["phase"] in ("before", "after")]
     variants = list(dict.fromkeys(r["variant"] for r in grid))
     real = next(r for r in rows if r["phase"] == "-")
-    metrics = [("p_correct", "P(correct outcome), balanced"), ("balanced_accuracy", "balanced accuracy"),
-               ("ball_hit_rate", "ball hit rate (within 48 px)")]
-    fig, axes = plt.subplots(1, len(metrics), figsize=(4.2 * len(metrics), 3.8), dpi=120)
+    metrics = [("one_ball_p_correct", "P(correct outcome), one ball"), ("one_ball_auroc", "through vs blocked AUROC"),
+               ("argmax_hit_rate", "most likely cell within 48 px"), ("cell_auroc", "ball cell AUROC")]
+    fig, axes = plt.subplots(1, len(metrics), figsize=(3.8 * len(metrics), 3.8), dpi=120)
     x = np.arange(len(variants))
     for ax, (key, title) in zip(axes, metrics):
         for i, (phase, colour) in enumerate((("before", "#9aa5b1"), ("after", "#c0392b"))):
-            vals = [next((r[key] for r in grid if r["variant"] == v and r["phase"] == phase), None) or 0
+            vals = [next((r.get(key) for r in grid if r["variant"] == v and r["phase"] == phase), None) or 0
                     for v in variants]
             ax.bar(x + (i - 0.5) * 0.38, vals, 0.38, color=colour, label=phase)
         if real.get(key) is not None:
@@ -111,7 +125,8 @@ def figure(rows: list[dict]) -> None:
         ax.set_ylim(0, 1.05)
         ax.set_title(title, fontsize=10)
     axes[0].legend(fontsize=8)
-    fig.suptitle("V-JEPA 2 imagined future, read by the frozen decoder: before vs after post-training", fontsize=10)
+    fig.suptitle("V-JEPA 2 imagined future, frozen decoder, threshold-free scores: before vs after post-training",
+                 fontsize=10)
     fig.tight_layout()
     fig.savefig(OUT / "summary.png")
     plt.close(fig)

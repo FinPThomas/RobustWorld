@@ -98,6 +98,14 @@ def readouts(maps: np.ndarray, far: np.ndarray, near: np.ndarray | None = None) 
     return out
 
 
+def one_ball_readouts(maps: np.ndarray, far: np.ndarray, near: np.ndarray) -> dict:
+    """Threshold-free readouts assuming exactly one ball: each step's cell probabilities are
+    normalised to sum to 1, so a blurred but well-placed prediction still counts. "far" / "near"
+    are the share of the ball on each side of the plank per step (the rest is on or under it)."""
+    q = maps / np.maximum(maps.sum(axis=(1, 2), keepdims=True), 1e-12)
+    return {"far": (q * far).sum(axis=(1, 2)).round(3).tolist(), "near": (q * near).sum(axis=(1, 2)).round(3).tolist()}
+
+
 def returned(near: list[float]) -> float:
     """Bounce score: P(ball on the near side) at a step, times how surely it had left the near side
     at some earlier step. High only for "gone, then back", not for the ball still rolling in."""
