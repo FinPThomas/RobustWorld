@@ -1,0 +1,277 @@
+"""Post-train V-JEPA 2's predictor on the clips, so its imagined future can learn the blockade.
+
+The encoder stays frozen; only the predictor (context tokens -> future tokens) is trained.
+That keeps the measuring stick fixed (CLAUDE.md): the evaluation decoder is fitted on frozen
+context-half features, so it is bit-for-bit the same before and after post-training. It also
+makes training cheap, because every clip's encoder features are computed once and cached.
+
+Objective (the default; other directions plug in at `loss_fn`): the V-JEPA latent prediction
+loss restricted to the future half. The predictor sees the context half's tokens (encoded on
+their own, so nothing leaks from the future) and predicts the encoder's tokens of the real
+target half; L1, as in V-JEPA 2.
+
+Splits: one predictor per cross-validation fold (robust_world.eval.ball.cv_folds, the same
+folds the evaluation uses), each trained only on that fold's training clips. Each checkpoint
+records its training clip ids, and ball_probe_cv.py refuses a checkpoint whose clips overlap
+the fold it scores. `--all` trains one predictor on every clip, for scoring new sessions.
+
+Steps:
+    python models/vjepa2/posttrain.py encode               # cache encoder features (GPU, once)
+    python models/vjepa2/posttrain.py train --run l1       # checkpoints/vjepa2/l1/fold{k}.pt
+    python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
+    python models/vjepa2/blocker_figs.py --per-clip outputs/vjepa2/ball_probe_cv/l1/per_clip.json --label l1
+
+Held-out L1 ("surprise", label-free) is logged per fold for the pretrained and post-trained
+predictor, split by outcome, in checkpoints/vjepa2/<run>/log.json.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import random
+import sys
+import time
+from pathlib import Path
+
+import numpy as np
+import torch
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(REPO / "src"))
+from robust_world.eval.ball import OUTCOMES, cv_folds  # noqa: E402
+
+MANIFEST = REPO / "data" / "processed" / "clips" / "manifest.jsonl"
+CKPT_ROOT = REPO / "checkpoints" / "vjepa2"
+
+
+def cache_dir(model_id: str) -> Path:
+    """Shared with ball_probe_cv.py, so clips are only ever encoded once."""
+    return REPO / "outputs" / "vjepa2" / "cache" / model_id.replace("/", "--")
+
+
+def training_clips(manifest: Path = MANIFEST) -> list[dict]:
+    clips = [json.loads(line) for line in manifest.open()]
+    return [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
+
+
+def cache_matches(enc: dict, clip: dict, tubelet: int = 2) -> bool:
+    """A cached encoding is only reused if it was made from a clip of the same length and split
+    (clips keep their ids when they are re-cut, e.g. from 2 s to 3 s)."""
+    n_ctx = clip["context_frames"][1] + 1
+    return (enc["real"].shape[0] * tubelet == clip["n_frames"]
+            and "context" in enc and enc["context"].shape[0] * tubelet == n_ctx)
+
+
+def load_cached(cache: Path, clip: dict) -> dict | None:
+    path = cache / f"{clip['clip_id']}.pt"
+    if not path.exists():
+        return None
+    enc = torch.load(path)
+    return enc if cache_matches(enc, clip) else None
+
+
+def masks(n_ctx_tok: int, n_all_tok: int, batch: int, device) -> tuple[list, list]:
+    ctx = torch.arange(n_ctx_tok, device=device).unsqueeze(0).repeat(batch, 1)
+    tgt = torch.arange(n_ctx_tok, n_all_tok, device=device).unsqueeze(0).repeat(batch, 1)
+    return [ctx], [tgt]
+
+
+def imagine(predictor, context: torch.Tensor, target_steps: int) -> torch.Tensor:
+    """Context token grids [B, ctx_steps, g, g, D] -> imagined target grids [B, target_steps, g, g, D]."""
+    b, cs, g, _, d = context.shape
+    per_step = g * g
+    cm, tm = masks(cs * per_step, (cs + target_steps) * per_step, b, context.device)
+    pred = predictor(encoder_hidden_states=context.reshape(b, cs * per_step, d),
+                     context_mask=cm, target_mask=tm).last_hidden_state
+    return pred.reshape(b, target_steps, g, g, -1)
+
+
+def load_predictor(model, checkpoint: Path):
+    """Load a post-trained predictor into `model` (in place); returns the checkpoint's metadata."""
+    ck = torch.load(checkpoint, map_location="cpu")
+    model.predictor.load_state_dict(ck["predictor"])
+    return {k: v for k, v in ck.items() if k != "predictor"}
+
+
+def loss_fn(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """V-JEPA's latent L1 between imagined and real target tokens."""
+    return (pred - target).abs().mean()
+
+
+# ---------------------------------------------------------------------------------------------
+
+def encode_all(args) -> None:
+    from transformers import AutoVideoProcessor, VJEPA2Model
+    from ball_probe import encode
+    from robust_world.eval.io import read_video
+    from run import pick_device
+
+    device = pick_device()
+    model = VJEPA2Model.from_pretrained(args.model_id).to(device).eval()
+    proc = AutoVideoProcessor.from_pretrained(args.model_id)
+    mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
+    cache = cache_dir(args.model_id)
+    cache.mkdir(parents=True, exist_ok=True)
+    clips = training_clips(args.manifest)
+    t0, done = time.perf_counter(), 0
+    for i, c in enumerate(clips):
+        if load_cached(cache, c) is None:
+            frames = read_video(REPO / c["path"])
+            enc = encode(model, frames, c["context_frames"][1] + 1, mean, std, device, imagine=True)
+            torch.save(enc, cache / f"{c['clip_id']}.pt")
+            done += 1
+        print(f"\r  {i + 1}/{len(clips)} clips ({done} newly encoded, {time.perf_counter() - t0:.0f}s)",
+              end="", flush=True)
+    print(f"\n-> {cache}")
+
+
+class Cached(torch.utils.data.Dataset):
+    """(context grid, real target grid) per clip, read from the encoding cache on demand."""
+
+    def __init__(self, clips: list[dict], cache: Path):
+        self.clips, self.cache = clips, cache
+        missing = [c["clip_id"] for c in clips if load_cached(cache, c) is None]
+        if missing:
+            raise FileNotFoundError(f"{len(missing)} clips not encoded (e.g. {missing[:3]}); "
+                                    "run `posttrain.py encode` first")
+
+    def __len__(self):
+        return len(self.clips)
+
+    def __getitem__(self, i):
+        enc = load_cached(self.cache, self.clips[i])
+        cs = enc["context"].shape[0]
+        return enc["context"].float(), enc["real"][cs:].float()
+
+
+@torch.no_grad()
+def held_out_l1(predictor, data: Cached, device, autocast) -> list[float]:
+    predictor.eval()
+    out = []
+    for i in range(len(data)):
+        ctx, tgt = data[i]
+        with autocast():
+            pred = imagine(predictor, ctx[None].to(device), tgt.shape[0])
+        out.append(float(loss_fn(pred.float(), tgt[None].to(device))))
+    return out
+
+
+def by_outcome(clips, values) -> dict:
+    return {o: round(float(np.mean([v for c, v in zip(clips, values) if c["outcome"] == o])), 5)
+            for o in OUTCOMES if any(c["outcome"] == o for c in clips)}
+
+
+def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str) -> dict:
+    cache = cache_dir(args.model_id)
+    model.predictor.load_state_dict(base_state)
+    pred = model.predictor
+    tr, te = Cached(train, cache), Cached(test, cache) if test else None
+
+    use_amp = device == "cuda"
+    amp_dtype = torch.bfloat16 if use_amp and torch.cuda.is_bf16_supported() else torch.float16
+
+    def autocast():
+        return torch.autocast("cuda", dtype=amp_dtype, enabled=use_amp)
+
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp and amp_dtype == torch.float16)
+    log = {"tag": tag, "n_train": len(train), "n_test": len(test)}
+    if te:
+        before = held_out_l1(pred, te, device, autocast)
+        log["held_out_l1_pretrained"] = by_outcome(test, before)
+
+    opt = torch.optim.AdamW(pred.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    loader = torch.utils.data.DataLoader(tr, batch_size=args.batch_size, shuffle=True, drop_last=False,
+                                         num_workers=args.workers, generator=torch.Generator().manual_seed(args.seed))
+    total = args.epochs * math.ceil(len(loader) / args.accum)
+    warm = max(1, int(0.1 * total))
+    sched = torch.optim.lr_scheduler.LambdaLR(
+        opt, lambda s: min(1.0, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / total))))
+    log["train_loss"] = []
+    t0 = time.perf_counter()
+    for epoch in range(args.epochs):
+        pred.train()
+        losses = []
+        for step, (ctx, tgt) in enumerate(loader):
+            ctx, tgt = ctx.to(device), tgt.to(device)
+            with autocast():
+                loss = loss_fn(imagine(pred, ctx, tgt.shape[1]).float(), tgt)
+            scaler.scale(loss / args.accum).backward()
+            if (step + 1) % args.accum == 0 or step + 1 == len(loader):
+                scaler.unscale_(opt)
+                torch.nn.utils.clip_grad_norm_(pred.parameters(), 1.0)
+                scaler.step(opt)
+                scaler.update()
+                opt.zero_grad(set_to_none=True)
+                sched.step()
+            losses.append(loss.item())
+        log["train_loss"].append(round(float(np.mean(losses)), 5))
+        print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: train L1 {log['train_loss'][-1]:.4f} "
+              f"({time.perf_counter() - t0:.0f}s)", flush=True)
+    if te:
+        log["held_out_l1_posttrained"] = by_outcome(test, held_out_l1(pred, te, device, autocast))
+        print(f"  [{tag}] held-out L1 pretrained {log['held_out_l1_pretrained']} -> "
+              f"post-trained {log['held_out_l1_posttrained']}")
+    log["seconds"] = round(time.perf_counter() - t0, 1)
+    return log
+
+
+def train_all(args) -> None:
+    from transformers import VJEPA2Model
+    from run import pick_device
+
+    torch.manual_seed(args.seed)
+    random.seed(args.seed)
+    device = pick_device()
+    model = VJEPA2Model.from_pretrained(args.model_id)
+    model.encoder = None                      # frozen and already cached; frees memory
+    model.to(device)
+    base_state = {k: v.detach().clone() for k, v in model.predictor.state_dict().items()}
+    clips = training_clips(args.manifest)
+    out = CKPT_ROOT / args.run
+    out.mkdir(parents=True, exist_ok=True)
+    splits = ([("all", list(range(len(clips))), [])] if args.all else
+              [(f"fold{k}", tr, te) for k, (tr, te) in enumerate(cv_folds(clips, args.folds, args.seed))
+               if args.fold is None or k == args.fold])
+    print(f"post-training the V-JEPA 2 predictor on {device}: {len(clips)} clips, run '{args.run}', "
+          f"{len(splits)} split(s)")
+    logs = []
+    for tag, tr, te in splits:
+        train, test = [clips[i] for i in tr], [clips[i] for i in te]
+        log = train_one(model, base_state, train, test, args, device, tag)
+        torch.save({"predictor": model.predictor.state_dict(), "model_id": args.model_id, "split": tag,
+                    "train_clip_ids": [c["clip_id"] for c in train], "args": vars(args) | {"manifest": str(args.manifest)},
+                    "log": log}, out / f"{tag}.pt")
+        logs.append(log)
+        (out / "log.json").write_text(json.dumps(logs, indent=1))
+    print(f"-> {out}/ ({', '.join(t for t, _, _ in splits)}.pt, log.json)")
+
+
+def main(argv: list[str] | None = None) -> int:
+    from run import MODEL_ID
+
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("stage", choices=["encode", "train"])
+    p.add_argument("--manifest", type=Path, default=MANIFEST)
+    p.add_argument("--model-id", default=MODEL_ID)
+    p.add_argument("--run", default="l1", help="checkpoints go to checkpoints/vjepa2/<run>/")
+    p.add_argument("--folds", type=int, default=5)
+    p.add_argument("--fold", type=int, help="train only this fold")
+    p.add_argument("--all", action="store_true", help="one predictor on every clip (no held-out fold)")
+    p.add_argument("--epochs", type=int, default=10)
+    p.add_argument("--batch-size", type=int, default=2)
+    p.add_argument("--accum", type=int, default=4, help="gradient accumulation steps")
+    p.add_argument("--lr", type=float, default=3e-5)
+    p.add_argument("--weight-decay", type=float, default=0.04)
+    p.add_argument("--workers", type=int, default=2)
+    p.add_argument("--seed", type=int, default=0)
+    args = p.parse_args(argv)
+    encode_all(args) if args.stage == "encode" else train_all(args)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

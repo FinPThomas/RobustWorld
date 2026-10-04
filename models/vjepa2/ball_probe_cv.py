@@ -13,9 +13,15 @@ ever sees predictions, target-half labels or outcomes. Answers, across the whole
 Also times every stage per clip on this device (encodings are cached, so only clips
 encoded in this run are timed).
 
-Outputs (outputs/vjepa2/ball_probe_cv/): curves.png, outcome.png, metrics.json, per_clip.json
+With --predictor-run (checkpoints from posttrain.py), each fold's clips are imagined by the
+predictor post-trained on that fold's training clips; the encoder, the cached features and the
+decoder are the same as for the pretrained model.
+
+Outputs (outputs/vjepa2/ball_probe_cv/, or .../<run>/ with --predictor-run): curves.png,
+outcome.png, metrics.json, per_clip.json
 
     python models/vjepa2/ball_probe_cv.py
+    python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
 """
 
 from __future__ import annotations
@@ -35,6 +41,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
 from ball_probe import encode  # noqa: E402
+from posttrain import cache_dir, imagine, load_cached, load_predictor  # noqa: E402
 from robust_world.eval.ball import (OUTCOMES, ball_labels, cv_folds, far_cells, load_tracking,  # noqa: E402
                                     near_cells, outcome_metrics, source_indices)
 from robust_world.eval.io import read_video  # noqa: E402
@@ -92,7 +99,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe_cv")
     p.add_argument("--model-id", default=MODEL_ID)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--predictor-run", type=Path, help="posttrain.py run folder with fold{k}.pt checkpoints")
     args = p.parse_args(argv)
+    if args.predictor_run and args.out == p.get_default("out"):
+        args.out = args.out / args.predictor_run.name
 
     from sklearn.metrics import roc_auc_score
     from transformers import AutoVideoProcessor, VJEPA2Model
@@ -105,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
     track, passes, scene = load_tracking()
-    cache = REPO / "outputs" / "vjepa2" / "cache" / args.model_id.replace("/", "--")
+    cache = cache_dir(args.model_id)
     cache.mkdir(parents=True, exist_ok=True)
 
     clips = [json.loads(line) for line in args.manifest.open()]
@@ -119,9 +129,8 @@ def main(argv: list[str] | None = None) -> int:
         frames = read_video(REPO / c["path"])
         t_read = time.perf_counter() - t0
         n_ctx = c["context_frames"][1] + 1
-        if path.exists():
-            enc = torch.load(path)
-        else:
+        enc = load_cached(cache, c)
+        if enc is None:
             enc = encode(model, frames, n_ctx, mean, std, device, imagine=True)
             torch.save(enc, path)
             timings.append({"read_video": t_read, **enc["timing"],
@@ -140,12 +149,24 @@ def main(argv: list[str] | None = None) -> int:
     for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
         decoder = eval_decoder.fit([eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr],
                                    seed=args.seed)
+        if args.predictor_run:
+            meta = load_predictor(model, args.predictor_run / f"fold{fold}.pt")
+            test_ids = {data[i]["clip"]["clip_id"] for i in te}
+            if test_ids & set(meta["train_clip_ids"]):
+                raise SystemExit(f"fold{fold}.pt was trained on clips this fold scores; "
+                                 "train it with the same manifest, --folds and --seed")
         for i in te:
             d = data[i]
             cs = d["cs"]
             m_real = decoder(d["enc"]["real"]).numpy()
             m_ctx = decoder(d["enc"]["context"]).numpy()
-            m_imag = decoder(d["enc"]["imagined"]).numpy()
+            if args.predictor_run:
+                with torch.no_grad():
+                    imag = imagine(model.predictor, d["enc"]["context"][None].float().to(device),
+                                   d["enc"]["real"].shape[0] - cs)[0].cpu()
+            else:
+                imag = d["enc"]["imagined"]
+            m_imag = decoder(imag).numpy()
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
@@ -168,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     t_arr = {k: np.array([t[k] for t in timings]) for k in (timings[0] if timings else {})}
     metrics = {
         "model_id": args.model_id, "device": device, "n_clips": len(rows),
+        "predictor_run": str(args.predictor_run) if args.predictor_run else "pretrained",
         **{f"n_{o}": sum(r["outcome"] == o for r in rows) for o in OUTCOMES}, "folds": args.folds,
         "real_cell_auroc": round(float(roc_auc_score(rl, rm)), 3),
         "future_cell_auroc_imagined": round(float(roc_auc_score(fl, fi)), 3),
