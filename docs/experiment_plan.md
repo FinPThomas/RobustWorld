@@ -145,6 +145,22 @@ A separate session on Fin's own computer probes how best to read the encoded sta
 VS Code and doesn't need Colab. Its findings may change *how* we read results, but the frozen-decoder
 rule above stays.
 
+## What is saved, and where
+
+After every step, `results/<date>_<time>_twoday/` on this branch is updated with:
+- `vjepa2/plan/summary.md`, `summary.json`, `summary.png` and `status.md`: the report, plus the plan's
+  state (`state.json`), including which variants were picked as best.
+- `vjepa2/plan/scores/<run>/`: each run's metrics, per-clip readouts and figures, together with its
+  training log and run settings (`train_log.json`, `train_run_info.json`).
+- `vjepa2/plan/blocker/`, `baselines/tapnext/`, `generalise/`, `interpret/`: the blocker figures,
+  TAPNext scores, held-out scores and interpretation outputs.
+- `vjepa2/plan/logs/<step>.txt`: the full console output of every step, for debugging.
+
+The status table in this file is updated at the same time. If a push fails, for example because the
+network drops, everything goes up with the next step's push. Only model weights and the feature cache
+stay on Drive, because they are too large for git. The clean-up cell pushes once more and deletes
+nothing unless that push succeeds.
+
 ## Known limits
 
 - Stages 1–4 read ball tracking for the `start` video only (`load_tracking`). Extra sessions *in the

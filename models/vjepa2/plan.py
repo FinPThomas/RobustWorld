@@ -245,6 +245,9 @@ def step_generalise(args, state, log):
     must([PY, HERE / "posttrain.py", "train", "--all", "--run", f"plan/{v}-all", "--epochs", str(EPOCHS),
           "--manifest", SEEN, "--resume", *VARIANTS[v][0], *T4, *args.extra], log)
     must([PY, HERE / "generalise.py", "score", "--run", CKPT / f"{v}-all", "--manifest", MANIFEST], log)
+    for f in ("log.json", "run_info.json"):
+        if (CKPT / f"{v}-all" / f).exists():
+            shutil.copy2(CKPT / f"{v}-all" / f, PLAN / "generalise" / f"train_{f}")
 
 
 def step_interpret(args, state, log):
@@ -454,27 +457,32 @@ def figure(rows: list[dict]) -> None:
 
 # --------------------------------------------------------------------------------------------- commands
 
-def save_and_push(state: dict, block: str, args) -> None:
+def save_and_push(state: dict, block: str, args) -> bool:
+    """Save the results folder and, with --push, commit it and the status block. -> True once pushed."""
     import save_results
     try:
         dest = save_results.save("twoday", f"two-day plan, {sum(s.get('state') == 'done' for s in state['steps'].values())} "
                                  f"steps done", into=state["results_folder"], source="outputs/vjepa2/plan")
     except SystemExit as e:
         print(e)
-        return
+        return False
     if not args.push:
-        return
+        return False
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
         print("!! --push needs the GITHUB_TOKEN secret; results are saved locally only", flush=True)
-        return
+        return False
     branch = args.branch or save_results.git("rev-parse", "--abbrev-ref", "HEAD")
     try:
         save_results.push(dest, branch, f"https://x-access-token:{token}@{save_results.GITHUB}", token,
                           update=True, status=(DOC, block))
     except (SystemExit, subprocess.CalledProcessError) as e:
-        print(f"!! push failed ({str(e).replace(token, '***')[-300:]}); results stay on Drive, the plan carries on",
-              flush=True)
+        print(f"!! push failed ({str(e).replace(token, '***')[-300:]}); results stay on Drive and go up with the "
+              "next step's push (or `plan.py report --push`)", flush=True)
+        return False
+    state["last_push"] = f"{dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M}"
+    save_state(state)
+    return True
 
 
 def storage_ok() -> str | None:
@@ -571,8 +579,8 @@ def main(argv: list[str] | None = None) -> int:
         state = load_state()
         block = report(state)
         print(block)
-        if args.push:
-            save_and_push(state, block, args)
+        if args.push and not save_and_push(state, block, args):
+            return 1                                  # the clean-up cell relies on this
     return 0
 
 
