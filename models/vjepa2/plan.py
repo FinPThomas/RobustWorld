@@ -35,6 +35,7 @@ import shutil
 import subprocess
 import sys
 import time
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -109,16 +110,43 @@ def gpu() -> str:
         return "no GPU"
 
 
+TAIL: deque[str] = deque(maxlen=200)     # the last lines commands printed, to tell a Drive drop from a real failure
+# What a Colab Google Drive mount raises when it drops (FUSE): not the step's fault, so it is never recorded as failed.
+DRIVE_ERRORS = ("Transport endpoint is not connected", "Errno 107", "Errno 5]", "Input/output error",
+                "Stale file handle", "Software caused connection abort")
+DRIVE_RETRY_WAIT = 60                     # seconds to wait before trying a step once more after a Drive drop
+
+
 def sh(cmd: list[str], log: Path | None = None) -> int:
-    """Run a command, streaming its output to the cell (and to `log`). -> exit code."""
+    """Run a command, streaming its output to the cell (and to `log`, while it can be written). -> exit code."""
     print("$ " + " ".join(str(c) for c in cmd), flush=True)
     proc = subprocess.Popen([str(c) for c in cmd], cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, bufsize=1)
-    with (log.open("a") if log else open(os.devnull, "w")) as f:
-        for line in proc.stdout:
-            print(line, end="", flush=True)
-            f.write(line)
+    try:
+        f = log.open("a") if log else None
+    except OSError:
+        f = None
+    for line in proc.stdout:
+        print(line, end="", flush=True)
+        TAIL.append(line)
+        if f:
+            try:
+                f.write(line)
+            except OSError:
+                f = None
+    if f:
+        try:
+            f.close()
+        except OSError:
+            pass
     return proc.wait()
+
+
+def drive_dropped(error: BaseException) -> str | None:
+    """The Drive problem behind a failed step, or None if the step failed on its own."""
+    text = f"{error!r} {error} " + "".join(TAIL)
+    hit = next((m for m in DRIVE_ERRORS if m in text), None)
+    return storage_ok() or hit
 
 
 def must(cmd: list[str], log: Path | None = None) -> None:
@@ -517,6 +545,10 @@ def run(args) -> None:
         step_split(args, state, None)
     stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
     todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
+    cut_off = [s for s in STEPS if s.stage < min(stages) and state["steps"].get(s.name, {}).get("state") == "running"]
+    if cut_off and not args.only:                     # e.g. encode stopped by a Drive drop: later stages need it
+        print(f"== finishing first what was cut off: {', '.join(s.name for s in cut_off)}", flush=True)
+        todo = cut_off + todo
     for s in todo:
         st = state["steps"].get(s.name, {})
         if st.get("state") == "done" and not args.redo:
@@ -535,13 +567,29 @@ def run(args) -> None:
         save_state(state)
         (PLAN / "logs").mkdir(parents=True, exist_ok=True)
         t0 = time.perf_counter()
-        try:
-            s.fn(args, state, PLAN / "logs" / f"{s.name}.txt")
-            result, error = "done", None
-        except Waiting as e:
-            result, error = "waiting", str(e)
-        except Exception as e:  # noqa: BLE001     one failed step must not stop the plan
-            result, error = "failed", str(e)[-200:]
+        dropped = None
+        for attempt in (1, 2):
+            TAIL.clear()
+            try:
+                s.fn(args, state, PLAN / "logs" / f"{s.name}.txt")
+                result, error, dropped = "done", None, None
+            except Waiting as e:
+                result, error, dropped = "waiting", str(e), None
+            except Exception as e:  # noqa: BLE001     one failed step must not stop the plan
+                result, error = "failed", str(e)[-200:]
+                dropped = drive_dropped(e)
+            if not dropped or attempt == 2:
+                break
+            print(f"!! Google Drive dropped during {s.name} ({dropped}); waiting {DRIVE_RETRY_WAIT} s and trying "
+                  "it once more (finished parts are kept)", flush=True)
+            time.sleep(DRIVE_RETRY_WAIT)
+            if storage_ok():
+                break
+        if dropped:                                   # stop cleanly; the step stays "running", so it is redone
+            print(f"!! Google Drive stopped working during {s.name} ({dropped}). Stopping: nothing is marked failed. "
+                  f"Rerun cell 1 (Google Drive), then cell 2 (Setup), then this cell: it carries on from {s.name}.",
+                  flush=True)
+            break
         state["steps"][s.name] |= {"state": result, "minutes": round((time.perf_counter() - t0) / 60, 1),
                                    "finished": f"{dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M}"}
         state["steps"][s.name].pop("error", None)
