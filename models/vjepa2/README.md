@@ -97,6 +97,10 @@ into encoder space (gamma * prediction + beta, the encoder's own final layer nor
 fitted on raw features, as a check on the layer-norm decoder. `scale_check.py` is a 16-clip
 reproduction of the scale mismatch and its fix.
 
+Unattended (overnight on Colab): `experiments.py run --resume --save-as overnight --push --branch <b>`
+saves and pushes `results/<date>_<time>_overnight/` after every run, logs and skips a run that
+fails, and with `--resume` skips runs already done (state in `outputs/vjepa2/experiments/grid.json`).
+
 `python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
 `results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the
 end. `results/README.md` indexes every saved run.
