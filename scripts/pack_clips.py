@@ -24,6 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "robustworld_clips.zip")
     args = p.parse_args(argv)
+    # Relative paths are from the repo root, wherever this is run from (z.write needs paths under REPO).
+    args.manifest, args.out = ((x if x.is_absolute() else REPO / x).resolve() for x in (args.manifest, args.out))
 
     clips = [json.loads(line) for line in args.manifest.open()]
     kept = [c for c in clips if c.get("include")]
