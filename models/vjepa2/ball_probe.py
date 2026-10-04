@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import json
 import random
 import sys
@@ -56,7 +57,13 @@ PANEL = 256
 CONFIDENT = 0.5
 
 
-def load_tracking(name: str = "start"):
+def video_of(clip: dict) -> str:
+    """Source video name: data/interim/<name>/<name>_512.mp4 -> <name>."""
+    return Path(clip["source_video"]).parent.name
+
+
+@functools.lru_cache(maxsize=None)
+def load_tracking(name: str):
     interim = REPO / "data" / "interim" / name
     track = []
     for r in csv.DictReader((interim / "track.csv").open()):
@@ -64,6 +71,17 @@ def load_tracking(name: str = "start"):
     passes = {p["id"]: p for p in json.loads((interim / "passes.json").read_text())["passes"]}
     scene = json.loads((REPO / "configs" / "scenes" / f"{name}.json").read_text())
     return track, passes, scene
+
+
+def far_cells_for(scene: dict, side_in: str, grid: int) -> np.ndarray:
+    """[grid, grid] bool: cells beyond the plank from the side the ball came in, and clear of it
+    (cell centre at least one cell outside the polygon)."""
+    side = side_fn(scene["occluder_polygon"])
+    occluder = np.array(scene["occluder_polygon"], np.float32)
+    cell_px = CLIP_SIZE / grid
+    centre = [(xx + 0.5) * cell_px for xx in range(grid)]
+    return np.array([[side(x, y) != side_in and cv2.pointPolygonTest(occluder, (x, y), True) < -cell_px
+                      for x in centre] for y in centre])
 
 
 def source_indices(clip: dict, passes: dict, n_frames: int, n_ctx: int) -> list[int]:
@@ -226,7 +244,7 @@ def summary_plot(rows: list[dict], path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--sample", type=Path, default=REPO / "data" / "eval" / "sample5")
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--train-clips", type=int, default=30)
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe")
     p.add_argument("--model-id", default=MODEL_ID)
@@ -240,8 +258,6 @@ def main(argv: list[str] | None = None) -> int:
     proc = AutoVideoProcessor.from_pretrained(args.model_id)
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
-    track, passes, scene = load_tracking()
-    side = side_fn(scene["occluder_polygon"])
 
     sample = json.loads((args.sample / "sample.json").read_text())
     eval_ids = {c["clip_id"] for c in sample["clips"]}
@@ -255,6 +271,7 @@ def main(argv: list[str] | None = None) -> int:
     xs, ys, xi, yi = [], [], [], []
     for i, c in enumerate(train):
         frames = read_video(REPO / c["path"])
+        track, passes, _ = load_tracking(video_of(c))
         lab, _ = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
         enc = cached_encode(cache, c["clip_id"], model, frames, n_ctx, mean, std, device, imagine=True)
         cs = enc["context"].shape[0]
@@ -271,12 +288,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args.out.mkdir(parents=True, exist_ok=True)
     from sklearn.metrics import roc_auc_score
-    occluder = np.array(scene["occluder_polygon"], np.float32)
     cell_px = CLIP_SIZE / grid
-    # Far side = beyond the plank and clear of it (cell centre at least one cell outside the polygon).
-    far_cells = np.array([[side((xx + 0.5) * cell_px, (yy + 0.5) * cell_px) == "L" and
-                           cv2.pointPolygonTest(occluder, ((xx + 0.5) * cell_px, (yy + 0.5) * cell_px), True) < -cell_px
-                           for xx in range(grid)] for yy in range(grid)])
     rows, hits, total, aucs = [], 0, 0, []
     future_lab, future_imag, future_hold, future_kin = [], [], [], []
     # Per target step with the real ball visible: predicted centre error (clip px), or a miss.
@@ -286,6 +298,8 @@ def main(argv: list[str] | None = None) -> int:
     for c in sample["clips"]:
         frames = read_video(args.sample / "clips" / f"{c['clip_id']}.mp4")
         full_rec = next(r for r in pool + [json.loads(line) for line in args.manifest.open()] if r["clip_id"] == c["clip_id"])
+        track, passes, scene = load_tracking(video_of(full_rec))
+        far_cells = far_cells_for(scene, full_rec.get("side_in", "R"), grid)
         src = source_indices(full_rec, passes, len(frames), n_ctx)
         lab, centres = ball_labels(src, track, grid, tub)
         kin_track, fit = extrapolate(track, src, n_ctx, scene["occluder_polygon"], full_rec["source_fps"], CLIP_SIZE)

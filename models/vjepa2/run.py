@@ -134,7 +134,7 @@ def probe(results: list[dict], kind: str, folds: int, seed: int) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--sample", type=Path, help="score an eval sample instead of the whole manifest")
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2")
     p.add_argument("--model-id", default=MODEL_ID)

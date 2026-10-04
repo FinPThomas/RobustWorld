@@ -30,9 +30,16 @@ scene file) or `--from` forces it.
 | `downsize` | `data/interim/<name>/<name>_512.mp4`: 512x512, source fps, no audio |
 | `track`    | `data/interim/<name>/track.csv`: ball position and hand signal for every frame; `backgrounds.npz` |
 | `passes`   | `data/interim/<name>/passes.json`: one record per approach to the occluder |
-| `clips`    | `data/processed/clips/<name>/`: clips, hand masks, `manifest.jsonl`, `sheets/`, `review.jpg` |
+| `clips`    | `data/processed/clips/<name>/<segment>/`: clips, `hand/`, `manifest.jsonl`, `sheets/`, `review.jpg` |
 
-All videos' manifests are merged into `data/processed/clips/manifest.jsonl`.
+Each segment's manifests are merged across videos into
+`data/processed/clips/manifest_<segment>.jsonl`. Segments are never merged with each
+other, and the tools default to `manifest_right.jsonl`.
+
+Tracking (about 40 min for a 36 min video) reruns only when a setting it uses changes:
+the occluder, ball colours, `ignore_regions` or `background_breaks_s` (recorded in
+`data/interim/<name>/track_scene.json`). Editing `segments` or `hand_min_px` only
+re-cuts the clips.
 
 ### Adding a new video
 
@@ -48,6 +55,16 @@ All videos' manifests are merged into `data/processed/clips/manifest.jsonl`.
 
 The defaults assume a fixed camera and a **blue** ball. A different ball colour
 needs `ball_hsv_lo`/`ball_hsv_hi` set in the scene file (OpenCV HSV, H 0–179).
+For a striped ball, also set `ball_stripe_hsv_lo`/`_hi`. The ball is then the blue
+core plus its stripes, so its labelled centre and radius cover the whole ball (see
+`configs/scenes/whole.json`).
+
+`segments` splits a recording into time ranges, each with the side the ball is rolled
+in from (`R`/`L` of the occluder). Each segment gets its own folder and manifest, and a
+clip's whole window must lie inside one segment, so segments share no frames. In
+`whole.json`, `right` (0–1708 s, rolled in from the right) is for training and eval now,
+and `left` (1708 s to the end) is held out for testing later. Without `segments`, the
+whole video is one segment called `all`.
 Moments where the scene changes for good (a prop nudged, the chair moved) are
 detected automatically. To override them, set `background_breaks_s`.
 
@@ -61,21 +78,32 @@ detected automatically. To override them, set `background_breaks_s`.
   counts of 4n+1), condition on the context and generate 25 frames starting
   from frame 23.
 
-Every outcome is kept, including the ball staying hidden: the blockade under the
-occluder is part of what the model has to learn. A clip is marked
-`include: false` only if:
+Every outcome is kept. The outcome is what the ball does by itself within 1.5 s of
+reaching the plank:
+- `through`: comes out on the far side.
+- `bounce`: rolls clear again on the entry side. It either never fully vanishes
+  (`touch_only`) or goes under briefly first.
+- `hidden`: blocked. The ball stays under the plank, or rests against its edge with a
+  sliver showing, until it is picked up.
 
-- the context half is unusable: another ball is in it, or the ball didn't roll
-  in from the frame edge, or
-- a hand touches the ball after the throw. The ball must roll untouched for the
-  last 0.5 s of context and the whole target.
+If the ball doesn't reappear within the clip, `outcome` is `hidden`.
 
-A hand elsewhere in the frame doesn't exclude the clip. It is saved instead as
-`<clip>_hand.npz` (`masks`: bool `[48, 512, 512]`), so it can be masked out of
-the loss or filled in from the background later.
+Each clip goes into one `set`:
+- `main` (`include: true`): usable as is.
+- `hand`: usable except that a hand is in shot somewhere in the 3 s. These clips are set
+  aside in `<segment>/hand/` with `<clip>_hand.npz` (`masks`: bool `[48, 512, 512]`),
+  for masking or inpainting later.
+- `excluded`, for any of these reasons:
+  - the window runs off the video or its segment
+  - another ball is in the context
+  - the ball didn't roll in from the frame edge, or came from the wrong side for its
+    segment
+  - a hand touches the ball after the throw (it must roll untouched for the last 0.5 s
+    of context and the whole target)
 
-Main `manifest.jsonl` fields: `clip_id`, `path`, `include`, `reasons`, `outcome`
-(`through` / `hidden` / `bounce` within the clip), `ball_at_start`,
+Main `manifest.jsonl` fields: `clip_id`, `segment`, `set`, `side_in`, `path`,
+`include`, `reasons`, `outcome` (`through` / `bounce` / `hidden` within the clip),
+`touch_only`, `ball_at_start`,
 `entry_frame`, `occlusion_start_frame`, `hidden_frame`, `reappear_frame`,
 `exit_frame` (clip frame indices, or null when outside the clip),
 `hand_mask_path`, `hand_in_context`, `hand_in_target`, `source_video`,
