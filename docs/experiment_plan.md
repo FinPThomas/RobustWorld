@@ -82,8 +82,9 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
      picks through the frozen decoder.
 8. `--train-frac` for the data-efficiency runs, and `--resume`, which skips folds already trained with the
    same settings, so a Colab disconnect loses at most one fold.
-9. `plan.py`: the stage runner. It keeps its state on Drive, rebuilds the report and pushes after every
-   step.
+9. `plan.py`: the stage runner. It works on Colab's local disk and backs up to Drive after every step and every
+   10 minutes (`scripts/drive_sync.py`), so a Drive drop no longer interrupts a step; it rebuilds the report and
+   pushes after every step.
 10. `generalise.py`: held-out other-side and new-ball scoring.
 11. `interpret.py`: change maps and layer patching.
 12. A paired bootstrap of before vs after on the same clips.

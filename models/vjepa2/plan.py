@@ -1,8 +1,9 @@
 """The two-day experiment plan (docs/experiment_plan.md), stage by stage, resumable.
 
 Every step is one unit of work: encode, a baseline, one training run and its scoring, an analysis.
-Progress is kept in outputs/vjepa2/plan/state.json (keep outputs/ and checkpoints/ on Google
-Drive). A finished step is never redone; a step cut off by a disconnect, or one that failed, runs
+Progress is kept in outputs/vjepa2/plan/state.json. On Colab, outputs/ and checkpoints/ live on the
+local disk and are backed up to Google Drive ($ROBUSTWORLD_BACKUP, set by the notebook) after every
+step and every 10 minutes, so a Drive drop never interrupts a step. A finished step is never redone; a step cut off by a disconnect, or one that failed, runs
 again next time, and training resumes at the first fold not yet saved. After every step the
 report is rebuilt and saved to results/<date>_<time>_twoday/; with --push it is committed to
 GitHub together with the status block in docs/experiment_plan.md.
@@ -34,6 +35,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -57,7 +59,7 @@ CLIPS = REPO / "data" / "processed" / "clips"
 # Training clips: the right-entry segment (whole.mp4 pipeline); older single-video data has manifest.jsonl.
 # Other segments (manifest_left.jsonl) are held out for stage 5.
 MANIFEST = CLIPS / "manifest_right.jsonl" if (CLIPS / "manifest_right.jsonl").exists() else CLIPS / "manifest.jsonl"
-SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; on Drive, so it survives restarts
+SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; backed up to Drive, so it survives restarts
 PY = sys.executable
 
 EPOCHS, LONG_EPOCHS = 10, 30
@@ -532,10 +534,47 @@ def storage_ok() -> str | None:
         return str(e)
 
 
+BACKUP_EVERY = 600                           # seconds between backups to Drive while a step runs
+_backup_lock = threading.Lock()
+
+
+def backup(why: str = "") -> bool:
+    """Copy new work in outputs/ and checkpoints/ to the Drive backup ($ROBUSTWORLD_BACKUP). -> False if it failed."""
+    dest = os.environ.get("ROBUSTWORLD_BACKUP")
+    if not dest:
+        return True
+    import drive_sync
+    with _backup_lock:
+        try:
+            n = sum(drive_sync.sync(REPO / d, Path(dest) / d) for d in ("outputs", "checkpoints"))
+        except OSError as e:
+            print(f"!! backup to Google Drive failed ({e}); the work is safe on Colab's disk and the next backup "
+                  "tries again. If Drive stays down, rerun cell 1 once this cell finishes or stops.", flush=True)
+            return False
+    if n and why:
+        print(f"backed up {n} files to Drive ({why})", flush=True)
+    return True
+
+
+def backup_every(stop: threading.Event) -> None:
+    while not stop.wait(BACKUP_EVERY):
+        backup()
+
+
 def run(args) -> None:
-    if Path("/content").exists() and not (REPO / "outputs").is_symlink():
-        print("!! outputs/ is not on Google Drive: progress is lost if Colab stops. Run the Drive and Setup "
-              "cells first.", flush=True)
+    if Path("/content").exists() and not (REPO / "outputs").is_symlink() and not os.environ.get("ROBUSTWORLD_BACKUP"):
+        print("!! outputs/ is not backed up to Google Drive: progress is lost if Colab stops. Run the Drive and "
+              "Setup cells first.", flush=True)
+    stop = threading.Event()
+    threading.Thread(target=backup_every, args=(stop,), daemon=True).start()
+    try:
+        _run(args)
+    finally:
+        stop.set()
+        backup("end of run")
+
+
+def _run(args) -> None:
     problem = storage_ok()
     if problem:
         raise SystemExit(f"!! can't write to {PLAN} ({problem}): rerun the Google Drive cell, then this one")
@@ -601,8 +640,10 @@ def run(args) -> None:
             block = report(state)
         except Exception as e:  # noqa: BLE001
             print(f"!! report failed: {e!r}", flush=True)
-            continue
-        save_and_push(state, block, args)
+            block = None
+        if block is not None:
+            save_and_push(state, block, args)
+        backup(f"after {s.name}")
     status(args)
 
 

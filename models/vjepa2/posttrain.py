@@ -102,11 +102,21 @@ def cache_matches(enc: dict, clip: dict, tubelet: int = 2) -> bool:
             and "context" in enc and enc["context"].shape[0] * tubelet == n_ctx)
 
 
+def save_atomic(obj, path: Path) -> None:
+    """torch.save via "<name>.tmp" and a rename, so a stop (or a backup copying it) never sees half a file."""
+    tmp = path.with_name(path.name + ".tmp")
+    torch.save(obj, tmp)
+    tmp.replace(path)
+
+
 def load_cached(cache: Path, clip: dict) -> dict | None:
     path = cache / f"{clip['clip_id']}.pt"
     if not path.exists():
         return None
-    enc = torch.load(path)
+    try:
+        enc = torch.load(path)
+    except (RuntimeError, EOFError):          # a half-written file from an older run: encode it again
+        return None
     return enc if cache_matches(enc, clip) else None
 
 
@@ -362,7 +372,7 @@ def encode_all(args) -> None:
         if load_cached(cache, c) is None:
             frames = read_video(REPO / c["path"])
             enc = encode(model, frames, c["context_frames"][1] + 1, mean, std, device, imagine=True)
-            torch.save(enc, cache / f"{c['clip_id']}.pt")
+            save_atomic(enc, cache / f"{c['clip_id']}.pt")
             done += 1
         print(f"\r  {i + 1}/{len(clips)} clips ({done} newly encoded, {time.perf_counter() - t0:.0f}s)",
               end="", flush=True)
@@ -634,7 +644,10 @@ def resumable(path: Path, args, train: list[dict]) -> dict | None:
     """With --resume: the saved log of a split already trained with the same settings and clips."""
     if not path.exists():
         return None
-    ck = torch.load(path, map_location="cpu")
+    try:
+        ck = torch.load(path, map_location="cpu")
+    except (RuntimeError, EOFError):          # half-written: train this split again
+        return None
     saved = ck.get("args", {})
     same = all(saved.get(k) == getattr(args, k, None) for k in RESUME_KEYS)
     return ck.get("log") if same and ck.get("train_clip_ids") == [c["clip_id"] for c in train] else None
@@ -683,9 +696,9 @@ def train_all(args) -> None:
             log = done
         else:
             log, mode = train_one(model, base_state, train, test, args, device, tag)
-            torch.save({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
-                        "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
-                        "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
+            save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
+                         "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
+                         "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
         logs.append(log)
         (out / "log.json").write_text(json.dumps(logs, indent=1))
         info["folds"].append({"split": tag, "seconds": log["seconds"], "best_epoch": log.get("best_epoch"),

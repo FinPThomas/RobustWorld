@@ -172,3 +172,24 @@ def test_cut_off_earlier_step_runs_first(fake):
     assert json.loads(plan.STATE.read_text())["steps"]["encode"]["state"] == "running"
     plan.main(["run", "--stage", "2"])
     assert json.loads(plan.STATE.read_text())["steps"]["encode"]["state"] == "done"
+
+
+def test_backs_up_to_drive_after_every_step_and_survives_a_drop(fake, tmp_path, monkeypatch):
+    drive = tmp_path / "drive"
+    monkeypatch.setenv("ROBUSTWORLD_BACKUP", str(drive))
+    monkeypatch.setattr(plan, "PLAN", tmp_path / "outputs" / "plan")      # as in the repo: the plan under outputs/
+    monkeypatch.setattr(plan, "STATE", tmp_path / "outputs" / "plan" / "state.json")
+    import drive_sync
+    real = drive_sync.sync
+    calls = {"n": 0}
+
+    def flaky(src, dst):                           # Drive is down for the first backup
+        calls["n"] += 1
+        if calls["n"] <= 2:
+            raise OSError(107, "Transport endpoint is not connected")
+        return real(src, dst)
+    monkeypatch.setattr(drive_sync, "sync", flaky)
+    plan.main(["run", "--stage", "1", "--only", "encode", "pretrained"])
+    steps = json.loads(plan.STATE.read_text())["steps"]
+    assert steps["encode"]["state"] == "done" and steps["pretrained"]["state"] == "done"
+    assert json.loads((drive / "outputs" / "plan" / "state.json").read_text())["steps"]["pretrained"]["state"] == "done"
