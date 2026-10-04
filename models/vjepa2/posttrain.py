@@ -400,6 +400,8 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             bank = None                           # too few clips for outside negatives
     rng = torch.Generator().manual_seed(args.seed)
     log["train_loss"], log["train_parts"], log["val_l1"], log["train_clip_l1"] = [], [], [], []
+    log["epochs"] = []                            # one detailed record per epoch (see epoch_record)
+    log["val_clip_ids"] = [c["clip_id"] for c in val]
     best = (float(np.mean(held_out_l1(pred, va, device, autocast, mode))), 0, None) if va else None
     if va:
         log["val_l1_pretrained"] = round(best[0], 5)
@@ -407,7 +409,10 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     t0 = time.perf_counter()
     for epoch in range(args.epochs):
         pred.train()
-        losses, parts = [], []
+        losses, parts, grads = [], [], []
+        t_epoch = time.perf_counter()
+        if device == "cuda":
+            torch.cuda.reset_peak_memory_stats()
         for step, (ctx, tgt, last, ids) in enumerate(loader):
             ctx, tgt, last = ctx.to(device), tgt.to(device), last.to(device)
             neg = None
@@ -423,7 +428,7 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             scaler.scale(loss / args.accum).backward()
             if (step + 1) % args.accum == 0 or step + 1 == len(loader):
                 scaler.unscale_(opt)
-                torch.nn.utils.clip_grad_norm_(pred.parameters(), 1.0)
+                grads.append(float(torch.nn.utils.clip_grad_norm_(pred.parameters(), 1.0)))
                 scaler.step(opt)
                 scaler.update()
                 opt.zero_grad(set_to_none=True)
@@ -435,10 +440,17 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: loss {log['train_loss'][-1]:.4f} "
               + " ".join(f"{k} {v:.4f}" for k, v in (log["train_parts"][-1] if parts else {}).items())
               + f" ({time.perf_counter() - t0:.0f}s)", flush=True)
+        rec = epoch_record(epoch + 1, log, grads, opt, pred, base_state, device, time.perf_counter() - t_epoch)
+        log["epochs"].append(rec)
+        print(f"  [{tag}]   grad norm mean {rec['grad_norm_mean']} max {rec['grad_norm_max']} "
+              f"(clipped {rec['grad_clipped_share']:.0%}, non-finite steps {rec['nonfinite_steps']}), "
+              f"weights moved {rec['weight_change']:.2e}, lr {rec['lr']:.1e}, "
+              f"peak GPU memory {rec['peak_gpu_gb']} GB, {rec['seconds']}s", flush=True)
         if va:
             v = float(np.mean(held_out_l1(pred, va, device, autocast, mode)))
             t = float(np.mean(held_out_l1(pred, tr_probe, device, autocast, mode)))
             log["val_l1"].append(round(v, 5)), log["train_clip_l1"].append(round(t, 5))
+            rec["val_l1"], rec["train_clip_l1"] = round(v, 5), round(t, 5)
             print(f"  [{tag}]   validation L1 {v:.4f} (training clips {t:.4f})", flush=True)
             if v < best[0]:
                 best = (v, epoch + 1, {k: x.detach().to("cpu", copy=True) for k, x in pred.state_dict().items()})
@@ -462,18 +474,41 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         print(f"  [{tag}] held-out L1 pretrained {log['held_out_l1_pretrained']} -> "
               f"post-trained {log['held_out_l1_posttrained']}")
     log["seconds"] = round(time.perf_counter() - t0, 1)
+    log["final_weight_change"] = weight_change(pred, base_state)
     return log, mode
 
 
 @torch.no_grad()
-def scale_check(predictor, enc: dict, device) -> str:
+def weight_change(pred, base_state: dict) -> float:
+    """||weights - pretrained|| / ||pretrained|| over the whole predictor."""
+    num = sum(float((v.float() - base_state[k].float()).norm()) ** 2 for k, v in pred.state_dict().items())
+    den = sum(float(v.float().norm()) ** 2 for v in base_state.values())
+    return round(math.sqrt(num / max(den, 1e-12)), 6)
+
+
+def epoch_record(epoch: int, log: dict, grads: list[float], opt, pred, base_state: dict, device, seconds: float) -> dict:
+    finite = [g for g in grads if math.isfinite(g)]
+    return {"epoch": epoch, "train_loss": log["train_loss"][-1],
+            **({"parts": log["train_parts"][-1]} if log["train_parts"] else {}),
+            "grad_norm_mean": round(float(np.mean(finite)), 4) if finite else None,
+            "grad_norm_max": round(float(np.max(finite)), 4) if finite else None,
+            "grad_clipped_share": round(sum(g > 1.0 for g in finite) / max(len(finite), 1), 3),
+            "nonfinite_steps": len(grads) - len(finite), "optimizer_steps": len(grads),
+            "lr": opt.param_groups[0]["lr"], "weight_change": weight_change(pred, base_state),
+            "peak_gpu_gb": round(torch.cuda.max_memory_allocated() / 2**30, 2) if device == "cuda" else None,
+            "seconds": round(seconds, 1)}
+
+
+@torch.no_grad()
+def scale_check(predictor, enc: dict, device) -> dict:
     """Per-token spread of the pretrained prediction vs the real target, raw and in target space."""
     cs = enc["context"].shape[0]
     real = enc["real"][cs:].float()
     pred = imagine(predictor.eval(), enc["context"][None].float().to(device), real.shape[0])[0].float().cpu()
-    sd = lambda x: float(x.std(-1).mean())  # noqa: E731
-    return (f"scale check: predicted token spread {sd(pred):.3f}, real target {sd(real):.3f} raw / "
-            f"{sd(target_space(real)):.3f} in target space (training and scoring use target space)")
+    sd = lambda x: round(float(x.std(-1).mean()), 4)  # noqa: E731
+    return {"pred_spread": sd(pred), "target_spread_raw": sd(real), "target_spread_ln": sd(target_space(real)),
+            "l1_vs_raw": round(float((pred - real).abs().mean()), 4),
+            "l1_vs_ln": round(float((pred - target_space(real)).abs().mean()), 4)}
 
 
 def train_all(args) -> None:
@@ -490,9 +525,21 @@ def train_all(args) -> None:
     clips = training_clips(args.manifest)
     commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, capture_output=True, text=True)
     print(f"code version {commit.stdout.strip() or 'unknown'}", flush=True)
-    print(scale_check(model.predictor, load_cached(cache_dir(args.model_id), clips[0]), device), flush=True)
+    sc = scale_check(model.predictor, load_cached(cache_dir(args.model_id), clips[0]), device)
+    print(f"scale check: predicted token spread {sc['pred_spread']}, real target {sc['target_spread_raw']} raw / "
+          f"{sc['target_spread_ln']} layer-normalised (training and scoring use the layer-normalised space)",
+          flush=True)
     out = CKPT_ROOT / args.run
     out.mkdir(parents=True, exist_ok=True)
+    import transformers
+    info = {"run": args.run, "code_version": commit.stdout.strip() or "unknown", "device": device,
+            "gpu": torch.cuda.get_device_name() if device == "cuda" else None,
+            "torch": torch.__version__, "transformers": transformers.__version__,
+            "started": time.strftime("%Y-%m-%d %H:%M:%S %Z"), "n_clips": len(clips),
+            "clips_per_outcome": {o: sum(c["outcome"] == o for c in clips) for o in OUTCOMES},
+            "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
+            "scale_check": sc, "folds": []}
+    t_run = time.perf_counter()
     splits = ([("all", list(range(len(clips))), [])] if args.all else
               [(f"fold{k}", tr, te) for k, (tr, te) in enumerate(cv_folds(clips, args.folds, args.seed))
                if args.fold is None or k == args.fold])
@@ -507,7 +554,14 @@ def train_all(args) -> None:
                     "log": log}, out / f"{tag}.pt")
         logs.append(log)
         (out / "log.json").write_text(json.dumps(logs, indent=1))
-    print(f"-> {out}/ ({', '.join(t for t, _, _ in splits)}.pt, log.json)")
+        info["folds"].append({"split": tag, "seconds": log["seconds"], "best_epoch": log.get("best_epoch"),
+                              "overfit": log.get("overfit"), "final_weight_change": log["final_weight_change"],
+                              "held_out_l1_pretrained": log.get("held_out_l1_pretrained"),
+                              "held_out_l1_posttrained": log.get("held_out_l1_posttrained"),
+                              "peak_gpu_gb": max((e["peak_gpu_gb"] or 0 for e in log["epochs"]), default=None)})
+        info["seconds"] = round(time.perf_counter() - t_run, 1)
+        (out / "run_info.json").write_text(json.dumps(info, indent=1))
+    print(f"-> {out}/ ({', '.join(t for t, _, _ in splits)}.pt, log.json, run_info.json)")
 
 
 def main(argv: list[str] | None = None) -> int:
