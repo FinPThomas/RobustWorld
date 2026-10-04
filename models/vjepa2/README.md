@@ -41,6 +41,19 @@ python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip 
 
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
+**Post-training** (`posttrain.py`, or `notebooks/colab_vjepa2_posttrain.ipynb` on Colab).
+Only the predictor is trained; the encoder stays frozen, so the evaluation decoder is identical
+before and after, and features are encoded once and cached.
+```bash
+python scripts/pack_clips.py                                 # on your computer, for Colab
+python models/vjepa2/posttrain.py encode                     # cache encoder features
+python models/vjepa2/posttrain.py train --run l1             # one predictor per CV fold
+python models/vjepa2/ball_probe_cv.py --predictor-run checkpoints/vjepa2/l1
+```
+Each fold's predictor trains only on that fold's training clips (`cv_folds`), and
+`ball_probe_cv.py` refuses a checkpoint that saw the clips it scores. Held-out prediction error
+before and after, per outcome, is in `checkpoints/vjepa2/<run>/log.json`.
+
 **Blocker figures.** `python models/vjepa2/blocker_figs.py` (after `ball_probe_cv.py`) asks whether
 V-JEPA knows *where* the hidden blocker is. It fits nothing: it reads `per_clip.json` from
 `ball_probe_cv.py` and places each pass by where its straight-line path from the context enters and
