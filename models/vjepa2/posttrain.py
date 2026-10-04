@@ -55,6 +55,7 @@ import argparse
 import json
 import math
 import random
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -114,6 +115,22 @@ def imagine(predictor, context: torch.Tensor, target_steps: int) -> torch.Tensor
     return pred.reshape(b, target_steps, g, g, -1)
 
 
+def target_space(x: torch.Tensor) -> torch.Tensor:
+    """V-JEPA's prediction space: each token layer-normalised (no learned scale). V-JEPA 2 was
+    pretrained to predict F.layer_norm(encoder output), and the Hugging Face encoder returns the
+    un-normalised output, so real targets are mapped into this space before they are compared."""
+    return torch.nn.functional.layer_norm(x.float(), x.shape[-1:]).to(x.dtype)
+
+
+def to_encoder_space(pred: torch.Tensor, like: torch.Tensor) -> torch.Tensor:
+    """Map predicted tokens (target space) back to encoder-output scale, giving each token the
+    mean and spread of the same position in `like` (the latest real or fed context step).
+    Used when a prediction is fed back in as context. [B, 1, g, g, D], [B, g, g, D]."""
+    mu = like.float().mean(-1, keepdim=True)[:, None]
+    sd = like.float().std(-1, correction=0, keepdim=True)[:, None]
+    return (target_space(pred).float() * sd + mu).to(like.dtype)
+
+
 def load_predictor(model, checkpoint: Path):
     """Load a post-trained predictor into `model` (in place); returns the checkpoint's metadata,
     including its inference mode ("rollout", "codebook")."""
@@ -141,7 +158,7 @@ def rollout(predictor, context: torch.Tensor, target_steps: int, codebook=None) 
         step = imagine(predictor, seen, 1)
         out.append(step)
         fed = snap(step.detach(), codebook) if codebook is not None else step.detach()
-        seen = torch.cat([seen, fed.to(seen.dtype)], 1)
+        seen = torch.cat([seen, to_encoder_space(fed, seen[:, -1])], 1)
     return torch.cat(out, 1)
 
 
@@ -258,7 +275,9 @@ def encode_all(args) -> None:
 
 
 class Cached(torch.utils.data.Dataset):
-    """(context grid, real target grid) per clip, read from the encoding cache on demand."""
+    """(context grid, real target grid, last real context step, index) per clip, read from the
+    encoding cache on demand. Context stays in encoder space (the predictor's input); the target and
+    last step are in target space (what the predictor outputs)."""
 
     def __init__(self, clips: list[dict], cache: Path):
         self.clips, self.cache = clips, cache
@@ -273,10 +292,10 @@ class Cached(torch.utils.data.Dataset):
     def __getitem__(self, i):
         enc = load_cached(self.cache, self.clips[i])
         cs = enc["context"].shape[0]
-        return enc["context"].float(), enc["real"][cs:].float(), enc["real"][cs - 1].float(), i
+        return (enc["context"].float(), target_space(enc["real"][cs:].float()),
+                target_space(enc["real"][cs - 1].float()), i)
 
 
-@torch.no_grad()
 @torch.no_grad()
 def held_out_l1(predictor, data: Cached, device, autocast, mode: dict) -> list[float]:
     """L1 between the imagined target, in the run's inference mode, and the real one (label-free)."""
@@ -376,6 +395,17 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     return log, mode
 
 
+@torch.no_grad()
+def scale_check(predictor, enc: dict, device) -> str:
+    """Per-token spread of the pretrained prediction vs the real target, raw and in target space."""
+    cs = enc["context"].shape[0]
+    real = enc["real"][cs:].float()
+    pred = imagine(predictor.eval(), enc["context"][None].float().to(device), real.shape[0])[0].float().cpu()
+    sd = lambda x: float(x.std(-1).mean())  # noqa: E731
+    return (f"scale check: predicted token spread {sd(pred):.3f}, real target {sd(real):.3f} raw / "
+            f"{sd(target_space(real)):.3f} in target space (training and scoring use target space)")
+
+
 def train_all(args) -> None:
     from transformers import VJEPA2Model
     from run import pick_device
@@ -388,6 +418,9 @@ def train_all(args) -> None:
     model.to(device)
     base_state = {k: v.detach().clone() for k, v in model.predictor.state_dict().items()}
     clips = training_clips(args.manifest)
+    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, capture_output=True, text=True)
+    print(f"code version {commit.stdout.strip() or 'unknown'}", flush=True)
+    print(scale_check(model.predictor, load_cached(cache_dir(args.model_id), clips[0]), device), flush=True)
     out = CKPT_ROOT / args.run
     out.mkdir(parents=True, exist_ok=True)
     splits = ([("all", list(range(len(clips))), [])] if args.all else

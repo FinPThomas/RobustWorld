@@ -87,3 +87,11 @@ def test_no_other_readout_is_trained_on_vjepa_features():
         text = f.read_text()
         for b in banned:
             assert b not in text, f"{f.name} trains a readout ({b}); use eval_decoder instead"
+
+
+def test_decoder_reads_tokens_regardless_of_scale():
+    """Real (encoder) and imagined (predictor) tokens differ in scale; the decoder must read both alike."""
+    rng = np.random.default_rng(0)
+    dec = fit_decoder([fake_clip(rng, o) for o in ["through", "hidden"] * 3])
+    t = torch.randn(5, D)
+    assert torch.allclose(dec(t), dec(t * 5 + 2), atol=1e-5)
