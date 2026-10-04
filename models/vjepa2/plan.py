@@ -552,23 +552,31 @@ BACKUP_EVERY = 600                           # seconds between backups to Drive 
 _backup_lock = threading.Lock()
 
 
-def backup(why: str = "") -> bool:
-    """Copy new work in outputs/ and checkpoints/ to the Drive backup ($ROBUSTWORLD_BACKUP). -> False if it failed."""
+def _backup(dest: str, why: str, wait: float) -> None:
+    import drive_sync
+    if not _backup_lock.acquire(timeout=wait or 0.01):
+        return                                        # one is already running (Drive may be slow): skip this one
+    try:
+        n = sum(drive_sync.sync(REPO / d, Path(dest) / d, drive_sync.NOT_BACKED_UP) for d in ("outputs", "checkpoints"))
+        if n and why:
+            print(f"backed up {n} files to Drive ({why})", flush=True)
+    except OSError as e:
+        print(f"!! backup to Google Drive failed ({e}); the work is safe on Colab's disk, GitHub pushes go on, and "
+              "the next backup tries again.", flush=True)
+    finally:
+        _backup_lock.release()
+
+
+def backup(why: str = "", wait: float = 0) -> None:
+    """Copy new work in outputs/ and checkpoints/ to the Drive backup ($ROBUSTWORLD_BACKUP), in the background so
+    a slow or dropped Drive never holds up a step or a GitHub push; `wait`: seconds to wait for it at most."""
     dest = os.environ.get("ROBUSTWORLD_BACKUP")
     if not dest:
-        return True
-    import drive_sync
-    with _backup_lock:
-        try:
-            n = sum(drive_sync.sync(REPO / d, Path(dest) / d, drive_sync.NOT_BACKED_UP)
-                    for d in ("outputs", "checkpoints"))
-        except OSError as e:
-            print(f"!! backup to Google Drive failed ({e}); the work is safe on Colab's disk and the next backup "
-                  "tries again. If Drive stays down, rerun cell 1 once this cell finishes or stops.", flush=True)
-            return False
-    if n and why:
-        print(f"backed up {n} files to Drive ({why})", flush=True)
-    return True
+        return
+    t = threading.Thread(target=_backup, args=(dest, why, wait), daemon=True)
+    t.start()
+    if wait:
+        t.join(2 * wait)
 
 
 def backup_every(stop: threading.Event) -> None:
@@ -586,7 +594,7 @@ def run(args) -> None:
         _run(args)
     finally:
         stop.set()
-        backup("end of run")
+        backup("end of run", wait=600)
 
 
 def _run(args) -> None:
