@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -207,3 +208,58 @@ def test_scale_check_runs(tmp_path, monkeypatch):
     res = scale_check.check(tiny_model(), data[:8], data[8:], args, "cpu")
     assert set(res["before"]) == set(res["after"]) and res["relative_weight_change"] > 0
     assert abs(res["before"]["spread_target_ln"] - 1) < 0.05
+
+
+def test_split_guard_refuses_leaks():
+    a = {"clip_id": "a", "source_video": "v", "pass_id": 1}
+    b = {"clip_id": "b", "source_video": "v", "pass_id": 2}
+    posttrain.check_split([a], [b])
+    with pytest.raises(ValueError):
+        posttrain.check_split([a, b], [b])                                         # same clip
+    with pytest.raises(ValueError):
+        posttrain.check_split([a], [dict(b, clip_id="a2", pass_id=1)])            # re-cut of the same pass
+
+
+def overfit_args(**kw):
+    return SimpleNamespace(**{"model_id": "tiny", "lr": 1e-2, "weight_decay": 0.0, "batch_size": 2, "accum": 1,
+                              "epochs": 25, "workers": 0, "seed": 0, "loss": "l1", "val_frac": 0.3,
+                              "patience": 0, "keep_best": True} | kw)
+
+
+def test_overfit_report():
+    ok = posttrain.overfit_report([0.9, 0.8, 0.79], [0.88, 0.78, 0.77], 0.79, 3)
+    assert not ok["flag"]
+    rising = posttrain.overfit_report([0.8, 0.85, 0.9], [0.7, 0.6, 0.5], 0.8, 1)       # validation turns up
+    assert rising["flag"] and rising["val_rise_from_best"] > 0.1
+    memorising = posttrain.overfit_report([0.8, 0.8], [0.4, 0.4], 0.8, 1)             # train far below
+    assert memorising["flag"] and memorising["val_over_train"] == 2.0
+
+
+def test_best_validation_epoch_is_kept(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 14)
+    g = torch.Generator().manual_seed(1)
+    for c in clips:                                       # every clip gets its own random future:
+        enc = torch.load(cache / f"{c['clip_id']}.pt")   # nothing carries over to validation clips
+        enc["real"][CTX:] = torch.randn(ALL - CTX, G, G, D, generator=g).half()
+        torch.save(enc, cache / f"{c['clip_id']}.pt")
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = overfit_args(lr=3e-2, epochs=8)
+    log, mode = posttrain.train_one(model, base, clips[:12], clips[12:], args, "cpu", "fold0")
+    assert log["n_val"] == 4 and len(log["val_l1"]) == 8 and "flag" in log["overfit"]
+    fit, val = posttrain.split_validation(clips[:12], 0.3, 0)
+    now = float(np.mean(posttrain.held_out_l1(model.predictor, posttrain.Cached(val, cache), "cpu",
+                                                  lambda: torch.autocast("cpu", enabled=False), mode)))
+    assert now == pytest.approx(min(log["val_l1"] + [log["val_l1_pretrained"]]), abs=1e-4)
+
+
+def test_learnable_task_is_not_flagged_and_patience_stops(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 14)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    log, _ = posttrain.train_one(model, base, clips[:12], clips[12:], overfit_args(lr=3e-3, epochs=10),
+                                 "cpu", "fold0")
+    assert not log["overfit"]["flag"] and log["best_epoch"] > 0
+    assert min(log["val_l1"]) < log["val_l1_pretrained"]

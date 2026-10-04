@@ -78,13 +78,24 @@ def headline(m: dict, kind: str) -> dict:
     return row
 
 
+def training_health(name: str) -> dict:
+    """From the run's log.json: folds flagged for overfitting and the epochs kept (best validation)."""
+    path = REPO / "checkpoints" / "vjepa2" / name / "log.json"
+    logs = json.loads(path.read_text()) if path.exists() else []
+    logs = [g for g in logs if "overfit" in g]
+    if not logs:
+        return {}
+    return {"overfit_folds": f"{sum(g['overfit']['flag'] for g in logs)}/{len(logs)}",
+            "best_epochs": "/".join(str(g["best_epoch"]) for g in logs)}
+
+
 def summary(args) -> None:
     rows, last = [], None
     for v, phase, name in runs(args.variants):
         path = SCORES / name / "metrics.json"
         if path.exists():
             last = json.loads(path.read_text())
-            rows.append({"variant": v, "phase": phase, **headline(last, "imagined")})
+            rows.append({"variant": v, "phase": phase, **headline(last, "imagined"), **training_health(name)})
     if last is None:
         raise SystemExit(f"no scores under {SCORES}; run `experiments.py run` first")
     # the decoder on the real future frames: the ceiling any imagined future can reach

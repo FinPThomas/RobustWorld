@@ -314,12 +314,56 @@ def by_outcome(clips, values) -> dict:
             for o in OUTCOMES if any(c["outcome"] == o for c in clips)}
 
 
+OVERFIT_RISE = 0.02      # validation L1 this far above its best by the last epoch -> overfitting
+GAP_WARN = 1.25          # validation L1 / training-clip L1 above this -> memorising the training clips
+
+
+def check_split(train: list[dict], test: list[dict]) -> None:
+    """Leakage guard: no clip, and no pass of the same recording, on both sides of a split."""
+    def key(c):
+        return (c.get("source_video"), c.get("pass_id", c["clip_id"]))
+    shared = {c["clip_id"] for c in train} & {c["clip_id"] for c in test}
+    shared |= {str(k) for k in {key(c) for c in train} & {key(c) for c in test}}
+    if shared:
+        raise ValueError(f"train and held-out share {len(shared)} clips/passes, e.g. {sorted(shared)[:3]}")
+
+
+def overfit_report(val_l1: list[float], train_l1: list[float], best_v: float, best_epoch: int) -> dict:
+    """Overfitting signs from per-epoch validation and training-clip L1 (same clip count, eval mode)."""
+    last_v = val_l1[-1] if val_l1 else best_v
+    i = max(best_epoch - 1, 0)
+    gap = val_l1[i] / train_l1[i] if val_l1 else 1.0
+    return {"val_rise_from_best": round(last_v / best_v - 1, 4), "val_over_train": round(gap, 3),
+            "flag": bool(last_v > best_v * (1 + OVERFIT_RISE) or gap > GAP_WARN)}
+
+
+def split_validation(train: list[dict], frac: float, seed: int) -> tuple[list[dict], list[dict]]:
+    """Hold back part of the TRAINING clips to watch for overfitting and pick the best epoch.
+    The fold's held-out clips are never used for that (they are what gets scored)."""
+    n = int(round(len(train) * frac))
+    if frac <= 0 or n < 2 or len(train) - n < 2:
+        return train, []
+    order = list(range(len(train)))
+    random.Random(seed).shuffle(order)
+    val = set(order[:n])
+    return [c for i, c in enumerate(train) if i not in val], [c for i, c in enumerate(train) if i in val]
+
+
 def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str) -> tuple[dict, dict]:
-    """Train one split. Returns (log, inference mode {"rollout", "codebook"})."""
+    """Train one split. Returns (log, inference mode {"rollout", "codebook"}).
+
+    Guards: train and held-out must not share clips or passes; a validation part of the training
+    clips is scored every epoch (L1 in target space), the best epoch's weights are kept
+    (--patience stops early), and the log flags overfitting (validation L1 rising from its best,
+    or far above the L1 on training clips)."""
+    check_split(train, test)
     cache = cache_dir(args.model_id)
     model.predictor.load_state_dict(base_state)
     pred = model.predictor
+    train, val = split_validation(train, getattr(args, "val_frac", 0.1), args.seed)
     tr, te = Cached(train, cache), Cached(test, cache) if test else None
+    va = Cached(val, cache) if val else None
+    tr_probe = Cached(train[:max(len(val), 2)], cache) if val else None    # same-size sample of training clips
     codebook = (fit_codebook(tr, args.codes, args.seed, device=device) if args.loss == "codes" else None)
     mode = {"rollout": bool(getattr(args, "rollout", False)), "codebook": codebook}
 
@@ -336,7 +380,7 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         return torch.autocast("cuda", dtype=amp_dtype, enabled=use_amp)
 
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp and amp_dtype == torch.float16)
-    log = {"tag": tag, "n_train": len(train), "n_test": len(test)}
+    log = {"tag": tag, "n_train": len(train), "n_val": len(val), "n_test": len(test)}
     if te:
         before = held_out_l1(pred, te, device, autocast, mode)
         log["held_out_l1_pretrained"] = by_outcome(test, before)
@@ -355,7 +399,11 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         if len(bank) <= args.batch_size:
             bank = None                           # too few clips for outside negatives
     rng = torch.Generator().manual_seed(args.seed)
-    log["train_loss"], log["train_parts"] = [], []
+    log["train_loss"], log["train_parts"], log["val_l1"], log["train_clip_l1"] = [], [], [], []
+    best = (float(np.mean(held_out_l1(pred, va, device, autocast, mode))), 0, None) if va else None
+    if va:
+        log["val_l1_pretrained"] = round(best[0], 5)
+    patience = getattr(args, "patience", 3)
     t0 = time.perf_counter()
     for epoch in range(args.epochs):
         pred.train()
@@ -387,6 +435,28 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         print(f"  [{tag}] epoch {epoch + 1}/{args.epochs}: loss {log['train_loss'][-1]:.4f} "
               + " ".join(f"{k} {v:.4f}" for k, v in (log["train_parts"][-1] if parts else {}).items())
               + f" ({time.perf_counter() - t0:.0f}s)", flush=True)
+        if va:
+            v = float(np.mean(held_out_l1(pred, va, device, autocast, mode)))
+            t = float(np.mean(held_out_l1(pred, tr_probe, device, autocast, mode)))
+            log["val_l1"].append(round(v, 5)), log["train_clip_l1"].append(round(t, 5))
+            print(f"  [{tag}]   validation L1 {v:.4f} (training clips {t:.4f})", flush=True)
+            if v < best[0]:
+                best = (v, epoch + 1, {k: x.detach().to("cpu", copy=True) for k, x in pred.state_dict().items()})
+            elif patience and epoch + 1 - best[1] >= patience:
+                print(f"  [{tag}]   no validation gain for {patience} epochs: stopping early", flush=True)
+                break
+    if va:
+        log["best_epoch"] = best[1]
+        if best[2] is not None and getattr(args, "keep_best", True):
+            pred.load_state_dict(best[2])             # weights from the best validation epoch
+        elif best[1] == 0 and getattr(args, "keep_best", True):
+            pred.load_state_dict(base_state)          # never beat the pretrained predictor
+        log["overfit"] = overfit_report(log["val_l1"], log["train_clip_l1"], best[0], best[1])
+        if log["overfit"]["flag"]:
+            o = log["overfit"]
+            print(f"  [{tag}] WARNING overfitting: validation L1 rose {o['val_rise_from_best']:.1%} from its best "
+                  f"(epoch {best[1]}); validation / training-clip L1 {o['val_over_train']}. "
+                  f"Kept epoch {best[1]}.", flush=True)
     if te:
         log["held_out_l1_posttrained"] = by_outcome(test, held_out_l1(pred, te, device, autocast, mode))
         print(f"  [{tag}] held-out L1 pretrained {log['held_out_l1_pretrained']} -> "
@@ -461,6 +531,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--loss", choices=["l1", "commit", "codes"], default="l1")
     p.add_argument("--no-grad-checkpoint", dest="grad_checkpoint", action="store_false",
                    help="keep activations instead of recomputing them (faster, needs a big GPU)")
+    p.add_argument("--val-frac", type=float, default=0.1,
+                   help="share of each fold's training clips held back to watch for overfitting (0 = off)")
+    p.add_argument("--patience", type=int, default=3, help="stop after this many epochs without validation gain")
+    p.add_argument("--no-keep-best", dest="keep_best", action="store_false",
+                   help="keep the last epoch instead of the best validation epoch")
     p.add_argument("--rollout", action="store_true", help="predict one step at a time, feeding predictions back")
     p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
     p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")
