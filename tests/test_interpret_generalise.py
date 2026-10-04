@@ -44,12 +44,14 @@ def world(tmp_path, monkeypatch):
         real = torch.randn(ALL, G, G, D, generator=g)
         torch.save({"real": real.half(), "context": real[:CTX].half(), "imagined": real[CTX:].half()},
                    cache / f"c{i}.pt")
-        clips.append({"clip_id": f"c{i}", "source_video": "data/raw/videos/start.mp4", "pass_id": i,
+        clips.append({"clip_id": f"c{i}", "source_video": "data/interim/start/start_512.mp4", "pass_id": i,
                       "outcome": outcome, "include": True, "n_frames": ALL * 2, "fps": 16, "source_fps": 16,
                       "context_frames": [0, CTX * 2 - 1], "path": "x.mp4"})
     manifest = tmp_path / "manifest.jsonl"
     manifest.write_text("".join(json.dumps(c) + "\n" for c in clips))
-    fake_tracking = lambda name="start": (track, passes, SCENE)  # noqa: E731
+    def fake_tracking(name="start"):
+        assert name == "start", f"tracking looked up for {name!r}, not the video's name"
+        return track, passes, SCENE
     monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
     monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
     monkeypatch.setattr(interpret, "load_tracking", fake_tracking)
