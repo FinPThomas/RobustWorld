@@ -170,5 +170,5 @@ rule above stays.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_No steps run yet. Open `notebooks/colab_two_day_plan.ipynb` in Colab, run Setup, then the stage cells._
+_No steps run yet. Open `notebooks/colab_two_day_plan.ipynb` in Colab, run cell 1 (Google Drive, mounted and tested first) and cell 2 (Setup), then the stage cells._
 <!-- status:end -->
