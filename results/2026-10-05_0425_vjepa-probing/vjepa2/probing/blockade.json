@@ -4,10 +4,10 @@
   324.9
  ],
  "p_blocked_tgt": {
-  "config": "last-mlp-nbhd-ln-sigmoid",
-  "auroc_blocked": 0.9999,
-  "mean_inside_range": 0.932,
-  "mean_outside_range": 0.226
+  "config": "L16-mlp-nbhd-ln-sigmoid",
+  "auroc_blocked": 1.0,
+  "mean_inside_range": 0.935,
+  "mean_outside_range": 0.227
  },
  "p_blocked_img": {
   "config": "last-mlp-token-raw-softmax",

@@ -1,0 +1,35 @@
+{
+ "layer": "L4",
+ "model": "linear",
+ "input": "token",
+ "norm": "raw",
+ "head": "sigmoid",
+ "name": "L4-linear-token-raw-sigmoid",
+ "n_clips": 254,
+ "seconds": 53.1,
+ "context": {
+  "cell_auroc": 0.9893,
+  "visible_auroc": 0.9999,
+  "phantom_rate": 0.0385,
+  "hit_rate": 0.9994,
+  "error_px": 14.6,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.8984,
+  "visible_auroc": 0.9985,
+  "phantom_rate": 0.0629,
+  "hit_rate": 1.0,
+  "error_px": 14.5,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.9778,
+  "far_hit_rate": 1.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.9924,
+  "outcome_auroc_one_ball": 0.9986,
+  "p_correct_balanced": 0.658,
+  "balanced_accuracy": 0.681,
+  "p_correct_balanced_one_ball": 0.612,
+  "balanced_accuracy_one_ball": 0.896
+ }
+}

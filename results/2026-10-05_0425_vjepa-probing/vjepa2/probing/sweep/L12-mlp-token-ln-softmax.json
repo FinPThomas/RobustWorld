@@ -1,0 +1,35 @@
+{
+ "layer": "L12",
+ "model": "mlp",
+ "input": "token",
+ "norm": "ln",
+ "head": "softmax",
+ "name": "L12-mlp-token-ln-softmax",
+ "n_clips": 254,
+ "seconds": 111.1,
+ "context": {
+  "cell_auroc": 0.999,
+  "visible_auroc": 0.9998,
+  "phantom_rate": 0.0157,
+  "hit_rate": 0.9404,
+  "error_px": 28.5,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.9667,
+  "visible_auroc": 0.9956,
+  "phantom_rate": 0.2924,
+  "hit_rate": 0.9886,
+  "error_px": 25.8,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.9972,
+  "far_hit_rate": 0.9796,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.9988,
+  "outcome_auroc_one_ball": 0.9986,
+  "p_correct_balanced": 0.696,
+  "balanced_accuracy": 0.745,
+  "p_correct_balanced_one_ball": 0.664,
+  "balanced_accuracy_one_ball": 0.682
+ }
+}
