@@ -1,0 +1,35 @@
+{
+ "layer": "L12",
+ "model": "linear",
+ "input": "nbhd",
+ "norm": "ln",
+ "head": "sigmoid",
+ "name": "L12-linear-nbhd-ln-sigmoid",
+ "n_clips": 254,
+ "seconds": 62.5,
+ "context": {
+  "cell_auroc": 0.9997,
+  "visible_auroc": 0.9997,
+  "phantom_rate": 0.0036,
+  "hit_rate": 0.9994,
+  "error_px": 14.5,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.9978,
+  "visible_auroc": 0.997,
+  "phantom_rate": 0.0,
+  "hit_rate": 0.9958,
+  "error_px": 19.1,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.9993,
+  "far_hit_rate": 1.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.9978,
+  "outcome_auroc_one_ball": 0.995,
+  "p_correct_balanced": 0.665,
+  "balanced_accuracy": 0.668,
+  "p_correct_balanced_one_ball": 0.576,
+  "balanced_accuracy_one_ball": 0.713
+ }
+}
