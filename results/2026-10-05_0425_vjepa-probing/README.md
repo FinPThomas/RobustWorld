@@ -1,8 +1,8 @@
 # 2026-10-05_0425_vjepa-probing
 
 - Name: vjepa-probing
-- Saved: 2026-10-06 12:08 UTC
-- Code commit: `49ee942`
+- Saved: 2026-10-06 14:19 UTC
+- Code commit: `9e59258`
 - Note: V-JEPA 2 encoder probing (models/vjepa2/probing.py), CPU overnight
 
 ## Encoder probing

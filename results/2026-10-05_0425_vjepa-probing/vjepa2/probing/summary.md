@@ -245,6 +245,45 @@ Ceiling (same readout on tracker ball cells): bounce-vs-hidden AUROC 0.9589, P(c
 | last-mlp-global-ln-softmax | 0.504 | 0.339 | 0.352 | 0.571 | 0.328 | 0.333 |
 | last-mlp-global-raw-softmax | 0.503 | 0.339 | 0.352 | 0.570 | 0.328 | 0.333 |
 
+## Other side: right-trained probes on left-segment clips
+
+Fitted on all right clips' real context; the left clips (ball from the other side) are never seen.
+
+| config | ctx cell AUROC | tgt cell AUROC | far cell AUROC | tgt hit | outcome AUROC | bounce-vs-hidden (away) | P(correct, away) | imag outcome AUROC |
+|---|---|---|---|---|---|---|---|---|
+| L8-linear-token-ln-sigmoid | 0.999 | 0.983 | 0.995 | 0.999 | 0.975 | 0.667 | 0.651 |  |
+| L8-linear-token-ln-softmax | 0.964 | 0.943 | 0.965 | 0.927 | 1.000 | 0.771 | 0.538 |  |
+| L8-linear-nbhd-ln-sigmoid | 1.000 | 0.998 | 1.000 | 0.997 | 1.000 | 0.528 | 0.627 |  |
+| L8-linear-nbhd-ln-softmax | 0.988 | 0.978 | 0.994 | 0.949 | 1.000 | 0.681 | 0.515 |  |
+| L8-mlp-token-ln-sigmoid | 0.999 | 0.984 | 0.998 | 0.994 | 0.993 | 0.847 | 0.702 |  |
+| L8-mlp-token-ln-softmax | 0.998 | 0.974 | 0.994 | 0.976 | 0.995 | 0.861 | 0.603 |  |
+| L8-mlp-nbhd-ln-sigmoid | 1.000 | 0.997 | 1.000 | 0.999 | 0.999 | 0.799 | 0.695 |  |
+| L8-mlp-nbhd-ln-softmax | 0.999 | 0.996 | 0.999 | 0.994 | 0.999 | 0.757 | 0.605 |  |
+| L12-linear-token-ln-sigmoid | 0.998 | 0.992 | 0.998 | 1.000 | 0.993 | 0.694 | 0.658 |  |
+| L12-linear-token-ln-softmax | 0.895 | 0.967 | 0.977 | 0.950 | 0.990 | 0.764 | 0.504 |  |
+| L12-linear-nbhd-ln-sigmoid | 1.000 | 0.998 | 1.000 | 0.994 | 1.000 | 0.597 | 0.639 |  |
+| L12-linear-nbhd-ln-softmax | 0.962 | 0.988 | 0.995 | 0.959 | 0.986 | 0.785 | 0.527 |  |
+| L12-mlp-token-ln-sigmoid | 1.000 | 0.994 | 0.999 | 0.999 | 0.995 | 0.757 | 0.704 |  |
+| L12-mlp-token-ln-softmax | 0.999 | 0.988 | 0.996 | 0.996 | 0.988 | 0.826 | 0.656 |  |
+| L12-mlp-nbhd-ln-sigmoid | 1.000 | 0.998 | 1.000 | 0.996 | 1.000 | 0.764 | 0.681 |  |
+| L12-mlp-nbhd-ln-softmax | 0.999 | 0.994 | 0.999 | 0.989 | 1.000 | 0.819 | 0.613 |  |
+| L16-linear-token-ln-sigmoid | 0.998 | 0.988 | 0.998 | 1.000 | 0.987 | 0.715 | 0.661 |  |
+| L16-linear-token-ln-softmax | 0.849 | 0.963 | 0.974 | 0.893 | 0.974 | 0.757 | 0.430 |  |
+| L16-linear-nbhd-ln-sigmoid | 1.000 | 0.998 | 0.999 | 0.993 | 1.000 | 0.569 | 0.643 |  |
+| L16-linear-nbhd-ln-softmax | 0.817 | 0.975 | 0.984 | 0.828 | 0.988 | 0.729 | 0.468 |  |
+| L16-mlp-token-ln-sigmoid | 1.000 | 0.994 | 0.999 | 1.000 | 0.995 | 0.535 | 0.671 |  |
+| L16-mlp-token-ln-softmax | 0.999 | 0.988 | 0.997 | 0.984 | 1.000 | 0.792 | 0.677 |  |
+| L16-mlp-nbhd-ln-sigmoid | 1.000 | 0.999 | 1.000 | 0.996 | 1.000 | 0.826 | 0.691 |  |
+| L16-mlp-nbhd-ln-softmax | 0.999 | 0.996 | 0.999 | 0.996 | 0.990 | 0.861 | 0.612 |  |
+| last-linear-token-ln-sigmoid | 0.999 | 0.981 | 0.995 | 0.997 | 0.993 | 0.743 | 0.667 | 0.490 |
+| last-linear-token-ln-softmax | 0.939 | 0.966 | 0.977 | 0.865 | 0.961 | 0.660 | 0.415 | 0.546 |
+| last-linear-nbhd-ln-sigmoid | 1.000 | 0.998 | 0.999 | 0.992 | 1.000 | 0.611 | 0.643 | 0.435 |
+| last-linear-nbhd-ln-softmax | 0.927 | 0.977 | 0.984 | 0.852 | 0.999 | 0.757 | 0.437 | 0.625 |
+| last-mlp-token-ln-sigmoid | 0.999 | 0.988 | 0.997 | 0.999 | 0.993 | 0.486 | 0.661 | 0.484 |
+| last-mlp-token-ln-softmax | 0.998 | 0.983 | 0.996 | 0.983 | 0.998 | 0.819 | 0.670 | 0.561 |
+| last-mlp-nbhd-ln-sigmoid | 1.000 | 0.998 | 0.999 | 0.987 | 1.000 | 0.792 | 0.702 | 0.438 |
+| last-mlp-nbhd-ln-softmax | 0.998 | 0.993 | 0.999 | 0.989 | 1.000 | 0.819 | 0.641 | 0.423 |
+
 ## Blockade (label-free)
 
 ```json
