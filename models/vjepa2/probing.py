@@ -907,6 +907,7 @@ def cmd_publish(args) -> None:
     r = git("commit", "-q", "-m", f"Probing results: {dest.name}", "--", "results")
     if r.returncode == 0:
         for attempt in range(4):
+            git("pull", "-q", "--rebase", "origin", git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip())
             r = git("push", "origin", "HEAD")
             if r.returncode == 0:
                 break
