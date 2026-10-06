@@ -1,0 +1,2125 @@
+{
+ "fits": {
+  "straight_y": {
+   "first 14 min": {
+    "range": [
+     177.5,
+     319.6
+    ],
+    "in_sample_accuracy": 0.878,
+    "n": 123
+   },
+   "last 14 min": {
+    "range": [
+     194.5,
+     325.0
+    ],
+    "in_sample_accuracy": 0.847,
+    "n": 131
+   },
+   "all": {
+    "range": [
+     187.9,
+     324.9
+    ],
+    "in_sample_accuracy": 0.846,
+    "n": 254
+   }
+  },
+  "actual_y": {
+   "first 14 min": {
+    "range": [
+     172.6,
+     326.8
+    ],
+    "in_sample_accuracy": 0.878,
+    "n": 123
+   },
+   "last 14 min": {
+    "range": [
+     175.3,
+     325.7
+    ],
+    "in_sample_accuracy": 0.847,
+    "n": 131
+   },
+   "all": {
+    "range": [
+     175.1,
+     326.1
+    ],
+    "in_sample_accuracy": 0.862,
+    "n": 254
+   }
+  }
+ },
+ "straight_minus_actual_px": {
+  "median": 4.3,
+  "mae": 21.0,
+  "p90_abs": 54.0
+ },
+ "misfit_rate_by_time": {
+  "0-4 min": {
+   "n": 35,
+   "misfit_rate": 0.06
+  },
+  "4-8 min": {
+   "n": 35,
+   "misfit_rate": 0.11
+  },
+  "8-12 min": {
+   "n": 35,
+   "misfit_rate": 0.26
+  },
+  "12-16 min": {
+   "n": 38,
+   "misfit_rate": 0.13
+  },
+  "16-20 min": {
+   "n": 39,
+   "misfit_rate": 0.23
+  },
+  "20-24 min": {
+   "n": 34,
+   "misfit_rate": 0.12
+  },
+  "24-28 min": {
+   "n": 34,
+   "misfit_rate": 0.12
+  }
+ },
+ "clips": [
+  {
+   "clip_id": "whole_0000",
+   "outcome": "bounce",
+   "minute": 0.04,
+   "straight_y": 266.9976639823078,
+   "actual_y": 269.1,
+   "speed_px_per_frame": 26.3
+  },
+  {
+   "clip_id": "whole_0001",
+   "outcome": "bounce",
+   "minute": 0.14,
+   "straight_y": 279.2598582939797,
+   "actual_y": 283.85,
+   "speed_px_per_frame": 30.6
+  },
+  {
+   "clip_id": "whole_0002",
+   "outcome": "through",
+   "minute": 0.29,
+   "straight_y": 130.61708281406348,
+   "actual_y": 129.7,
+   "speed_px_per_frame": 21.6
+  },
+  {
+   "clip_id": "whole_0003",
+   "outcome": "bounce",
+   "minute": 0.38,
+   "straight_y": 271.8342343677316,
+   "actual_y": 283.65,
+   "speed_px_per_frame": 25.3
+  },
+  {
+   "clip_id": "whole_0004",
+   "outcome": "bounce",
+   "minute": 0.47,
+   "straight_y": 249.0815936754947,
+   "actual_y": 257.4,
+   "speed_px_per_frame": 23.2
+  },
+  {
+   "clip_id": "whole_0005",
+   "outcome": "through",
+   "minute": 0.59,
+   "straight_y": 331.78471110446856,
+   "actual_y": 330.3,
+   "speed_px_per_frame": 28.3
+  },
+  {
+   "clip_id": "whole_0006",
+   "outcome": "through",
+   "minute": 0.68,
+   "straight_y": 147.96790665046683,
+   "actual_y": 149.8,
+   "speed_px_per_frame": 21.1
+  },
+  {
+   "clip_id": "whole_0007",
+   "outcome": "hidden",
+   "minute": 0.77,
+   "straight_y": 278.1258628723628,
+   "actual_y": 291.0,
+   "speed_px_per_frame": 20.5
+  },
+  {
+   "clip_id": "whole_0008",
+   "outcome": "hidden",
+   "minute": 0.88,
+   "straight_y": 98.10061382442002,
+   "actual_y": 129.4,
+   "speed_px_per_frame": 10.4
+  },
+  {
+   "clip_id": "whole_0009",
+   "outcome": "through",
+   "minute": 1.03,
+   "straight_y": 135.26835248161322,
+   "actual_y": 133.27499999999998,
+   "speed_px_per_frame": 13.9
+  },
+  {
+   "clip_id": "whole_0010",
+   "outcome": "through",
+   "minute": 1.14,
+   "straight_y": 162.4592039055306,
+   "actual_y": 161.575,
+   "speed_px_per_frame": 13.9
+  },
+  {
+   "clip_id": "whole_0011",
+   "outcome": "hidden",
+   "minute": 1.24,
+   "straight_y": 237.0139150693144,
+   "actual_y": 195.75,
+   "speed_px_per_frame": 18.5
+  },
+  {
+   "clip_id": "whole_0012",
+   "outcome": "through",
+   "minute": 1.37,
+   "straight_y": 123.37579604420294,
+   "actual_y": 124.875,
+   "speed_px_per_frame": 12.7
+  },
+  {
+   "clip_id": "whole_0013",
+   "outcome": "bounce",
+   "minute": 1.47,
+   "straight_y": 270.92368319876977,
+   "actual_y": 279.8,
+   "speed_px_per_frame": 23.2
+  },
+  {
+   "clip_id": "whole_0014",
+   "outcome": "through",
+   "minute": 1.58,
+   "straight_y": 115.85412993101245,
+   "actual_y": 119.4,
+   "speed_px_per_frame": 17.7
+  },
+  {
+   "clip_id": "whole_0015",
+   "outcome": "hidden",
+   "minute": 1.68,
+   "straight_y": 279.0610414549812,
+   "actual_y": 288.9,
+   "speed_px_per_frame": 24.6
+  },
+  {
+   "clip_id": "whole_0016",
+   "outcome": "hidden",
+   "minute": 1.79,
+   "straight_y": 377.11494683470795,
+   "actual_y": 323.35,
+   "speed_px_per_frame": 28.8
+  },
+  {
+   "clip_id": "whole_0017",
+   "outcome": "through",
+   "minute": 1.91,
+   "straight_y": 174.46999670913573,
+   "actual_y": 168.875,
+   "speed_px_per_frame": 19.6
+  },
+  {
+   "clip_id": "whole_0018",
+   "outcome": "through",
+   "minute": 2.01,
+   "straight_y": 352.438796473068,
+   "actual_y": 345.75,
+   "speed_px_per_frame": 19.1
+  },
+  {
+   "clip_id": "whole_0019",
+   "outcome": "hidden",
+   "minute": 2.1,
+   "straight_y": 299.6166666108533,
+   "actual_y": 309.15,
+   "speed_px_per_frame": 20.6
+  },
+  {
+   "clip_id": "whole_0020",
+   "outcome": "through",
+   "minute": 2.21,
+   "straight_y": 130.82297857262802,
+   "actual_y": 132.15,
+   "speed_px_per_frame": 17.6
+  },
+  {
+   "clip_id": "whole_0021",
+   "outcome": "through",
+   "minute": 2.31,
+   "straight_y": 327.0242784095051,
+   "actual_y": 355.375,
+   "speed_px_per_frame": 20.1
+  },
+  {
+   "clip_id": "whole_0022",
+   "outcome": "through",
+   "minute": 2.42,
+   "straight_y": 157.32115967312455,
+   "actual_y": 156.85,
+   "speed_px_per_frame": 18.6
+  },
+  {
+   "clip_id": "whole_0023",
+   "outcome": "hidden",
+   "minute": 2.52,
+   "straight_y": 218.75815986511537,
+   "actual_y": 195.75,
+   "speed_px_per_frame": 15.8
+  },
+  {
+   "clip_id": "whole_0024",
+   "outcome": "hidden",
+   "minute": 2.64,
+   "straight_y": 232.4049360331919,
+   "actual_y": 205.55,
+   "speed_px_per_frame": 15.2
+  },
+  {
+   "clip_id": "whole_0025",
+   "outcome": "hidden",
+   "minute": 2.75,
+   "straight_y": 271.6136054390973,
+   "actual_y": 249.25,
+   "speed_px_per_frame": 18.9
+  },
+  {
+   "clip_id": "whole_0026",
+   "outcome": "through",
+   "minute": 2.87,
+   "straight_y": 141.4532757711964,
+   "actual_y": 142.2,
+   "speed_px_per_frame": 12.5
+  },
+  {
+   "clip_id": "whole_0027",
+   "outcome": "hidden",
+   "minute": 2.98,
+   "straight_y": 208.00062734526972,
+   "actual_y": 184.2,
+   "speed_px_per_frame": 17.7
+  },
+  {
+   "clip_id": "whole_0028",
+   "outcome": "hidden",
+   "minute": 3.12,
+   "straight_y": 253.81462054703522,
+   "actual_y": 250.3,
+   "speed_px_per_frame": 14.6
+  },
+  {
+   "clip_id": "whole_0029",
+   "outcome": "through",
+   "minute": 3.24,
+   "straight_y": 153.8020866242045,
+   "actual_y": 149.375,
+   "speed_px_per_frame": 19.4
+  },
+  {
+   "clip_id": "whole_0030",
+   "outcome": "hidden",
+   "minute": 3.34,
+   "straight_y": 299.2653204891923,
+   "actual_y": 310.54999999999995,
+   "speed_px_per_frame": 21.1
+  },
+  {
+   "clip_id": "whole_0031",
+   "outcome": "hidden",
+   "minute": 3.45,
+   "straight_y": 268.05316376612944,
+   "actual_y": 232.3,
+   "speed_px_per_frame": 22.5
+  },
+  {
+   "clip_id": "whole_0033",
+   "outcome": "bounce",
+   "minute": 3.63,
+   "straight_y": 304.5913433791953,
+   "actual_y": 313.95,
+   "speed_px_per_frame": 41.0
+  },
+  {
+   "clip_id": "whole_0035",
+   "outcome": "bounce",
+   "minute": 3.87,
+   "straight_y": 281.1978780367777,
+   "actual_y": 283.0,
+   "speed_px_per_frame": 69.0
+  },
+  {
+   "clip_id": "whole_0036",
+   "outcome": "hidden",
+   "minute": 3.95,
+   "straight_y": 215.91671236737176,
+   "actual_y": 223.25,
+   "speed_px_per_frame": 23.5
+  },
+  {
+   "clip_id": "whole_0037",
+   "outcome": "hidden",
+   "minute": 4.06,
+   "straight_y": 182.0643043988921,
+   "actual_y": 62.75,
+   "speed_px_per_frame": 33.7
+  },
+  {
+   "clip_id": "whole_0038",
+   "outcome": "hidden",
+   "minute": 4.19,
+   "straight_y": 387.19991118458813,
+   "actual_y": 249.5,
+   "speed_px_per_frame": 20.9
+  },
+  {
+   "clip_id": "whole_0039",
+   "outcome": "hidden",
+   "minute": 4.31,
+   "straight_y": 254.03038197287987,
+   "actual_y": 221.85,
+   "speed_px_per_frame": 16.6
+  },
+  {
+   "clip_id": "whole_0040",
+   "outcome": "through",
+   "minute": 4.43,
+   "straight_y": 133.0088535685202,
+   "actual_y": 135.15,
+   "speed_px_per_frame": 23.1
+  },
+  {
+   "clip_id": "whole_0041",
+   "outcome": "through",
+   "minute": 4.52,
+   "straight_y": 341.9366963708818,
+   "actual_y": 334.175,
+   "speed_px_per_frame": 26.0
+  },
+  {
+   "clip_id": "whole_0042",
+   "outcome": "through",
+   "minute": 4.61,
+   "straight_y": 111.25674373115271,
+   "actual_y": 115.025,
+   "speed_px_per_frame": 15.6
+  },
+  {
+   "clip_id": "whole_0043",
+   "outcome": "hidden",
+   "minute": 4.7,
+   "straight_y": 309.72519935106664,
+   "actual_y": 364.29999999999995,
+   "speed_px_per_frame": 27.3
+  },
+  {
+   "clip_id": "whole_0044",
+   "outcome": "hidden",
+   "minute": 4.84,
+   "straight_y": 239.7361880830159,
+   "actual_y": 201.15,
+   "speed_px_per_frame": 14.3
+  },
+  {
+   "clip_id": "whole_0045",
+   "outcome": "bounce",
+   "minute": 4.96,
+   "straight_y": 232.32415483625587,
+   "actual_y": 233.65,
+   "speed_px_per_frame": 22.0
+  },
+  {
+   "clip_id": "whole_0046",
+   "outcome": "hidden",
+   "minute": 5.05,
+   "straight_y": 303.41761857682445,
+   "actual_y": 305.6,
+   "speed_px_per_frame": 26.3
+  },
+  {
+   "clip_id": "whole_0047",
+   "outcome": "through",
+   "minute": 5.16,
+   "straight_y": 154.26253257098736,
+   "actual_y": 152.25,
+   "speed_px_per_frame": 21.9
+  },
+  {
+   "clip_id": "whole_0048",
+   "outcome": "through",
+   "minute": 5.25,
+   "straight_y": 142.3238733511247,
+   "actual_y": 144.25,
+   "speed_px_per_frame": 14.4
+  },
+  {
+   "clip_id": "whole_0049",
+   "outcome": "through",
+   "minute": 5.33,
+   "straight_y": 331.2838645289409,
+   "actual_y": 335.775,
+   "speed_px_per_frame": 27.9
+  },
+  {
+   "clip_id": "whole_0050",
+   "outcome": "through",
+   "minute": 5.42,
+   "straight_y": 147.48698646946025,
+   "actual_y": 148.25,
+   "speed_px_per_frame": 18.1
+  },
+  {
+   "clip_id": "whole_0051",
+   "outcome": "through",
+   "minute": 5.51,
+   "straight_y": 116.22804321319413,
+   "actual_y": 119.17500000000001,
+   "speed_px_per_frame": 15.0
+  },
+  {
+   "clip_id": "whole_0052",
+   "outcome": "through",
+   "minute": 5.61,
+   "straight_y": 132.52925918166744,
+   "actual_y": 130.75,
+   "speed_px_per_frame": 18.4
+  },
+  {
+   "clip_id": "whole_0053",
+   "outcome": "hidden",
+   "minute": 5.7,
+   "straight_y": 241.8136541354012,
+   "actual_y": 192.35,
+   "speed_px_per_frame": 20.3
+  },
+  {
+   "clip_id": "whole_0054",
+   "outcome": "hidden",
+   "minute": 5.84,
+   "straight_y": 190.24981543456772,
+   "actual_y": 201.65,
+   "speed_px_per_frame": 21.2
+  },
+  {
+   "clip_id": "whole_0055",
+   "outcome": "through",
+   "minute": 5.97,
+   "straight_y": 115.19471458178992,
+   "actual_y": 122.05,
+   "speed_px_per_frame": 18.4
+  },
+  {
+   "clip_id": "whole_0056",
+   "outcome": "through",
+   "minute": 6.08,
+   "straight_y": 111.65228587144242,
+   "actual_y": 124.87499999999999,
+   "speed_px_per_frame": 17.4
+  },
+  {
+   "clip_id": "whole_0057",
+   "outcome": "hidden",
+   "minute": 6.18,
+   "straight_y": 180.43205264685963,
+   "actual_y": 210.2,
+   "speed_px_per_frame": 28.4
+  },
+  {
+   "clip_id": "whole_0058",
+   "outcome": "hidden",
+   "minute": 6.3,
+   "straight_y": 213.22592480330508,
+   "actual_y": 176.7,
+   "speed_px_per_frame": 23.0
+  },
+  {
+   "clip_id": "whole_0059",
+   "outcome": "through",
+   "minute": 6.46,
+   "straight_y": 108.74244055049907,
+   "actual_y": 117.4,
+   "speed_px_per_frame": 15.8
+  },
+  {
+   "clip_id": "whole_0060",
+   "outcome": "hidden",
+   "minute": 6.55,
+   "straight_y": 188.0542504517263,
+   "actual_y": 130.8,
+   "speed_px_per_frame": 24.3
+  },
+  {
+   "clip_id": "whole_0061",
+   "outcome": "hidden",
+   "minute": 6.65,
+   "straight_y": 298.85527798232846,
+   "actual_y": 340.65,
+   "speed_px_per_frame": 22.6
+  },
+  {
+   "clip_id": "whole_0062",
+   "outcome": "hidden",
+   "minute": 6.8,
+   "straight_y": 198.36083237510582,
+   "actual_y": 167.5,
+   "speed_px_per_frame": 22.2
+  },
+  {
+   "clip_id": "whole_0063",
+   "outcome": "through",
+   "minute": 6.94,
+   "straight_y": 149.58433222015447,
+   "actual_y": 165.825,
+   "speed_px_per_frame": 20.0
+  },
+  {
+   "clip_id": "whole_0064",
+   "outcome": "through",
+   "minute": 7.08,
+   "straight_y": 114.32747122094088,
+   "actual_y": 128.3,
+   "speed_px_per_frame": 19.9
+  },
+  {
+   "clip_id": "whole_0065",
+   "outcome": "through",
+   "minute": 7.18,
+   "straight_y": 86.13834355027097,
+   "actual_y": 120.475,
+   "speed_px_per_frame": 17.1
+  },
+  {
+   "clip_id": "whole_0066",
+   "outcome": "through",
+   "minute": 7.28,
+   "straight_y": 143.88199190910808,
+   "actual_y": 151.77499999999998,
+   "speed_px_per_frame": 18.4
+  },
+  {
+   "clip_id": "whole_0067",
+   "outcome": "through",
+   "minute": 7.39,
+   "straight_y": 122.77508379794035,
+   "actual_y": 132.5,
+   "speed_px_per_frame": 16.6
+  },
+  {
+   "clip_id": "whole_0068",
+   "outcome": "through",
+   "minute": 7.5,
+   "straight_y": 123.34720939558272,
+   "actual_y": 130.325,
+   "speed_px_per_frame": 19.9
+  },
+  {
+   "clip_id": "whole_0069",
+   "outcome": "bounce",
+   "minute": 7.6,
+   "straight_y": 419.9567789602077,
+   "actual_y": 423.05,
+   "speed_px_per_frame": 33.4
+  },
+  {
+   "clip_id": "whole_0070",
+   "outcome": "bounce",
+   "minute": 7.71,
+   "straight_y": 211.98243918631323,
+   "actual_y": 217.7,
+   "speed_px_per_frame": 23.8
+  },
+  {
+   "clip_id": "whole_0071",
+   "outcome": "through",
+   "minute": 7.85,
+   "straight_y": 122.9850040662586,
+   "actual_y": 128.0,
+   "speed_px_per_frame": 14.4
+  },
+  {
+   "clip_id": "whole_0072",
+   "outcome": "hidden",
+   "minute": 8.19,
+   "straight_y": 273.80904581285125,
+   "actual_y": 196.2,
+   "speed_px_per_frame": 24.4
+  },
+  {
+   "clip_id": "whole_0073",
+   "outcome": "hidden",
+   "minute": 8.33,
+   "straight_y": 231.09177393414626,
+   "actual_y": 239.15,
+   "speed_px_per_frame": 16.7
+  },
+  {
+   "clip_id": "whole_0074",
+   "outcome": "through",
+   "minute": 8.43,
+   "straight_y": 109.2767207874967,
+   "actual_y": 126.17500000000001,
+   "speed_px_per_frame": 14.8
+  },
+  {
+   "clip_id": "whole_0075",
+   "outcome": "hidden",
+   "minute": 8.54,
+   "straight_y": 56.08504906430776,
+   "actual_y": 58.0,
+   "speed_px_per_frame": 13.0
+  },
+  {
+   "clip_id": "whole_0076",
+   "outcome": "through",
+   "minute": 8.63,
+   "straight_y": 319.8305109594344,
+   "actual_y": 314.8,
+   "speed_px_per_frame": 25.2
+  },
+  {
+   "clip_id": "whole_0077",
+   "outcome": "hidden",
+   "minute": 8.76,
+   "straight_y": 173.27709388217997,
+   "actual_y": 125.9,
+   "speed_px_per_frame": 20.7
+  },
+  {
+   "clip_id": "whole_0078",
+   "outcome": "hidden",
+   "minute": 8.9,
+   "straight_y": 202.32924935892916,
+   "actual_y": 176.3,
+   "speed_px_per_frame": 18.8
+  },
+  {
+   "clip_id": "whole_0079",
+   "outcome": "through",
+   "minute": 9.04,
+   "straight_y": 138.22694552064297,
+   "actual_y": 140.65,
+   "speed_px_per_frame": 12.9
+  },
+  {
+   "clip_id": "whole_0080",
+   "outcome": "through",
+   "minute": 9.15,
+   "straight_y": 140.67700875435082,
+   "actual_y": 141.72500000000002,
+   "speed_px_per_frame": 13.6
+  },
+  {
+   "clip_id": "whole_0081",
+   "outcome": "bounce",
+   "minute": 9.23,
+   "straight_y": 269.2295097567211,
+   "actual_y": 289.5,
+   "speed_px_per_frame": 31.1
+  },
+  {
+   "clip_id": "whole_0082",
+   "outcome": "bounce",
+   "minute": 9.34,
+   "straight_y": 443.2039401378471,
+   "actual_y": 445.9,
+   "speed_px_per_frame": 26.4
+  },
+  {
+   "clip_id": "whole_0083",
+   "outcome": "hidden",
+   "minute": 9.46,
+   "straight_y": 210.4447384130119,
+   "actual_y": 178.45,
+   "speed_px_per_frame": 17.5
+  },
+  {
+   "clip_id": "whole_0084",
+   "outcome": "through",
+   "minute": 9.57,
+   "straight_y": 371.0524548082998,
+   "actual_y": 357.225,
+   "speed_px_per_frame": 28.9
+  },
+  {
+   "clip_id": "whole_0085",
+   "outcome": "hidden",
+   "minute": 9.68,
+   "straight_y": 304.4138894286848,
+   "actual_y": 314.15,
+   "speed_px_per_frame": 34.0
+  },
+  {
+   "clip_id": "whole_0087",
+   "outcome": "through",
+   "minute": 9.91,
+   "straight_y": 330.71020239576313,
+   "actual_y": 343.975,
+   "speed_px_per_frame": 29.8
+  },
+  {
+   "clip_id": "whole_0088",
+   "outcome": "bounce",
+   "minute": 10.0,
+   "straight_y": 368.56184053789525,
+   "actual_y": 314.6,
+   "speed_px_per_frame": 41.9
+  },
+  {
+   "clip_id": "whole_0089",
+   "outcome": "hidden",
+   "minute": 10.13,
+   "straight_y": 396.60096064397584,
+   "actual_y": 225.15,
+   "speed_px_per_frame": 31.2
+  },
+  {
+   "clip_id": "whole_0090",
+   "outcome": "through",
+   "minute": 10.24,
+   "straight_y": 369.6592161258933,
+   "actual_y": 361.45,
+   "speed_px_per_frame": 27.5
+  },
+  {
+   "clip_id": "whole_0091",
+   "outcome": "bounce",
+   "minute": 10.31,
+   "straight_y": 418.6956664789455,
+   "actual_y": 397.95000000000005,
+   "speed_px_per_frame": 36.6
+  },
+  {
+   "clip_id": "whole_0092",
+   "outcome": "bounce",
+   "minute": 10.4,
+   "straight_y": 270.15883045549987,
+   "actual_y": 275.55,
+   "speed_px_per_frame": 36.3
+  },
+  {
+   "clip_id": "whole_0093",
+   "outcome": "bounce",
+   "minute": 10.54,
+   "straight_y": 229.9364649904371,
+   "actual_y": 237.35,
+   "speed_px_per_frame": 26.1
+  },
+  {
+   "clip_id": "whole_0094",
+   "outcome": "bounce",
+   "minute": 10.65,
+   "straight_y": 220.6113556484643,
+   "actual_y": 216.0,
+   "speed_px_per_frame": 26.5
+  },
+  {
+   "clip_id": "whole_0095",
+   "outcome": "hidden",
+   "minute": 10.79,
+   "straight_y": 282.9142464848262,
+   "actual_y": 227.15,
+   "speed_px_per_frame": 22.1
+  },
+  {
+   "clip_id": "whole_0096",
+   "outcome": "bounce",
+   "minute": 10.88,
+   "straight_y": 300.2456263088988,
+   "actual_y": 302.5,
+   "speed_px_per_frame": 29.1
+  },
+  {
+   "clip_id": "whole_0097",
+   "outcome": "bounce",
+   "minute": 10.99,
+   "straight_y": 307.8393057825233,
+   "actual_y": 311.20000000000005,
+   "speed_px_per_frame": 31.5
+  },
+  {
+   "clip_id": "whole_0098",
+   "outcome": "through",
+   "minute": 11.1,
+   "straight_y": 123.73388957721097,
+   "actual_y": 122.95,
+   "speed_px_per_frame": 18.0
+  },
+  {
+   "clip_id": "whole_0099",
+   "outcome": "through",
+   "minute": 11.18,
+   "straight_y": 361.66773854484575,
+   "actual_y": 348.02500000000003,
+   "speed_px_per_frame": 35.2
+  },
+  {
+   "clip_id": "whole_0100",
+   "outcome": "hidden",
+   "minute": 11.25,
+   "straight_y": 312.39212452223353,
+   "actual_y": 315.45000000000005,
+   "speed_px_per_frame": 29.8
+  },
+  {
+   "clip_id": "whole_0101",
+   "outcome": "hidden",
+   "minute": 11.35,
+   "straight_y": 389.58814234792754,
+   "actual_y": 359.95,
+   "speed_px_per_frame": 30.8
+  },
+  {
+   "clip_id": "whole_0102",
+   "outcome": "through",
+   "minute": 11.47,
+   "straight_y": 354.5905249976334,
+   "actual_y": 346.25,
+   "speed_px_per_frame": 32.6
+  },
+  {
+   "clip_id": "whole_0103",
+   "outcome": "hidden",
+   "minute": 11.56,
+   "straight_y": 252.29555180516707,
+   "actual_y": 208.8,
+   "speed_px_per_frame": 23.6
+  },
+  {
+   "clip_id": "whole_0104",
+   "outcome": "hidden",
+   "minute": 11.66,
+   "straight_y": 267.554690044512,
+   "actual_y": 277.35,
+   "speed_px_per_frame": 18.8
+  },
+  {
+   "clip_id": "whole_0105",
+   "outcome": "hidden",
+   "minute": 11.76,
+   "straight_y": 289.2172581759655,
+   "actual_y": 275.9,
+   "speed_px_per_frame": 20.6
+  },
+  {
+   "clip_id": "whole_0106",
+   "outcome": "bounce",
+   "minute": 11.85,
+   "straight_y": 385.11217296266557,
+   "actual_y": 316.2,
+   "speed_px_per_frame": 41.1
+  },
+  {
+   "clip_id": "whole_0107",
+   "outcome": "bounce",
+   "minute": 11.95,
+   "straight_y": 252.85415622808856,
+   "actual_y": 257.85,
+   "speed_px_per_frame": 40.9
+  },
+  {
+   "clip_id": "whole_0111",
+   "outcome": "bounce",
+   "minute": 12.4,
+   "straight_y": 264.29929512903135,
+   "actual_y": 266.25,
+   "speed_px_per_frame": 35.8
+  },
+  {
+   "clip_id": "whole_0112",
+   "outcome": "through",
+   "minute": 12.52,
+   "straight_y": 154.7583277408856,
+   "actual_y": 152.5,
+   "speed_px_per_frame": 29.1
+  },
+  {
+   "clip_id": "whole_0113",
+   "outcome": "through",
+   "minute": 12.59,
+   "straight_y": 375.3243707620516,
+   "actual_y": 332.75,
+   "speed_px_per_frame": 29.2
+  },
+  {
+   "clip_id": "whole_0114",
+   "outcome": "hidden",
+   "minute": 12.66,
+   "straight_y": 400.6016076822002,
+   "actual_y": 242.2,
+   "speed_px_per_frame": 30.8
+  },
+  {
+   "clip_id": "whole_0115",
+   "outcome": "through",
+   "minute": 12.74,
+   "straight_y": 114.49131108277943,
+   "actual_y": 112.975,
+   "speed_px_per_frame": 21.5
+  },
+  {
+   "clip_id": "whole_0116",
+   "outcome": "through",
+   "minute": 12.83,
+   "straight_y": 174.12529017062474,
+   "actual_y": 168.55,
+   "speed_px_per_frame": 19.2
+  },
+  {
+   "clip_id": "whole_0117",
+   "outcome": "through",
+   "minute": 12.92,
+   "straight_y": 335.9062931109994,
+   "actual_y": 331.575,
+   "speed_px_per_frame": 30.4
+  },
+  {
+   "clip_id": "whole_0118",
+   "outcome": "bounce",
+   "minute": 13.0,
+   "straight_y": null,
+   "actual_y": 429.65,
+   "speed_px_per_frame": 31.1
+  },
+  {
+   "clip_id": "whole_0119",
+   "outcome": "through",
+   "minute": 13.08,
+   "straight_y": 358.38566397584464,
+   "actual_y": 339.29999999999995,
+   "speed_px_per_frame": 24.9
+  },
+  {
+   "clip_id": "whole_0120",
+   "outcome": "through",
+   "minute": 13.15,
+   "straight_y": 383.50101800420344,
+   "actual_y": 368.20000000000005,
+   "speed_px_per_frame": 27.5
+  },
+  {
+   "clip_id": "whole_0121",
+   "outcome": "hidden",
+   "minute": 13.21,
+   "straight_y": 319.3564458563129,
+   "actual_y": 333.3,
+   "speed_px_per_frame": 27.0
+  },
+  {
+   "clip_id": "whole_0122",
+   "outcome": "bounce",
+   "minute": 13.29,
+   "straight_y": 309.62922451242866,
+   "actual_y": 308.8,
+   "speed_px_per_frame": 28.4
+  },
+  {
+   "clip_id": "whole_0123",
+   "outcome": "hidden",
+   "minute": 13.41,
+   "straight_y": 400.97728398672336,
+   "actual_y": 206.55,
+   "speed_px_per_frame": 27.9
+  },
+  {
+   "clip_id": "whole_0124",
+   "outcome": "through",
+   "minute": 13.56,
+   "straight_y": 134.767197389183,
+   "actual_y": 134.02499999999998,
+   "speed_px_per_frame": 15.5
+  },
+  {
+   "clip_id": "whole_0125",
+   "outcome": "through",
+   "minute": 13.64,
+   "straight_y": 133.65694488741204,
+   "actual_y": 137.9,
+   "speed_px_per_frame": 23.3
+  },
+  {
+   "clip_id": "whole_0126",
+   "outcome": "bounce",
+   "minute": 13.71,
+   "straight_y": 210.26920836884153,
+   "actual_y": 214.55,
+   "speed_px_per_frame": 34.9
+  },
+  {
+   "clip_id": "whole_0127",
+   "outcome": "bounce",
+   "minute": 13.83,
+   "straight_y": 247.35741582709986,
+   "actual_y": 252.95,
+   "speed_px_per_frame": 29.1
+  },
+  {
+   "clip_id": "whole_0128",
+   "outcome": "hidden",
+   "minute": 13.96,
+   "straight_y": 229.2711257102842,
+   "actual_y": 253.7,
+   "speed_px_per_frame": 33.9
+  },
+  {
+   "clip_id": "whole_0129",
+   "outcome": "bounce",
+   "minute": 14.06,
+   "straight_y": 277.4329940446923,
+   "actual_y": 280.8,
+   "speed_px_per_frame": 28.3
+  },
+  {
+   "clip_id": "whole_0130",
+   "outcome": "bounce",
+   "minute": 14.17,
+   "straight_y": 285.6013965143352,
+   "actual_y": 294.3,
+   "speed_px_per_frame": 23.9
+  },
+  {
+   "clip_id": "whole_0131",
+   "outcome": "hidden",
+   "minute": 14.28,
+   "straight_y": 199.9942272970494,
+   "actual_y": 209.65,
+   "speed_px_per_frame": 20.4
+  },
+  {
+   "clip_id": "whole_0132",
+   "outcome": "hidden",
+   "minute": 14.42,
+   "straight_y": 159.81060719356174,
+   "actual_y": 192.2,
+   "speed_px_per_frame": 20.2
+  },
+  {
+   "clip_id": "whole_0133",
+   "outcome": "bounce",
+   "minute": 14.52,
+   "straight_y": 197.2386123101835,
+   "actual_y": 225.0,
+   "speed_px_per_frame": 27.4
+  },
+  {
+   "clip_id": "whole_0134",
+   "outcome": "through",
+   "minute": 14.65,
+   "straight_y": 165.07850423701717,
+   "actual_y": 167.95,
+   "speed_px_per_frame": 23.1
+  },
+  {
+   "clip_id": "whole_0135",
+   "outcome": "through",
+   "minute": 14.74,
+   "straight_y": 165.57540632707878,
+   "actual_y": 162.95,
+   "speed_px_per_frame": 20.1
+  },
+  {
+   "clip_id": "whole_0136",
+   "outcome": "through",
+   "minute": 14.81,
+   "straight_y": 127.44584071734174,
+   "actual_y": 124.39999999999999,
+   "speed_px_per_frame": 19.6
+  },
+  {
+   "clip_id": "whole_0137",
+   "outcome": "through",
+   "minute": 14.9,
+   "straight_y": 152.191320378746,
+   "actual_y": 153.85,
+   "speed_px_per_frame": 18.6
+  },
+  {
+   "clip_id": "whole_0138",
+   "outcome": "through",
+   "minute": 14.98,
+   "straight_y": 122.05532259225608,
+   "actual_y": 125.35,
+   "speed_px_per_frame": 22.1
+  },
+  {
+   "clip_id": "whole_0139",
+   "outcome": "bounce",
+   "minute": 15.06,
+   "straight_y": 204.7642202980004,
+   "actual_y": 213.7,
+   "speed_px_per_frame": 23.4
+  },
+  {
+   "clip_id": "whole_0140",
+   "outcome": "through",
+   "minute": 15.19,
+   "straight_y": 108.82096938770012,
+   "actual_y": 120.75,
+   "speed_px_per_frame": 15.1
+  },
+  {
+   "clip_id": "whole_0141",
+   "outcome": "hidden",
+   "minute": 15.29,
+   "straight_y": 315.00185573718477,
+   "actual_y": 330.55,
+   "speed_px_per_frame": 27.6
+  },
+  {
+   "clip_id": "whole_0142",
+   "outcome": "bounce",
+   "minute": 15.4,
+   "straight_y": 286.7251277474739,
+   "actual_y": 296.35,
+   "speed_px_per_frame": 24.8
+  },
+  {
+   "clip_id": "whole_0143",
+   "outcome": "bounce",
+   "minute": 15.5,
+   "straight_y": 446.7367806503596,
+   "actual_y": 330.85,
+   "speed_px_per_frame": 30.2
+  },
+  {
+   "clip_id": "whole_0144",
+   "outcome": "through",
+   "minute": 15.62,
+   "straight_y": 365.51142659820425,
+   "actual_y": 354.65,
+   "speed_px_per_frame": 26.7
+  },
+  {
+   "clip_id": "whole_0145",
+   "outcome": "bounce",
+   "minute": 15.69,
+   "straight_y": 234.12760006280638,
+   "actual_y": 237.65,
+   "speed_px_per_frame": 27.4
+  },
+  {
+   "clip_id": "whole_0146",
+   "outcome": "through",
+   "minute": 15.79,
+   "straight_y": 348.3610659242171,
+   "actual_y": 329.1,
+   "speed_px_per_frame": 30.3
+  },
+  {
+   "clip_id": "whole_0147",
+   "outcome": "bounce",
+   "minute": 15.87,
+   "straight_y": 302.56338037062875,
+   "actual_y": 294.0,
+   "speed_px_per_frame": 31.1
+  },
+  {
+   "clip_id": "whole_0148",
+   "outcome": "through",
+   "minute": 15.96,
+   "straight_y": 353.64687243493853,
+   "actual_y": 341.625,
+   "speed_px_per_frame": 33.3
+  },
+  {
+   "clip_id": "whole_0149",
+   "outcome": "bounce",
+   "minute": 16.02,
+   "straight_y": 427.2327251254365,
+   "actual_y": 408.15,
+   "speed_px_per_frame": 43.0
+  },
+  {
+   "clip_id": "whole_0150",
+   "outcome": "through",
+   "minute": 16.12,
+   "straight_y": 331.8320739289404,
+   "actual_y": 335.25,
+   "speed_px_per_frame": 28.0
+  },
+  {
+   "clip_id": "whole_0151",
+   "outcome": "hidden",
+   "minute": 16.22,
+   "straight_y": 308.13822633941686,
+   "actual_y": 309.6,
+   "speed_px_per_frame": 24.2
+  },
+  {
+   "clip_id": "whole_0152",
+   "outcome": "bounce",
+   "minute": 16.31,
+   "straight_y": 429.7867702822899,
+   "actual_y": 408.15,
+   "speed_px_per_frame": 31.5
+  },
+  {
+   "clip_id": "whole_0153",
+   "outcome": "bounce",
+   "minute": 16.41,
+   "straight_y": 313.9254219507265,
+   "actual_y": 309.6,
+   "speed_px_per_frame": 32.2
+  },
+  {
+   "clip_id": "whole_0154",
+   "outcome": "bounce",
+   "minute": 16.53,
+   "straight_y": 307.20436366904266,
+   "actual_y": 297.1,
+   "speed_px_per_frame": 26.6
+  },
+  {
+   "clip_id": "whole_0155",
+   "outcome": "bounce",
+   "minute": 16.64,
+   "straight_y": 296.41764766560607,
+   "actual_y": 289.5,
+   "speed_px_per_frame": 23.8
+  },
+  {
+   "clip_id": "whole_0156",
+   "outcome": "through",
+   "minute": 16.73,
+   "straight_y": 336.690186624493,
+   "actual_y": 351.45,
+   "speed_px_per_frame": 29.8
+  },
+  {
+   "clip_id": "whole_0157",
+   "outcome": "through",
+   "minute": 16.81,
+   "straight_y": 343.4976671543302,
+   "actual_y": 333.6,
+   "speed_px_per_frame": 28.7
+  },
+  {
+   "clip_id": "whole_0158",
+   "outcome": "through",
+   "minute": 16.88,
+   "straight_y": 359.8686213447459,
+   "actual_y": 351.425,
+   "speed_px_per_frame": 23.8
+  },
+  {
+   "clip_id": "whole_0159",
+   "outcome": "through",
+   "minute": 16.95,
+   "straight_y": 364.61684689095165,
+   "actual_y": 350.3,
+   "speed_px_per_frame": 26.7
+  },
+  {
+   "clip_id": "whole_0160",
+   "outcome": "bounce",
+   "minute": 17.02,
+   "straight_y": 282.38713340965296,
+   "actual_y": 285.15,
+   "speed_px_per_frame": 27.8
+  },
+  {
+   "clip_id": "whole_0161",
+   "outcome": "through",
+   "minute": 17.12,
+   "straight_y": 104.99966156594405,
+   "actual_y": 117.94999999999999,
+   "speed_px_per_frame": 19.0
+  },
+  {
+   "clip_id": "whole_0162",
+   "outcome": "through",
+   "minute": 17.27,
+   "straight_y": 139.4322145122654,
+   "actual_y": 138.5,
+   "speed_px_per_frame": 22.4
+  },
+  {
+   "clip_id": "whole_0166",
+   "outcome": "through",
+   "minute": 17.63,
+   "straight_y": 137.64220745953065,
+   "actual_y": 129.75,
+   "speed_px_per_frame": 16.4
+  },
+  {
+   "clip_id": "whole_0167",
+   "outcome": "through",
+   "minute": 17.71,
+   "straight_y": 152.49557201638524,
+   "actual_y": 146.5,
+   "speed_px_per_frame": 15.3
+  },
+  {
+   "clip_id": "whole_0168",
+   "outcome": "through",
+   "minute": 17.79,
+   "straight_y": 157.73184897871678,
+   "actual_y": 148.95,
+   "speed_px_per_frame": 17.4
+  },
+  {
+   "clip_id": "whole_0169",
+   "outcome": "hidden",
+   "minute": 17.87,
+   "straight_y": 81.974827905225,
+   "actual_y": 76.9,
+   "speed_px_per_frame": 18.5
+  },
+  {
+   "clip_id": "whole_0170",
+   "outcome": "through",
+   "minute": 17.96,
+   "straight_y": 151.37560066995633,
+   "actual_y": 149.0,
+   "speed_px_per_frame": 16.1
+  },
+  {
+   "clip_id": "whole_0171",
+   "outcome": "through",
+   "minute": 18.05,
+   "straight_y": 114.60516276183651,
+   "actual_y": 113.17500000000001,
+   "speed_px_per_frame": 15.7
+  },
+  {
+   "clip_id": "whole_0172",
+   "outcome": "through",
+   "minute": 18.14,
+   "straight_y": 133.45074355838997,
+   "actual_y": 128.8,
+   "speed_px_per_frame": 13.1
+  },
+  {
+   "clip_id": "whole_0173",
+   "outcome": "hidden",
+   "minute": 18.25,
+   "straight_y": 87.75593971501104,
+   "actual_y": 95.65,
+   "speed_px_per_frame": 11.6
+  },
+  {
+   "clip_id": "whole_0174",
+   "outcome": "through",
+   "minute": 18.32,
+   "straight_y": 145.08318189554714,
+   "actual_y": 144.2,
+   "speed_px_per_frame": 19.5
+  },
+  {
+   "clip_id": "whole_0175",
+   "outcome": "bounce",
+   "minute": 18.41,
+   "straight_y": 96.63051882613199,
+   "actual_y": 101.4,
+   "speed_px_per_frame": 16.2
+  },
+  {
+   "clip_id": "whole_0176",
+   "outcome": "hidden",
+   "minute": 18.49,
+   "straight_y": 85.46166643165388,
+   "actual_y": 98.2,
+   "speed_px_per_frame": 15.3
+  },
+  {
+   "clip_id": "whole_0177",
+   "outcome": "hidden",
+   "minute": 18.57,
+   "straight_y": 95.36485875334009,
+   "actual_y": 131.1,
+   "speed_px_per_frame": 13.7
+  },
+  {
+   "clip_id": "whole_0178",
+   "outcome": "through",
+   "minute": 18.7,
+   "straight_y": 153.13974228259386,
+   "actual_y": 148.35000000000002,
+   "speed_px_per_frame": 14.5
+  },
+  {
+   "clip_id": "whole_0179",
+   "outcome": "hidden",
+   "minute": 18.79,
+   "straight_y": 209.32013980977388,
+   "actual_y": 166.15,
+   "speed_px_per_frame": 15.6
+  },
+  {
+   "clip_id": "whole_0180",
+   "outcome": "through",
+   "minute": 18.91,
+   "straight_y": 148.3921463435201,
+   "actual_y": 136.875,
+   "speed_px_per_frame": 14.5
+  },
+  {
+   "clip_id": "whole_0181",
+   "outcome": "hidden",
+   "minute": 19.0,
+   "straight_y": 275.3863152429025,
+   "actual_y": 235.95,
+   "speed_px_per_frame": 16.0
+  },
+  {
+   "clip_id": "whole_0182",
+   "outcome": "through",
+   "minute": 19.14,
+   "straight_y": 206.67861927273856,
+   "actual_y": 149.625,
+   "speed_px_per_frame": 15.7
+  },
+  {
+   "clip_id": "whole_0183",
+   "outcome": "through",
+   "minute": 19.27,
+   "straight_y": 157.80178116466394,
+   "actual_y": 143.35,
+   "speed_px_per_frame": 12.9
+  },
+  {
+   "clip_id": "whole_0184",
+   "outcome": "hidden",
+   "minute": 19.37,
+   "straight_y": 238.9781964260976,
+   "actual_y": 217.7,
+   "speed_px_per_frame": 14.5
+  },
+  {
+   "clip_id": "whole_0185",
+   "outcome": "hidden",
+   "minute": 19.48,
+   "straight_y": 216.8775515573302,
+   "actual_y": 176.7,
+   "speed_px_per_frame": 12.9
+  },
+  {
+   "clip_id": "whole_0186",
+   "outcome": "hidden",
+   "minute": 19.62,
+   "straight_y": 314.3767168858666,
+   "actual_y": 253.14999999999998,
+   "speed_px_per_frame": 16.9
+  },
+  {
+   "clip_id": "whole_0187",
+   "outcome": "through",
+   "minute": 19.71,
+   "straight_y": null,
+   "actual_y": 339.125,
+   "speed_px_per_frame": 26.2
+  },
+  {
+   "clip_id": "whole_0188",
+   "outcome": "through",
+   "minute": 19.8,
+   "straight_y": 174.07361678906224,
+   "actual_y": 161.525,
+   "speed_px_per_frame": 19.3
+  },
+  {
+   "clip_id": "whole_0189",
+   "outcome": "bounce",
+   "minute": 19.86,
+   "straight_y": 354.19351469873203,
+   "actual_y": 276.79999999999995,
+   "speed_px_per_frame": 22.3
+  },
+  {
+   "clip_id": "whole_0190",
+   "outcome": "bounce",
+   "minute": 19.97,
+   "straight_y": 262.04114320829365,
+   "actual_y": 212.7,
+   "speed_px_per_frame": 19.3
+  },
+  {
+   "clip_id": "whole_0192",
+   "outcome": "through",
+   "minute": 20.19,
+   "straight_y": 201.16121590031287,
+   "actual_y": 141.425,
+   "speed_px_per_frame": 20.8
+  },
+  {
+   "clip_id": "whole_0193",
+   "outcome": "hidden",
+   "minute": 20.28,
+   "straight_y": 322.8299238202755,
+   "actual_y": 251.04999999999998,
+   "speed_px_per_frame": 20.4
+  },
+  {
+   "clip_id": "whole_0194",
+   "outcome": "through",
+   "minute": 20.38,
+   "straight_y": 177.2570322013321,
+   "actual_y": 159.9,
+   "speed_px_per_frame": 17.0
+  },
+  {
+   "clip_id": "whole_0195",
+   "outcome": "through",
+   "minute": 20.46,
+   "straight_y": 174.81540305016915,
+   "actual_y": 169.625,
+   "speed_px_per_frame": 26.9
+  },
+  {
+   "clip_id": "whole_0196",
+   "outcome": "through",
+   "minute": 20.55,
+   "straight_y": 187.6520027486533,
+   "actual_y": 172.25,
+   "speed_px_per_frame": 15.2
+  },
+  {
+   "clip_id": "whole_0197",
+   "outcome": "through",
+   "minute": 20.64,
+   "straight_y": 176.9124583609441,
+   "actual_y": 169.25,
+   "speed_px_per_frame": 19.7
+  },
+  {
+   "clip_id": "whole_0198",
+   "outcome": "hidden",
+   "minute": 20.73,
+   "straight_y": 256.5752078926809,
+   "actual_y": 209.5,
+   "speed_px_per_frame": 14.7
+  },
+  {
+   "clip_id": "whole_0199",
+   "outcome": "bounce",
+   "minute": 20.82,
+   "straight_y": 307.61487338489803,
+   "actual_y": 247.10000000000002,
+   "speed_px_per_frame": 23.5
+  },
+  {
+   "clip_id": "whole_0200",
+   "outcome": "bounce",
+   "minute": 20.95,
+   "straight_y": 247.33359227393092,
+   "actual_y": 204.45,
+   "speed_px_per_frame": 20.9
+  },
+  {
+   "clip_id": "whole_0201",
+   "outcome": "bounce",
+   "minute": 21.05,
+   "straight_y": 288.4342906488706,
+   "actual_y": 236.55,
+   "speed_px_per_frame": 24.0
+  },
+  {
+   "clip_id": "whole_0203",
+   "outcome": "through",
+   "minute": 21.25,
+   "straight_y": 171.42134718346801,
+   "actual_y": 164.125,
+   "speed_px_per_frame": 25.1
+  },
+  {
+   "clip_id": "whole_0204",
+   "outcome": "bounce",
+   "minute": 21.32,
+   "straight_y": 339.57438051879416,
+   "actual_y": 322.45000000000005,
+   "speed_px_per_frame": 34.0
+  },
+  {
+   "clip_id": "whole_0205",
+   "outcome": "through",
+   "minute": 21.44,
+   "straight_y": 174.34733265912863,
+   "actual_y": 166.8,
+   "speed_px_per_frame": 21.6
+  },
+  {
+   "clip_id": "whole_0206",
+   "outcome": "through",
+   "minute": 21.56,
+   "straight_y": 175.10005940168878,
+   "actual_y": 163.27499999999998,
+   "speed_px_per_frame": 8.0
+  },
+  {
+   "clip_id": "whole_0207",
+   "outcome": "bounce",
+   "minute": 21.68,
+   "straight_y": 210.26475304050356,
+   "actual_y": 193.9,
+   "speed_px_per_frame": 21.2
+  },
+  {
+   "clip_id": "whole_0208",
+   "outcome": "hidden",
+   "minute": 21.83,
+   "straight_y": 203.1482744316364,
+   "actual_y": 137.3,
+   "speed_px_per_frame": 19.3
+  },
+  {
+   "clip_id": "whole_0209",
+   "outcome": "hidden",
+   "minute": 21.97,
+   "straight_y": 230.90093046512587,
+   "actual_y": 207.35000000000002,
+   "speed_px_per_frame": 16.7
+  },
+  {
+   "clip_id": "whole_0210",
+   "outcome": "bounce",
+   "minute": 22.06,
+   "straight_y": 285.45104633940076,
+   "actual_y": 260.95000000000005,
+   "speed_px_per_frame": 24.6
+  },
+  {
+   "clip_id": "whole_0211",
+   "outcome": "hidden",
+   "minute": 22.18,
+   "straight_y": 236.8724315592541,
+   "actual_y": 217.5,
+   "speed_px_per_frame": 19.4
+  },
+  {
+   "clip_id": "whole_0212",
+   "outcome": "through",
+   "minute": 22.29,
+   "straight_y": 183.79551527160046,
+   "actual_y": 173.7,
+   "speed_px_per_frame": 19.5
+  },
+  {
+   "clip_id": "whole_0213",
+   "outcome": "hidden",
+   "minute": 22.38,
+   "straight_y": 203.21480447967878,
+   "actual_y": 135.3,
+   "speed_px_per_frame": 18.3
+  },
+  {
+   "clip_id": "whole_0214",
+   "outcome": "bounce",
+   "minute": 22.48,
+   "straight_y": 270.4983500807264,
+   "actual_y": 243.9,
+   "speed_px_per_frame": 19.1
+  },
+  {
+   "clip_id": "whole_0215",
+   "outcome": "bounce",
+   "minute": 22.59,
+   "straight_y": 230.09025738048973,
+   "actual_y": 209.10000000000002,
+   "speed_px_per_frame": 25.9
+  },
+  {
+   "clip_id": "whole_0216",
+   "outcome": "bounce",
+   "minute": 22.71,
+   "straight_y": 304.3501505321801,
+   "actual_y": 274.0,
+   "speed_px_per_frame": 23.7
+  },
+  {
+   "clip_id": "whole_0218",
+   "outcome": "bounce",
+   "minute": 22.97,
+   "straight_y": 241.2710406738335,
+   "actual_y": 231.5,
+   "speed_px_per_frame": 30.2
+  },
+  {
+   "clip_id": "whole_0219",
+   "outcome": "through",
+   "minute": 23.11,
+   "straight_y": 170.7280225549441,
+   "actual_y": 165.775,
+   "speed_px_per_frame": 25.3
+  },
+  {
+   "clip_id": "whole_0220",
+   "outcome": "hidden",
+   "minute": 23.18,
+   "straight_y": 196.97409341496825,
+   "actual_y": 180.64999999999998,
+   "speed_px_per_frame": 15.2
+  },
+  {
+   "clip_id": "whole_0221",
+   "outcome": "hidden",
+   "minute": 23.32,
+   "straight_y": 204.6748094390433,
+   "actual_y": 127.69999999999999,
+   "speed_px_per_frame": 21.9
+  },
+  {
+   "clip_id": "whole_0222",
+   "outcome": "through",
+   "minute": 23.47,
+   "straight_y": 153.23372529519048,
+   "actual_y": 150.975,
+   "speed_px_per_frame": 16.5
+  },
+  {
+   "clip_id": "whole_0223",
+   "outcome": "hidden",
+   "minute": 23.56,
+   "straight_y": 122.87450504480731,
+   "actual_y": 197.95,
+   "speed_px_per_frame": 13.5
+  },
+  {
+   "clip_id": "whole_0224",
+   "outcome": "through",
+   "minute": 23.66,
+   "straight_y": 193.0584729323956,
+   "actual_y": 173.97500000000002,
+   "speed_px_per_frame": 14.2
+  },
+  {
+   "clip_id": "whole_0225",
+   "outcome": "hidden",
+   "minute": 23.76,
+   "straight_y": 221.25146470045047,
+   "actual_y": 166.5,
+   "speed_px_per_frame": 14.8
+  },
+  {
+   "clip_id": "whole_0226",
+   "outcome": "bounce",
+   "minute": 23.87,
+   "straight_y": 219.74938255788692,
+   "actual_y": 211.14999999999998,
+   "speed_px_per_frame": 29.0
+  },
+  {
+   "clip_id": "whole_0227",
+   "outcome": "through",
+   "minute": 23.99,
+   "straight_y": 151.85923552457683,
+   "actual_y": 150.65,
+   "speed_px_per_frame": 17.1
+  },
+  {
+   "clip_id": "whole_0228",
+   "outcome": "through",
+   "minute": 24.09,
+   "straight_y": 182.07302418803977,
+   "actual_y": 173.3,
+   "speed_px_per_frame": 14.1
+  },
+  {
+   "clip_id": "whole_0229",
+   "outcome": "through",
+   "minute": 24.19,
+   "straight_y": 111.97383756656619,
+   "actual_y": 113.075,
+   "speed_px_per_frame": 16.7
+  },
+  {
+   "clip_id": "whole_0231",
+   "outcome": "through",
+   "minute": 24.41,
+   "straight_y": 134.7768477585466,
+   "actual_y": 135.75,
+   "speed_px_per_frame": 23.2
+  },
+  {
+   "clip_id": "whole_0232",
+   "outcome": "bounce",
+   "minute": 24.49,
+   "straight_y": 207.41211303318647,
+   "actual_y": 188.75,
+   "speed_px_per_frame": 22.0
+  },
+  {
+   "clip_id": "whole_0233",
+   "outcome": "bounce",
+   "minute": 24.61,
+   "straight_y": 225.1451855449161,
+   "actual_y": 212.1,
+   "speed_px_per_frame": 20.7
+  },
+  {
+   "clip_id": "whole_0234",
+   "outcome": "hidden",
+   "minute": 24.73,
+   "straight_y": 227.20367830620944,
+   "actual_y": 206.5,
+   "speed_px_per_frame": 19.9
+  },
+  {
+   "clip_id": "whole_0235",
+   "outcome": "bounce",
+   "minute": 24.84,
+   "straight_y": 265.5070003156323,
+   "actual_y": 215.45,
+   "speed_px_per_frame": 19.8
+  },
+  {
+   "clip_id": "whole_0236",
+   "outcome": "bounce",
+   "minute": 24.98,
+   "straight_y": 321.1695509989733,
+   "actual_y": 265.7,
+   "speed_px_per_frame": 18.3
+  },
+  {
+   "clip_id": "whole_0237",
+   "outcome": "through",
+   "minute": 25.09,
+   "straight_y": 151.2682454898318,
+   "actual_y": 137.675,
+   "speed_px_per_frame": 13.9
+  },
+  {
+   "clip_id": "whole_0238",
+   "outcome": "bounce",
+   "minute": 25.17,
+   "straight_y": 244.12989065539674,
+   "actual_y": 200.45,
+   "speed_px_per_frame": 18.5
+  },
+  {
+   "clip_id": "whole_0239",
+   "outcome": "hidden",
+   "minute": 25.28,
+   "straight_y": 305.1186017498944,
+   "actual_y": 270.3,
+   "speed_px_per_frame": 15.8
+  },
+  {
+   "clip_id": "whole_0240",
+   "outcome": "through",
+   "minute": 25.4,
+   "straight_y": 417.6241305815055,
+   "actual_y": 347.79999999999995,
+   "speed_px_per_frame": 21.7
+  },
+  {
+   "clip_id": "whole_0241",
+   "outcome": "bounce",
+   "minute": 25.5,
+   "straight_y": null,
+   "actual_y": 434.9,
+   "speed_px_per_frame": 18.1
+  },
+  {
+   "clip_id": "whole_0242",
+   "outcome": "through",
+   "minute": 25.59,
+   "straight_y": 182.100216273591,
+   "actual_y": 166.175,
+   "speed_px_per_frame": 12.9
+  },
+  {
+   "clip_id": "whole_0243",
+   "outcome": "hidden",
+   "minute": 25.7,
+   "straight_y": 235.3806921660169,
+   "actual_y": 192.5,
+   "speed_px_per_frame": 16.4
+  },
+  {
+   "clip_id": "whole_0244",
+   "outcome": "hidden",
+   "minute": 25.81,
+   "straight_y": 195.86759435785763,
+   "actual_y": 180.5,
+   "speed_px_per_frame": 21.0
+  },
+  {
+   "clip_id": "whole_0245",
+   "outcome": "bounce",
+   "minute": 25.97,
+   "straight_y": null,
+   "actual_y": 369.4,
+   "speed_px_per_frame": 38.9
+  },
+  {
+   "clip_id": "whole_0247",
+   "outcome": "bounce",
+   "minute": 26.14,
+   "straight_y": 294.2842526723009,
+   "actual_y": 273.6,
+   "speed_px_per_frame": 33.8
+  },
+  {
+   "clip_id": "whole_0248",
+   "outcome": "bounce",
+   "minute": 26.24,
+   "straight_y": 261.84215182440147,
+   "actual_y": 239.5,
+   "speed_px_per_frame": 21.6
+  },
+  {
+   "clip_id": "whole_0249",
+   "outcome": "bounce",
+   "minute": 26.34,
+   "straight_y": 212.75214859753382,
+   "actual_y": 194.39999999999998,
+   "speed_px_per_frame": 23.6
+  },
+  {
+   "clip_id": "whole_0250",
+   "outcome": "through",
+   "minute": 26.47,
+   "straight_y": 163.8720505804411,
+   "actual_y": 159.60000000000002,
+   "speed_px_per_frame": 24.1
+  },
+  {
+   "clip_id": "whole_0251",
+   "outcome": "through",
+   "minute": 26.55,
+   "straight_y": 154.1900403379452,
+   "actual_y": 145.15,
+   "speed_px_per_frame": 18.2
+  },
+  {
+   "clip_id": "whole_0252",
+   "outcome": "hidden",
+   "minute": 26.63,
+   "straight_y": 287.7382942733532,
+   "actual_y": 268.2,
+   "speed_px_per_frame": 21.2
+  },
+  {
+   "clip_id": "whole_0253",
+   "outcome": "through",
+   "minute": 26.72,
+   "straight_y": 173.7571758371487,
+   "actual_y": 166.15,
+   "speed_px_per_frame": 18.9
+  },
+  {
+   "clip_id": "whole_0254",
+   "outcome": "through",
+   "minute": 26.8,
+   "straight_y": 151.48416957003926,
+   "actual_y": 147.82500000000002,
+   "speed_px_per_frame": 18.0
+  },
+  {
+   "clip_id": "whole_0255",
+   "outcome": "through",
+   "minute": 26.91,
+   "straight_y": 120.5273977191437,
+   "actual_y": 123.325,
+   "speed_px_per_frame": 19.1
+  },
+  {
+   "clip_id": "whole_0256",
+   "outcome": "through",
+   "minute": 27.0,
+   "straight_y": 318.8991087706492,
+   "actual_y": 312.25,
+   "speed_px_per_frame": 22.1
+  },
+  {
+   "clip_id": "whole_0257",
+   "outcome": "bounce",
+   "minute": 27.11,
+   "straight_y": 229.3621776288543,
+   "actual_y": 234.3,
+   "speed_px_per_frame": 40.5
+  },
+  {
+   "clip_id": "whole_0258",
+   "outcome": "hidden",
+   "minute": 27.21,
+   "straight_y": 182.08336986783726,
+   "actual_y": 131.5,
+   "speed_px_per_frame": 19.3
+  },
+  {
+   "clip_id": "whole_0259",
+   "outcome": "hidden",
+   "minute": 27.33,
+   "straight_y": 321.5617533953288,
+   "actual_y": 318.1,
+   "speed_px_per_frame": 30.8
+  },
+  {
+   "clip_id": "whole_0260",
+   "outcome": "through",
+   "minute": 27.51,
+   "straight_y": 334.77463258172526,
+   "actual_y": 337.25,
+   "speed_px_per_frame": 28.2
+  },
+  {
+   "clip_id": "whole_0261",
+   "outcome": "through",
+   "minute": 27.67,
+   "straight_y": 140.87643631047004,
+   "actual_y": 142.9,
+   "speed_px_per_frame": 21.5
+  },
+  {
+   "clip_id": "whole_0262",
+   "outcome": "through",
+   "minute": 27.75,
+   "straight_y": 104.876968120045,
+   "actual_y": 157.85000000000002,
+   "speed_px_per_frame": 18.7
+  },
+  {
+   "clip_id": "whole_0263",
+   "outcome": "through",
+   "minute": 27.92,
+   "straight_y": 327.23287238614097,
+   "actual_y": 328.9,
+   "speed_px_per_frame": 25.6
+  },
+  {
+   "clip_id": "whole_0264",
+   "outcome": "hidden",
+   "minute": 28.05,
+   "straight_y": 82.75451412418622,
+   "actual_y": 148.05,
+   "speed_px_per_frame": 24.3
+  },
+  {
+   "clip_id": "whole_0265",
+   "outcome": "bounce",
+   "minute": 28.18,
+   "straight_y": 233.6388307058391,
+   "actual_y": 239.15,
+   "speed_px_per_frame": 26.5
+  },
+  {
+   "clip_id": "whole_0266",
+   "outcome": "hidden",
+   "minute": 28.29,
+   "straight_y": 82.19455071917153,
+   "actual_y": 134.6,
+   "speed_px_per_frame": 19.5
+  },
+  {
+   "clip_id": "whole_0267",
+   "outcome": "through",
+   "minute": 28.4,
+   "straight_y": 136.45124741511884,
+   "actual_y": 134.85000000000002,
+   "speed_px_per_frame": 17.0
+  }
+ ]
+}

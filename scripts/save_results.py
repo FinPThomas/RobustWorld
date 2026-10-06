@@ -37,7 +37,7 @@ def collect(dest: Path, repo: Path = REPO) -> list[Path]:
     """Copy result files (not caches or weights) from outputs/ and checkpoints/ into dest."""
     saved = []
     sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / "outputs" / "vjepa2").rglob("*")
-               if p.suffix in (".json", ".md", ".png") and "cache" not in p.parts]
+               if p.suffix in (".json", ".md", ".png") and not any("cache" in part for part in p.parts)]
     sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/*.json")]
     for src, rel in sources:
         if src.is_file() and src.stat().st_size <= MAX_BYTES:
@@ -61,6 +61,10 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
     if summary.exists():
         lines += ["", "## Headline", "", summary.read_text().strip(), "",
                   "![summary](vjepa2/experiments/summary.png)"]
+    probing = dest / "vjepa2" / "probing" / "summary.md"
+    if probing.exists():
+        lines += ["", "## Encoder probing", "", "See [vjepa2/probing/summary.md](vjepa2/probing/summary.md)."
+                  + (" Written-up findings: [FINDINGS.md](FINDINGS.md)." if (dest / "FINDINGS.md").exists() else "")]
     figs = sorted(p.relative_to(dest) for p in dest.rglob("*.png"))
     if figs:
         lines += ["", "## Figures", ""] + [f"- [{p}]({p})" for p in figs]
@@ -70,6 +74,14 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
 def headline(folder: Path) -> str:
     """One line for the index: best balanced P(correct) after post-training, if there is a summary."""
     path = folder / "vjepa2" / "experiments" / "summary.json"
+    probing = folder / "vjepa2" / "probing" / "summary.json"
+    if not path.exists() and probing.exists():
+        rows = [r for r in json.loads(probing.read_text()) if r.get("target", {}).get("far_cell_auroc") is not None]
+        if not rows:
+            return ""
+        top = max(rows, key=lambda r: r["target"]["far_cell_auroc"])
+        return (f"encoder probing, {len(rows)} probes: best far-side cell AUROC {top['target']['far_cell_auroc']} "
+                f"({top['name']}), real-frame outcome AUROC {top['target']['outcome_auroc']}")
     if not path.exists():
         return ""
     key = "one_ball_p_correct"
@@ -107,9 +119,13 @@ def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None) 
     root = repo / RESULTS
     root.mkdir(exist_ok=True)
     dest = root / (into or new_id(root, name))
+    keep = {}
     if into and dest.exists():
+        keep = {p.name: p.read_bytes() for p in dest.glob("FINDINGS*.md")}     # hand-written notes survive a re-save
         shutil.rmtree(dest)
     dest.mkdir()
+    for name, data in keep.items():
+        (dest / name).write_bytes(data)
     saved = collect(dest, repo)
     if not saved:
         dest.rmdir()

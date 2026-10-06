@@ -1,0 +1,52 @@
+{
+ "layer": "last",
+ "model": "linear",
+ "input": "global",
+ "norm": "ln",
+ "head": "sigmoid",
+ "name": "last-linear-global-ln-sigmoid",
+ "n_clips": 254,
+ "seconds": 36.1,
+ "context": {
+  "cell_auroc": 0.9929,
+  "visible_auroc": 0.9897,
+  "phantom_rate": 0.0078,
+  "hit_rate": 0.9033,
+  "error_px": 24.6,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.7955,
+  "visible_auroc": 0.6964,
+  "phantom_rate": 0.2456,
+  "hit_rate": 0.2348,
+  "error_px": 70.4,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.5662,
+  "far_hit_rate": 0.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.6512,
+  "outcome_auroc_one_ball": 0.7765,
+  "p_correct_balanced": 0.329,
+  "balanced_accuracy": 0.315,
+  "p_correct_balanced_one_ball": 0.329,
+  "balanced_accuracy_one_ball": 0.333
+ },
+ "imagined": {
+  "cell_auroc": 0.7099,
+  "visible_auroc": 0.5346,
+  "phantom_rate": 0.2807,
+  "hit_rate": 0.3046,
+  "error_px": 98.1,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.4904,
+  "far_hit_rate": 0.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.5177,
+  "outcome_auroc_one_ball": 0.4355,
+  "p_correct_balanced": 0.321,
+  "balanced_accuracy": 0.29,
+  "p_correct_balanced_one_ball": 0.329,
+  "balanced_accuracy_one_ball": 0.333
+ }
+}

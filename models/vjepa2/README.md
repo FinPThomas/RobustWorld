@@ -39,6 +39,11 @@ python models/vjepa2/run.py                              # surprise, all include
 python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip sample
 ```
 
+**Kinematic reference** (`kinematic.py`): fits a constant velocity to the tracked ball over the
+last 1/3 s of context and extrapolates, hidden while its centre is under the plank or out of
+frame. It is hard-coded (it learns nothing from outcomes), so it is a reference model, not an
+evaluation tool. It is not wired into `ball_probe_cv.py` yet.
+
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
 **Post-training** (`posttrain.py`, or `notebooks/colab_vjepa2_posttrain.ipynb` on Colab).
@@ -124,6 +129,22 @@ is drawn dashed.
 - the real and imagined token features, projected to colour with one shared PCA basis
 - per-token change against V-JEPA's own output for an empty-scene clip
 - `trajectories.png`: real versus imagined paths through feature space
+
+**Encoder probing** (`probing.py`, CPU-friendly, resumable). Which readout of the frozen encoder
+best locates the ball: encoder layer (4, 8, 12, 16, 20, output) x linear / small MLP x per-token /
+3x3 neighbourhood / pooled over the frame x raw / layer-normed x per-cell sigmoid / one-ball softmax
+(with a "no ball" option). Every probe is fitted like the evaluation decoder (real context half
+encoded alone, same-frame labels, via `eval_decoder.examples_from`; `tests/test_eval_isolation.py`
+covers it) and scored on held-out clips (`cv_folds`): context frames, real target frames (including
+far-side cells, where no probe ever saw a ball) and, for the output layer, the pretrained predictor's
+imagined target. It also runs the tracker + plank/blockade-rule reference (blockade fitted on outcomes)
+and label-free blockade figures (P(blocked) against where the path crosses the plank, per-cell
+distinctiveness of static context features, surprise by outcome).
+```bash
+python models/vjepa2/probing.py all          # encode, baseline, sweep, blockade, report, publish
+```
+Encodings take ~70 s a clip on a laptop CPU and ~80 MB a clip in `outputs/vjepa2/probe_cache/`;
+results go to `outputs/vjepa2/probing/` and are saved to `results/<date>_<time>_vjepa-probing/`.
 
 **Outputs** go to `outputs/vjepa2/`:
 - `summary.json`: mean surprise curves per outcome (label-free)
