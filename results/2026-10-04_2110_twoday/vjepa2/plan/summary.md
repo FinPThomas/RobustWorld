@@ -4,5 +4,7 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain | one_ball_p_correct | balanced_accuracy | cell_auroc | argmax_hit_rate | overfit_folds | best_epochs |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| V-JEPA 2: real target frames (ceiling) | ceiling | 0.998 | [0.995, 1.0] | - | - | 0.673 | 0.725 | 0.971 | - | - | - |
+| V-JEPA 2 pretrained | before | 0.422 | [0.348, 0.487] | - | - | 0.328 | 0.333 | 0.658 | 0.199 | - | - |
 
 ![summary](summary.png)
