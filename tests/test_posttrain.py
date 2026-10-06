@@ -361,3 +361,31 @@ def test_train_frac_and_resume(tmp_path, monkeypatch):
     assert (tmp_path / "ck" / "t" / "fold0.pt").stat().st_mtime_ns == stamp
     posttrain.main(["train", "--run", "t", "--fold", "0", "--epochs", "2", "--workers", "0", "--resume"])
     assert (tmp_path / "ck" / "t" / "fold0.pt").stat().st_mtime_ns != stamp   # new settings: retrained
+
+
+def test_a_stopped_fold_carries_on_from_its_last_epoch(tmp_path, monkeypatch, capsys):
+    clips, cache = fake_clips(tmp_path, 12)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=3,
+                           workers=0, seed=0, loss="l1", patience=0)
+    partial = tmp_path / "fold0.partial.pt"
+    real_record = posttrain.epoch_record
+
+    def stop_after_two(epoch, *a, **k):                # Colab disconnects during epoch 3
+        if epoch == 3:
+            raise KeyboardInterrupt
+        return real_record(epoch, *a, **k)
+    monkeypatch.setattr(posttrain, "epoch_record", stop_after_two)
+    with pytest.raises(KeyboardInterrupt):
+        posttrain.train_one(model, base, clips[:10], clips[10:], args, "cpu", "fold0", partial)
+    assert torch.load(partial, weights_only=False)["epoch"] == 2
+    monkeypatch.setattr(posttrain, "epoch_record", real_record)
+    log, _ = posttrain.train_one(model, base, clips[:10], clips[10:], args, "cpu", "fold0", partial)
+    assert "carrying on after epoch 2" in capsys.readouterr().out
+    assert [e["epoch"] for e in log["epochs"]] == [1, 2, 3] and len(log["train_loss"]) == 3
+
+    other = SimpleNamespace(**{**vars(args), "lr": 1e-3})   # other settings: the saved state is not used
+    log, _ = posttrain.train_one(model, base, clips[:10], clips[10:], other, "cpu", "fold0", partial)
+    assert "carrying on" not in capsys.readouterr().out and len(log["epochs"]) == 3

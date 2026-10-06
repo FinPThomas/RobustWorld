@@ -456,8 +456,12 @@ def split_validation(train: list[dict], frac: float, seed: int) -> tuple[list[di
     return [c for i, c in enumerate(train) if i not in val], [c for i, c in enumerate(train) if i in val]
 
 
-def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str) -> tuple[dict, dict]:
+def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str,
+              partial: Path | None = None) -> tuple[dict, dict]:
     """Train one split. Returns (log, inference mode {"rollout", "codebook"}).
+
+    `partial`: after every epoch the whole training state (weights, optimiser, schedule, best epoch, log) is
+    saved there, and a matching one is picked up again, so a disconnect costs at most one epoch.
 
     Guards: train and held-out must not share clips or passes; a validation part of the training
     clips is scored every epoch (L1 in target space), the best epoch's weights are kept
@@ -523,8 +527,24 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     if va:
         log["val_l1_pretrained"] = round(best[0], 5)
     patience = getattr(args, "patience", 3)
+    key = {**{k: getattr(args, k, None) for k in RESUME_KEYS}, "batch_size": args.batch_size, "accum": args.accum,
+           "train": [c["clip_id"] for c in train]}
+    start = 0
+    if partial is not None and partial.exists():
+        try:
+            ck = torch.load(partial, map_location="cpu", weights_only=False)
+        except (RuntimeError, EOFError, OSError):
+            ck = None
+        if ck and ck.get("key") == key:
+            pred.load_state_dict(ck["pred"])
+            if heads is not None and ck.get("heads"):
+                heads.load_state_dict(ck["heads"])
+            opt.load_state_dict(ck["opt"]), sched.load_state_dict(ck["sched"]), scaler.load_state_dict(ck["scaler"])
+            log, best, start = ck["log"], ck["best"], ck["epoch"]
+            rng.set_state(ck["rng"])
+            print(f"  [{tag}] carrying on after epoch {start} (saved when the last run stopped)", flush=True)
     t0 = time.perf_counter()
-    for epoch in range(args.epochs):
+    for epoch in range(start, args.epochs):
         pred.train()
         if heads is not None:
             heads.train()
@@ -581,6 +601,11 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             elif patience and epoch + 1 - best[1] >= patience:
                 print(f"  [{tag}]   no validation gain for {patience} epochs: stopping early", flush=True)
                 break
+        if partial is not None and epoch + 1 < args.epochs:
+            save_atomic({"key": key, "epoch": epoch + 1, "pred": pred.state_dict(),
+                         "heads": heads.state_dict() if heads is not None else None, "opt": opt.state_dict(),
+                         "sched": sched.state_dict(), "scaler": scaler.state_dict(), "log": log, "best": best,
+                         "rng": rng.get_state()}, partial)
     if va:
         log["best_epoch"] = best[1]
         if best[2] is not None and getattr(args, "keep_best", True):
@@ -695,10 +720,12 @@ def train_all(args) -> None:
             print(f"  [{tag}] already trained with these settings: skipping (--resume)", flush=True)
             log = done
         else:
-            log, mode = train_one(model, base_state, train, test, args, device, tag)
+            partial = out / f"{tag}.partial.pt"
+            log, mode = train_one(model, base_state, train, test, args, device, tag, partial)
             save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
                          "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
                          "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
+            partial.unlink(missing_ok=True)       # the fold is saved: its per-epoch state is no longer needed
         logs.append(log)
         (out / "log.json").write_text(json.dumps(logs, indent=1))
         info["folds"].append({"split": tag, "seconds": log["seconds"], "best_epoch": log.get("best_epoch"),

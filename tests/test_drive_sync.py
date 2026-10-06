@@ -33,3 +33,15 @@ def test_feature_cache_is_not_backed_up(tmp_path):
         (local / rel).write_text("x")
     assert drive_sync.sync(local, tmp_path / "drive", drive_sync.NOT_BACKED_UP) == 1
     assert not (tmp_path / "drive" / "vjepa2" / "cache").exists()
+
+
+def test_finished_folds_per_epoch_state_is_removed_from_the_backup(tmp_path):
+    local, drive = tmp_path / "local", tmp_path / "drive"
+    (local / "run").mkdir(parents=True)
+    (local / "run" / "fold0.partial.pt").write_text("epoch 3")
+    drive_sync.sync(local, drive)
+    assert (drive / "run" / "fold0.partial.pt").exists()
+    (local / "run" / "fold0.partial.pt").unlink()            # fold finished
+    (local / "run" / "fold0.pt").write_text("done")
+    drive_sync.sync(local, drive)
+    assert not (drive / "run" / "fold0.partial.pt").exists() and (drive / "run" / "fold0.pt").exists()
