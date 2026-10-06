@@ -44,9 +44,13 @@ is a sanity check that the decoder reads the real outcome, not evidence of block
 It does show the outcome is *not* purely a function of where the straight path crosses the
 plank: the fitted range is y ≈ 179–325 px (rows 5–10), but several hidden clips cross at
 y ≈ 55–160 or 380–400 and bounces at 330–450. That is why the outcome-fitted rule only reaches
-0.84 here (37 blocked clips called through). Inferred, not checked: either the straight-line
-crossing estimate is off for curving or slow balls, or the blocker sat in different places
-within the right segment.
+0.84 here (37 blocked clips called through). The follow-up
+([blockade_timing.md](vjepa2/probing/blockade_timing.md)) settles it: the blocker did not move
+within the right segment (fitted range 178–320 px in the first 14 min, 194–325 px in the last 14),
+and the straight-line crossing is off by 21 px on average (90th percentile 54 px). Using the
+tracker's real crossing instead lifts the single-range rule to 0.862 accuracy. The blockade range
+here is fitted fresh on these clips' outcomes; nothing uses the 88-clip (start.mp4) blocker
+position, which was in a different place.
 
 **Static distinctiveness** (`static_distinctiveness.png`): ball-free context tokens on the plank
 are slightly more distinct inside the blockade rows than outside (L16 0.0084 vs 0.0065; last
@@ -58,8 +62,12 @@ visible".
 **Surprise by outcome** (`surprise_by_outcome.png`): the pretrained predictor's error is higher
 for hidden than through clips at the plank's exit edge in rows 6–8 (+0.012 to +0.016). This is
 confounded with path: hidden clips cross inside the range and through clips mostly outside, so
-the difference partly says where the ball was, not what happened to it. It needs a
-path-matched comparison (below) before it means anything.
+the difference partly says where the ball was, not what happened to it. The path-matched
+follow-up ([surprise_matched.md](vjepa2/probing/surprise_matched.md)), pairing each blocked clip
+with the through clip nearest in crossing and speed, still finds more surprise on blocked clips:
+hidden +0.0037 on plank cells (48/77 pairs, p = 0.003), bounce +0.015 (59/63, p < 0.001). So
+the pretrained predictor's own error does notice when the ball fails to come out, without any
+readout: surprise is a usable label-free score before and after post-training.
 
 ## 4. What this means for the Colab plan (PR #3)
 
@@ -74,10 +82,11 @@ path-matched comparison (below) before it means anything.
    It is label-free (outcomes only colour points), so it is allowed under rule 5/6.
 4. **Read the 0.84 tracker baseline as the bar on these clips, not 0.98.**
 
-## 5. Suggested follow-up runs (all label-free or scoring-only)
+## 5. Follow-ups done
 
-- Path-matched surprise: surprise along each clip's own path, binned by crossing y, split by
-  outcome, focusing on y ≈ 150–210 and 300–350 where both outcomes occur.
-- Check whether the outcome-vs-crossing outliers cluster in time within `whole.mp4` (a moved
-  blocker) or are tracker/straight-line errors; if the blocker moved, a single blockade range
-  is the wrong target for both the baseline and the world model.
+- Path-matched surprise and the blocker-timing check: both run (above).
+- Colab plan (PR #3, commit `6fef52b`): `ball_probe_cv.py` now reports `far_cell_auroc_imagined`
+  and `far_cell_auroc_real`, and the plan's summary table has a `far_cell_auroc` column. The
+  P(blocked)-vs-crossing figure already runs for every before/after pair (`blocker_figs.py`).
+- `configs/scenes/whole.json` has no `blocker_polygon`, so `blocker_figs.py`'s "known blocker"
+  reference panel is off. Setting it (the blocker's outline in 512 px coordinates) turns it on.
