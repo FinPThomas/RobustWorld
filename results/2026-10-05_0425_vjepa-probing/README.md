@@ -7,7 +7,7 @@
 
 ## Encoder probing
 
-See [vjepa2/probing/summary.md](vjepa2/probing/summary.md).
+See [vjepa2/probing/summary.md](vjepa2/probing/summary.md). Written-up findings: [FINDINGS.md](FINDINGS.md).
 
 ## Figures
 
