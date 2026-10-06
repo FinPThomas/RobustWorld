@@ -17,9 +17,11 @@
    "finished": "2026-10-04 22:11"
   },
   "gate-after": {
-   "state": "running",
-   "started": "2026-10-04 21:24",
-   "code": "c2bc906"
+   "state": "done",
+   "started": "2026-10-06 21:11",
+   "code": "3b6b3d1",
+   "minutes": 123.8,
+   "finished": "2026-10-06 23:15"
   },
   "long-1": {
    "state": "failed",
@@ -95,5 +97,5 @@
    }
   }
  },
- "last_push": "2026-10-06 19:05"
+ "last_push": "2026-10-06 21:11"
 }
