@@ -63,8 +63,8 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
                   "![summary](vjepa2/experiments/summary.png)"]
     probing = dest / "vjepa2" / "probing" / "summary.md"
     if probing.exists():
-        lines += ["", "## Encoder probing", "", f"See [vjepa2/probing/summary.md](vjepa2/probing/summary.md)"
-                  + (" and [the findings](vjepa2/probing/FINDINGS.md)." if (dest / "vjepa2" / "probing" / "FINDINGS.md").exists() else ".")]
+        lines += ["", "## Encoder probing", "", "See [vjepa2/probing/summary.md](vjepa2/probing/summary.md)."
+                  + (" Written-up findings: [FINDINGS.md](FINDINGS.md)." if (dest / "FINDINGS.md").exists() else "")]
     figs = sorted(p.relative_to(dest) for p in dest.rglob("*.png"))
     if figs:
         lines += ["", "## Figures", ""] + [f"- [{p}]({p})" for p in figs]
@@ -119,9 +119,13 @@ def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None) 
     root = repo / RESULTS
     root.mkdir(exist_ok=True)
     dest = root / (into or new_id(root, name))
+    keep = {}
     if into and dest.exists():
+        keep = {p.name: p.read_bytes() for p in dest.glob("FINDINGS*.md")}     # hand-written notes survive a re-save
         shutil.rmtree(dest)
     dest.mkdir()
+    for name, data in keep.items():
+        (dest / name).write_bytes(data)
     saved = collect(dest, repo)
     if not saved:
         dest.rmdir()

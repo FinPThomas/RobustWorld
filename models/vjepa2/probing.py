@@ -906,9 +906,13 @@ def cmd_publish(args) -> None:
     git("add", "results")
     r = git("commit", "-q", "-m", f"Probing results: {dest.name}", "--", "results")
     if r.returncode == 0:
+        branch = git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
         for attempt in range(4):
-            git("pull", "-q", "--rebase", "origin", git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip())
-            r = git("push", "origin", "HEAD")
+            if git("pull", "-q", "--rebase", "origin", branch).returncode != 0:
+                git("rebase", "--abort")                       # someone edited the same results files: leave it for a person
+                log("publish: pull --rebase conflicted; aborted, results committed locally only")
+                return
+            r = git("push", "origin", f"HEAD:{branch}")
             if r.returncode == 0:
                 break
             time.sleep(2 ** (attempt + 1))
