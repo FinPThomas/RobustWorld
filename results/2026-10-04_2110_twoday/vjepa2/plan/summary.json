@@ -131,5 +131,28 @@
   "argmax_hit_rate": 0.58,
   "overfit_folds": "0/5",
   "best_epochs": "10/7/10/9/10"
+ },
+ {
+  "method": "V-JEPA 2 gate-after",
+  "variant": "gate",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.885,
+  "auroc_ci": [
+   0.842,
+   0.924
+  ],
+  "delta_vs_before_ci": [
+   0.383,
+   0.544
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.371,
+  "balanced_accuracy": 0.383,
+  "cell_auroc": 0.803,
+  "far_cell_auroc": 0.769,
+  "argmax_hit_rate": 0.478,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/10/9/10/10"
  }
 ]
