@@ -93,6 +93,12 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
     batch 4 x 2 instead of 1 x 8 (same effective batch; batch 1 used 1.15 GB of the T4); and generalisation and
     interpretation of `plain` run straight after `plain-after`, before the other variants.
 
+14. (2026-10-06) Kaggle: `notebooks/kaggle_plan.ipynb` runs the same plan on Kaggle's free GPU (about 30 h a week,
+    12 h background sessions). Each session restores the plan's progress from the newest results folder on GitHub
+    (`plan.py restore`), re-encodes the clips, runs steps until about 11 h (`--budget-hours`) and pushes after every
+    step. Order is proof of concept first: plain, plain on the other side, commit, copy gate, interpretation of
+    plain, multi-hypothesis, then the rest of the grid, then the long and smaller-data runs.
+
 First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
 gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows
 clearly past the plank (P(blocked) ~0.97 for every pass, unnormalised), so the gain is in where the predicted

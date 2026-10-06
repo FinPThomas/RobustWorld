@@ -307,6 +307,11 @@ def interpret_variant(v: str, args, log) -> None:
     if (PLAN / "interpret" / f"{v}-after" / "interpret.json").exists():
         print(f"== interpretation of {v}-after is done already", flush=True)
         return
+    if len(list((CKPT / f"{v}-after").glob("fold*.pt"))) < 5:   # weights aren't on GitHub: a new machine retrains
+        print(f"== the {v}-after weights aren't on this machine: training them again (same settings and folds)",
+              flush=True)
+        must([PY, HERE / "posttrain.py", "train", "--run", f"plan/{v}-after", "--epochs", str(EPOCHS),
+              "--manifest", manifest(), "--resume", *VARIANTS[v][0], *T4, *args.extra], log)
     must([PY, HERE / "interpret.py", "--run", CKPT / f"{v}-after", "--manifest", manifest()], log)
 
 
@@ -323,14 +328,19 @@ STEPS: list[Step] = [
     Step(1, "encode", "encode every clip once (frozen encoder)", step_encode),
     Step(1, "pretrained", "pretrained V-JEPA 2, frozen decoder", step_pretrained),
     Step(1, "tapnext", "TAPNext + rules, with and without the coded blockade", step_tapnext),
+    # Proof of concept first (Fin, 2026-10-06): the first post-trained run, then the cheapest steps that answer
+    # the other questions (does it carry over to the other side? can the output be made cleaner? what changed?),
+    # then the rest of the grid, then the demanding runs. Stages 5 and 6 repeat generalisation and
+    # interpretation for the best variant if that isn't plain.
     *variant_steps(2, STAGE2[:1]),
-    # Results first: generalisation and interpretation of the first post-trained run straight away (Colab may
-    # stop at any time); stages 5 and 6 repeat them for the best variant if that turns out to be another one.
     Step(2, "generalise-plain", "plain: ball from the other side, before vs after",
          lambda a, s, log: generalise_variant("plain", a, s, log)),
+    *variant_steps(2, ["commit"]),
+    *variant_steps(3, ["gate"]),
     Step(2, "interpret-plain", "plain: change maps and layer patching", lambda a, s, log: interpret_variant("plain", a, log)),
-    *variant_steps(2, STAGE2[1:]),
-    *variant_steps(3, STAGE3),
+    *variant_steps(3, ["hyp"]),
+    *variant_steps(2, [v for v in STAGE2 if v not in ("plain", "commit")]),
+    *variant_steps(3, [v for v in STAGE3 if v not in ("gate", "hyp")]),
     Step(4, "long-1", f"best variant, {LONG_EPOCHS} epochs", step_long(0)),
     Step(4, "long-2", f"second-best variant, {LONG_EPOCHS} epochs", step_long(1)),
     Step(4, "frac-50", "best variant on 50% of the training clips", step_frac(0.5)),
@@ -617,6 +627,40 @@ def run(args) -> None:
         backup("end of run", wait=600)
 
 
+T_START = time.time()
+
+
+def step_hours(name: str) -> float:
+    """A generous guess of a step's run time on a T4 (plain-after took 2.3 h), for --budget-hours."""
+    if name.startswith("long"):
+        return 7.0
+    if name.endswith("-after") or name.startswith("interpret"):
+        return 2.8                                  # interpret may first retrain the weights it reads
+    if name.startswith("frac"):
+        return 1.5
+    if name.startswith("generalise"):
+        return 1.0
+    return 0.7
+
+
+def restore() -> int:
+    """A new machine (Kaggle, a fresh Colab without Drive): bring back the plan's progress from the newest
+    results/<date>_<time>_twoday/ folder on GitHub (state, scores, logs; weights aren't on GitHub)."""
+    if STATE.exists():
+        print(f"{STATE} exists: nothing to restore")
+        return 0
+    found = sorted((REPO / "results").glob("*_twoday/vjepa2/plan/state.json"))
+    if not found:
+        print("no saved plan on GitHub: starting from the beginning")
+        return 0
+    src = found[-1].parent
+    shutil.copytree(src, PLAN, dirs_exist_ok=True)
+    state = load_state()
+    done = [k for k, v in state["steps"].items() if v.get("state") == "done"]
+    print(f"restored from {src.relative_to(REPO)}: {len(done)} steps done ({', '.join(done)})")
+    return 0
+
+
 def _run(args) -> None:
     problem = storage_ok()
     if problem:
@@ -639,6 +683,12 @@ def _run(args) -> None:
         if st.get("state") == "done" and not args.redo:
             print(f"== {s.name}: done already ({st.get('finished')}), skipping", flush=True)
             continue
+        if args.budget_hours:                         # e.g. Kaggle's 12 h sessions: don't start what can't finish
+            used, need = (time.time() - T_START) / 3600, step_hours(s.name)
+            if used + need > args.budget_hours:
+                print(f"== {s.name} needs about {need:.1f} h and this session has {args.budget_hours - used:.1f} h "
+                      "left: stopping here. Run again (a new session) to carry on from this step.", flush=True)
+                break
         free = shutil.disk_usage(REPO).free / 2**30
         if free < MIN_FREE_GB:                        # Colab's disk: stop before a write fails half-way
             print(f"!! only {free:.1f} GB free on this disk (a step needs up to {MIN_FREE_GB} GB); stopping before "
@@ -713,18 +763,22 @@ def status(args) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("command", choices=["run", "status", "report"])
+    p.add_argument("command", choices=["run", "status", "report", "restore"])
     p.add_argument("--stage", default="all", help="1-6 or all")
     p.add_argument("--only", nargs="+", help="just these steps (names from `status`)")
     p.add_argument("--redo", action="store_true", help="run steps again even if done")
     p.add_argument("--push", action="store_true", help="commit results and the status block to GitHub after each step")
     p.add_argument("--branch", default=None)
+    p.add_argument("--budget-hours", type=float, default=None,
+                   help="don't start a step that wouldn't finish within this many hours of the run starting")
     p.add_argument("--extra", nargs=argparse.REMAINDER, default=[], help="more posttrain.py flags for every run")
     args = p.parse_args(argv)
     if args.command == "run":
         run(args)
     elif args.command == "status":
         status(args)
+    elif args.command == "restore":
+        return restore()
     else:
         state = load_state()
         block = report(state)
