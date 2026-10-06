@@ -204,7 +204,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-06 19:05 UTC from Colab (Tesla T4), code `3b6b3d1`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-06 21:11 UTC from Colab (Tesla T4), code `3b6b3d1`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -215,7 +215,7 @@ _Last update: 2026-10-06 19:05 UTC from Colab (Tesla T4), code `3b6b3d1`. Result
 | 2 | plain-before: plain: pretrained predictor, scored the plain way | done | 18.9 | 2026-10-06 13:26 |
 | 2 | plain-after: plain: post-trained 10 epochs | done | 140.4 | 2026-10-06 15:46 |
 | 2 | generalise-plain: plain: ball from the other side, before vs after | done | 31.0 | 2026-10-06 19:05 |
-| 2 | commit-after: commit: post-trained 10 epochs | to do |  |  |
+| 2 | commit-after: commit: post-trained 10 epochs | done | 126.1 | 2026-10-06 21:11 |
 | 3 | gate-after: gate: post-trained 10 epochs | running |  |  |
 | 2 | interpret-plain: plain: change maps and layer patching | to do |  |  |
 | 3 | hyp-after: hyp: post-trained 10 epochs | to do |  |  |
@@ -241,6 +241,7 @@ _Last update: 2026-10-06 19:05 UTC from Colab (Tesla T4), code `3b6b3d1`. Result
 | TAPNext + coded blockade (fitted on outcomes; reference) | baseline | 0.848 | [0.797, 0.894] | - | - |
 | V-JEPA 2 plain-after | after | 0.884 | [0.841, 0.921] | [0.38, 0.542] | 0.0 |
 | V-JEPA 2 plain-before | before | 0.422 | [0.348, 0.487] | - | - |
+| V-JEPA 2 commit-after | after | 0.934 | [0.903, 0.961] | [0.434, 0.591] | 0.0 |
 
 ### Generalisation of plain (held out, never trained on)
 
