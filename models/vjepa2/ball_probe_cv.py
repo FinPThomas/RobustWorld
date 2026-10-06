@@ -45,7 +45,7 @@ from ball_probe import encode  # noqa: E402
 from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
 from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
                                     far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
-                                    source_indices, video_of)
+                                    roc_auc_score_safe, source_indices, video_of)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
 
@@ -175,6 +175,10 @@ def main(argv: list[str] | None = None) -> int:
     y_out = np.array([d["clip"]["outcome"] == "through" for d in data], int)
     rows = [None] * len(data)
     fut_lab, fut_imag, fut_hold, fut_alt, real_lab, real_map = [], [], [], [], [], []
+    # Far-side cells only (beyond the plank, where no context frame ever had the ball): can the
+    # decoder find the ball where it comes out? Read from real target frames (ceiling) and imagined.
+    far_lab, far_real, far_imag = [], [], []
+    far_mask = np.asarray(far, bool)
     track_maps = {"real": [], "imagined": [], "imagined_encoder_space": []}
     # Alternative to layer-normalising the decoder's input: map predictions into encoder space with
     # the encoder's own final layer norm (gamma * prediction + beta) and read them with the decoder
@@ -212,6 +216,8 @@ def main(argv: list[str] | None = None) -> int:
             track_maps["imagined_encoder_space"].append(m_alt)
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
             fut_lab.append(d["lab"][cs:].reshape(-1)), fut_imag.append(m_imag.reshape(-1))
+            far_lab.append(d["lab"][cs:][:, far_mask].reshape(-1))
+            far_real.append(m_real[cs:][:, far_mask].reshape(-1)), far_imag.append(m_imag[:, far_mask].reshape(-1))
             fut_hold.append(np.repeat(m_ctx[-1:], len(m_imag), 0).reshape(-1))
             track_maps["real"].append(m_real[cs:]), track_maps["imagined"].append(m_imag)
             track_centres.append(d["centres"][cs:])
@@ -244,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
         "future_cell_auroc_imagined": round(float(roc_auc_score(fl, fi)), 3),
         "future_cell_auroc_hold_last_context": round(float(roc_auc_score(fl, fh)), 3),
         "future_cell_auroc_imagined_encoder_space": round(float(roc_auc_score(fl, np.concatenate(fut_alt))), 3),
+        "far_cell_auroc_real": round(float(roc_auc_score_safe(np.concatenate(far_lab), np.concatenate(far_real))), 3),
+        "far_cell_auroc_imagined": round(float(roc_auc_score_safe(np.concatenate(far_lab), np.concatenate(far_imag))), 3),
         "outcome_auroc_real": round(float(roc_auc_score(y_out, score_real)), 3),
         "outcome_auroc_imagined": round(float(roc_auc_score(y_out, score_imag)), 3),
         "imagined_far_peak_mean": {o: round(float(score_imag[[r["outcome"] == o for r in rows]].mean()), 3)
@@ -273,7 +281,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"  real features: ball cell AUROC {metrics['real_cell_auroc']}")
     print(f"  imagined future: ball cell AUROC {metrics['future_cell_auroc_imagined']} "
-          f"(hold last context: {metrics['future_cell_auroc_hold_last_context']})")
+          f"(hold last context: {metrics['future_cell_auroc_hold_last_context']}); far-side cells: "
+          f"imagined {metrics['far_cell_auroc_imagined']}, real {metrics['far_cell_auroc_real']}")
     print(f"  outcome from max P(beyond plank): real {metrics['outcome_auroc_real']}, "
           f"imagined {metrics['outcome_auroc_imagined']}; imagined peak mean {metrics['imagined_far_peak_mean']}")
     oi, bi = metrics["outcomes_imagined"], metrics["ball_imagined"]

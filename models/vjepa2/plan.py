@@ -385,9 +385,10 @@ def report_rows() -> list[dict]:
     if (pre / "per_clip.json").exists():
         pc, m = json.loads((pre / "per_clip.json").read_text()), json.loads((pre / "metrics.json").read_text())
         rows.append(score_row("V-JEPA 2: real target frames (ceiling)", "real frames", "ceiling",
-                              clip_rows(pc, "real_one_ball"), {"cell_auroc": m.get("real_cell_auroc")}))
+                              clip_rows(pc, "real_one_ball"), {"cell_auroc": m.get("real_cell_auroc"),
+                                                              "far_cell_auroc": m.get("far_cell_auroc_real")}))
         rows.append(score_row("V-JEPA 2 pretrained", "pretrained", "before", clip_rows(pc, "imagined_one_ball"),
-                              {"cell_auroc": m.get("future_cell_auroc_imagined"),
+                              {"cell_auroc": m.get("future_cell_auroc_imagined"), "far_cell_auroc": m.get("far_cell_auroc_imagined"),
                                "argmax_hit_rate": m.get("ball_imagined_argmax", {}).get("hit_rate")}))
     tap = PLAN / "baselines" / "tapnext"
     if (tap / "per_clip.json").exists():
@@ -405,7 +406,7 @@ def report_rows() -> list[dict]:
         before_rows = (clip_rows(json.loads((SCORES / before / "per_clip.json").read_text()), "imagined_one_ball")
                        if phase != "before" and (SCORES / before / "per_clip.json").exists() else None)
         rows.append(score_row(f"V-JEPA 2 {name}", variant, phase, clip_rows(pc, "imagined_one_ball"),
-                              {"cell_auroc": m.get("future_cell_auroc_imagined"),
+                              {"cell_auroc": m.get("future_cell_auroc_imagined"), "far_cell_auroc": m.get("far_cell_auroc_imagined"),
                                "argmax_hit_rate": m.get("ball_imagined_argmax", {}).get("hit_rate"), **health(name)},
                               before_rows))
     return rows
@@ -425,7 +426,7 @@ def report(state: dict) -> str:
     PLAN.mkdir(parents=True, exist_ok=True)
     (PLAN / "summary.json").write_text(json.dumps(rows, indent=1))
     head = ["method", "phase", "outcome_auroc", "auroc_ci", "delta_vs_before_ci", "p_no_gain", "one_ball_p_correct",
-            "balanced_accuracy", "cell_auroc", "argmax_hit_rate", "overfit_folds", "best_epochs"]
+            "balanced_accuracy", "cell_auroc", "far_cell_auroc", "argmax_hit_rate", "overfit_folds", "best_epochs"]
     table = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     table += ["| " + " | ".join(fmt(r.get(h)) for h in head) + " |" for r in rows]
     gen = PLAN / "generalise" / "metrics.json"
