@@ -80,7 +80,9 @@ def test_plan_runs_resumes_and_waits(fake, monkeypatch):
     assert any("interpret.py" in c[1] for c in calls)
     order = [" ".join(c) for c in calls]                              # results first: plain is interpreted
     first_interp = next(i for i, c in enumerate(order) if "interpret.py" in c and "plain-after" in c)
-    assert first_interp < next(i for i, c in enumerate(order) if "plan/commit-after" in c)
+    first = lambda run: next(i for i, c in enumerate(order) if run in c)  # noqa: E731
+    assert first("plan/plain-after") < first("plan/commit-after") < first("plan/gate-after") < first_interp
+    assert first_interp < first("plan/codes-after") < first("plan/codes_rollout-after") < first("-long")
     assert state["generalise-plain"]["state"] == "waiting"
 
     calls.clear(), fail.clear()
@@ -197,3 +199,22 @@ def test_backs_up_to_drive_after_every_step_and_survives_a_drop(fake, tmp_path, 
     steps = json.loads(plan.STATE.read_text())["steps"]
     assert steps["encode"]["state"] == "done" and steps["pretrained"]["state"] == "done"
     assert json.loads((drive / "outputs" / "plan" / "state.json").read_text())["steps"]["pretrained"]["state"] == "done"
+
+
+def test_budget_stops_before_a_step_that_would_not_finish(fake, monkeypatch):
+    calls, _ = fake
+    monkeypatch.setattr(plan, "T_START", plan.time.time() - 3600 * 9.5)   # 9.5 h into an 11 h session
+    plan.main(["run", "--stage", "all", "--budget-hours", "11"])
+    steps = json.loads(plan.STATE.read_text())["steps"]
+    assert steps["pretrained"]["state"] == "done" and "plain-after" not in steps   # 2.8 h wouldn't fit
+
+
+def test_restore_brings_back_progress_saved_on_github(fake):
+    saved = plan.REPO / "results" / "2026-10-04_2110_twoday" / "vjepa2" / "plan"
+    (saved / "scores" / "plain-after").mkdir(parents=True)
+    (saved / "state.json").write_text(json.dumps({"results_folder": "2026-10-04_2110_twoday", "started": "x",
+                                                  "choices": {}, "steps": {"plain-after": {"state": "done"}}}))
+    (saved / "scores" / "plain-after" / "per_clip.json").write_text("[]")
+    assert plan.main(["restore"]) == 0
+    assert json.loads(plan.STATE.read_text())["steps"]["plain-after"]["state"] == "done"
+    assert (plan.PLAN / "scores" / "plain-after" / "per_clip.json").exists()
