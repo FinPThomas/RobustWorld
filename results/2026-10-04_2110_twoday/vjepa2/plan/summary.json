@@ -13,7 +13,8 @@
   "p_no_gain": null,
   "one_ball_p_correct": 0.673,
   "balanced_accuracy": 0.725,
-  "cell_auroc": 0.971
+  "cell_auroc": 0.971,
+  "far_cell_auroc": null
  },
  {
   "method": "V-JEPA 2 pretrained",
@@ -30,6 +31,7 @@
   "one_ball_p_correct": 0.328,
   "balanced_accuracy": 0.333,
   "cell_auroc": 0.658,
+  "far_cell_auroc": null,
   "argmax_hit_rate": 0.199
  },
  {
@@ -82,6 +84,7 @@
   "one_ball_p_correct": 0.376,
   "balanced_accuracy": 0.431,
   "cell_auroc": 0.803,
+  "far_cell_auroc": null,
   "argmax_hit_rate": 0.483,
   "overfit_folds": "0/5",
   "best_epochs": "10/10/9/10/10"
@@ -101,6 +104,7 @@
   "one_ball_p_correct": 0.328,
   "balanced_accuracy": 0.333,
   "cell_auroc": 0.658,
+  "far_cell_auroc": null,
   "argmax_hit_rate": 0.199,
   "overfit_folds": "0/5",
   "best_epochs": "0/0/0/0/0"
