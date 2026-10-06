@@ -30,6 +30,7 @@ import argparse
 import json
 import sys
 import time
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -47,6 +48,23 @@ from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, c
                                     source_indices, video_of)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
+
+
+@lru_cache(maxsize=None)
+def normalisation(model_id: str) -> tuple[np.ndarray, np.ndarray]:
+    """The processor's pixel mean and std (only needed to encode a clip that isn't cached yet)."""
+    from transformers import AutoVideoProcessor
+    proc = AutoVideoProcessor.from_pretrained(model_id)
+    return np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
+
+
+def ram_gb() -> tuple[float, float] | None:
+    """(free, total) GB of RAM from /proc/meminfo (Linux, e.g. Colab), else None."""
+    try:
+        info = {line.split(":")[0]: int(line.split()[1]) for line in open("/proc/meminfo")}
+        return info["MemAvailable"] / 2**20, info["MemTotal"] / 2**20
+    except (OSError, KeyError, ValueError, IndexError):
+        return None
 
 
 def plots(rows: list[dict], out: Path) -> None:
@@ -106,14 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         args.out = args.out / args.predictor_run.name
 
     from sklearn.metrics import roc_auc_score
-    from transformers import AutoVideoProcessor, VJEPA2Model
+    from transformers import VJEPA2Model
 
     device = pick_device()
     t_load = time.perf_counter()
     model = VJEPA2Model.from_pretrained(args.model_id).to(device).eval()
-    proc = AutoVideoProcessor.from_pretrained(args.model_id)
     t_load = time.perf_counter() - t_load
-    mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     tub, grid = model.config.tubelet_size, SIZE // model.config.patch_size
     cache = cache_dir(args.model_id)
     cache.mkdir(parents=True, exist_ok=True)
@@ -132,14 +148,27 @@ def main(argv: list[str] | None = None) -> int:
         n_ctx = c["context_frames"][1] + 1
         enc = load_cached(cache, c)
         if enc is None:
-            enc = encode(model, frames, n_ctx, mean, std, device, imagine=True)
+            enc = encode(model, frames, n_ctx, *normalisation(args.model_id), device, imagine=True)
             torch.save(enc, path)
             timings.append({"read_video": t_read, **enc["timing"],
                             "total": t_read + sum(enc["timing"].values())})
         lab, centres = ball_labels(source_indices(c, passes, len(frames), n_ctx), track, grid, tub)
-        data.append({"clip": c, "enc": enc, "lab": lab, "centres": centres, "cs": enc["context"].shape[0]})
+        # Keep only the context half in memory (what the decoder is fitted on); a clip's full encoding is read
+        # back from the cache when it is scored. Holding every clip's real + imagined features as well needs
+        # about 25 MB per clip, which ran Colab's ~12 GB of RAM out at 254 clips.
+        data.append({"clip": c, "ctx": enc["context"].clone(), "lab": lab, "centres": centres, "cs": enc["context"].shape[0]})
+        del enc, frames
         print(f"\r  {i + 1}/{len(clips)} clips ({len(timings)} newly encoded)", end="", flush=True)
     print()
+    held = sum(d["ctx"].numel() * d["ctx"].element_size() for d in data) / 2**30
+    # Fitting the decoder makes a float32 copy of ~80% of these (2x their float16 size) plus a temporary for its
+    # spread, and a fold's test clips are read back one at a time: about 3.5x what is held now, at the peak.
+    ram, need = ram_gb(), 3.5 * held
+    print(f"context features in memory: {held:.1f} GB; fitting needs about {need:.1f} GB more; RAM: "
+          + (f"{ram[0]:.1f} GB free of {ram[1]:.1f} GB" if ram else "unknown"), flush=True)
+    if ram and ram[0] < need:
+        raise SystemExit(f"not enough RAM to fit the decoder ({ram[0]:.1f} GB free, about {need:.1f} GB needed): "
+                         "use a runtime with more RAM (Runtime > Change runtime type > High-RAM) or fewer clips")
 
     far, near = far_cells(scene, grid), near_cells(scene, grid)
 
@@ -155,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
     track_centres = []
     D = model.config.hidden_size
     for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
-        examples = [eval_decoder.examples_from(data[i]["enc"], data[i]["lab"]) for i in tr]
+        examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
         decoder = eval_decoder.fit(examples, seed=args.seed)
         decoder_raw = eval_decoder.fit_raw_features(examples, seed=args.seed)
         if args.predictor_run:
@@ -164,9 +193,11 @@ def main(argv: list[str] | None = None) -> int:
             if test_ids & set(meta["train_clip_ids"]):
                 raise SystemExit(f"fold{fold}.pt was trained on clips this fold scores; "
                                  "train it with the same manifest, --folds and --seed")
+        del examples
         for i in te:
             d = data[i]
             cs = d["cs"]
+            d["enc"] = load_cached(cache, d["clip"])
             m_real = decoder(d["enc"]["real"]).numpy()
             m_ctx = decoder(d["enc"]["context"]).numpy()
             if args.predictor_run:
@@ -195,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
                        **{f"{k}_one_ball_{side}": v for k, m in (("real", m_real[cs:]), ("imagined", m_imag),
                                                                  ("imagined_encoder_space", m_alt))
                           for side, v in one_ball_readouts(m, far, near).items()}}
+            del d["enc"]                      # scored: free it
         print(f"\r  fold {fold + 1}/{args.folds} scored", end="", flush=True)
     print()
 
