@@ -53,10 +53,17 @@
    "minutes": 0.0,
    "finished": "2026-10-04 21:32",
    "error": "no stage 2/3 run has been scored yet: run those first"
+  },
+  "tapnext": {
+   "state": "done",
+   "started": "2026-10-06 12:55",
+   "code": "b4ec0b9",
+   "minutes": 11.8,
+   "finished": "2026-10-06 13:07"
   }
  },
  "choices": {
   "held_out": {}
  },
- "last_push": "2026-10-04 22:11"
+ "last_push": "2026-10-06 12:55"
 }
