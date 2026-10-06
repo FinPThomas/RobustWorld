@@ -96,3 +96,16 @@ def test_no_held_out_clips_means_waiting(world):
     (tmp_path / "manifest_left.jsonl").unlink()                  # no left segment packed yet
     assert generalise.main(["split", "--manifest", str(manifest), "--out", str(tmp_path / "g")]) == generalise.WAITING
     assert len((tmp_path / "seen.jsonl").read_text().splitlines()) == 16
+
+
+def test_ball_probe_cv_scores_every_clip_holding_only_context_features(world, monkeypatch):
+    tmp_path, manifest = world
+    import ball_probe_cv
+
+    monkeypatch.setattr(ball_probe_cv, "cache_dir", posttrain.cache_dir)
+    monkeypatch.setattr(ball_probe_cv, "load_tracking", interpret.load_tracking)
+    monkeypatch.setattr(ball_probe_cv, "read_video", lambda path: np.zeros((ALL * 2, 64, 64, 3), np.uint8))
+    out = tmp_path / "probe"
+    ball_probe_cv.main(["--manifest", str(manifest), "--out", str(out)])
+    rows = json.loads((out / "per_clip.json").read_text())
+    assert len(rows) == 16 and all("imagined_one_ball_far" in r for r in rows)

@@ -108,7 +108,9 @@ def main(argv: list[str] | None = None) -> int:
         enc = load_cached(cache, c)
         n_ctx = c["context_frames"][1] + 1
         lab, _ = ball_labels(source_indices(c, passes, c["n_frames"], n_ctx), track, grid, tub)
-        data.append((c, enc, lab))
+        # only the context half (and the clip's length): every clip's full features would not fit in Colab's RAM
+        data.append((c, {"context": enc["context"].clone(), "steps": enc["real"].shape[0]}, lab))
+        del enc
 
     feat_change = {o: [] for o in OUTCOMES}
     ball_change = {o: [] for o in OUTCOMES}
@@ -136,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
             c, enc, _ = data[i]
             cs = enc["context"].shape[0]
             ctx = enc["context"][None].float().to(device)
-            steps = enc["real"].shape[0] - cs
+            steps = enc["steps"] - cs
             with torch.no_grad():
                 model.predictor.load_state_dict(base)
                 im_b = imagine(model.predictor, ctx, steps)[0].float().cpu()
@@ -156,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
                 cs = enc["context"].shape[0]
                 with torch.no_grad():
                     im = imagine_mode(model.predictor, enc["context"][None].float().to(device),
-                                      enc["real"].shape[0] - cs, mode)[0].float().cpu()
+                                      enc["steps"] - cs, mode)[0].float().cpu()
                 patched[kind][g].append(readout(decoder, im, c["outcome"]))
         print(f"\r  fold {fold + 1}/{args.folds} read", end="", flush=True)
     print()
