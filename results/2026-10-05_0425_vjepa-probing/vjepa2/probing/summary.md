@@ -132,6 +132,119 @@ Each cell: mean change, and how many pairs improved out of all pairs.
 | L16-linear-global-ln-softmax | 0.991 | 0.618 | 0.337 | 0.023 | 0.000 | 159.800 | 0.666 | 0.298 |  |  |  |
 | L16-linear-global-raw-softmax | 0.991 | 0.613 | 0.334 | 0.024 | 0.000 | 156.900 | 0.621 | 0.292 |  |  |  |
 
+## Three-way outcome with the away-from-plank bounce readout
+
+Most "hidden" passes stop at the plank edge still partly visible (only 26 of 77 vanish fully), so `returned()` (gone, then back on the near side) can't tell bounce from hidden even on ground truth. `away_from_plank` scores whether the visible ball moves away from the plank over the first 8 target steps; it fits nothing.
+
+Ceiling (same readout on tracker ball cells): bounce-vs-hidden AUROC 0.9589, P(correct) 0.742, balanced accuracy 0.81.
+
+| config | real: bounce-vs-hidden AUROC | real: P(correct) | real: balanced acc | imagined: bounce-vs-hidden AUROC | imagined: P(correct) | imagined: balanced acc |
+|---|---|---|---|---|---|---|
+| L16-mlp-token-ln-sigmoid | 0.837 | 0.722 | 0.808 |  |  |  |
+| L16-mlp-token-ln-softmax | 0.870 | 0.722 | 0.809 |  |  |  |
+| L12-mlp-token-ln-sigmoid | 0.833 | 0.720 | 0.809 |  |  |  |
+| L8-mlp-token-ln-sigmoid | 0.828 | 0.720 | 0.812 |  |  |  |
+| L20-mlp-token-ln-sigmoid | 0.835 | 0.719 | 0.799 |  |  |  |
+| last-mlp-token-raw-sigmoid | 0.839 | 0.719 | 0.812 | 0.284 | 0.319 | 0.333 |
+| last-mlp-token-ln-sigmoid | 0.838 | 0.718 | 0.812 | 0.296 | 0.320 | 0.333 |
+| L20-mlp-token-ln-softmax | 0.871 | 0.715 | 0.799 |  |  |  |
+| L12-mlp-token-ln-softmax | 0.850 | 0.714 | 0.814 |  |  |  |
+| last-mlp-nbhd-ln-sigmoid | 0.813 | 0.713 | 0.755 | 0.460 | 0.332 | 0.338 |
+| last-mlp-token-ln-softmax | 0.874 | 0.713 | 0.792 | 0.367 | 0.329 | 0.333 |
+| last-mlp-token-raw-softmax | 0.871 | 0.713 | 0.788 | 0.359 | 0.329 | 0.333 |
+| last-mlp-nbhd-raw-sigmoid | 0.810 | 0.712 | 0.755 | 0.452 | 0.332 | 0.338 |
+| last-mlp-nbhd-raw-softmax | 0.904 | 0.709 | 0.749 | 0.435 | 0.300 | 0.328 |
+| L16-mlp-nbhd-ln-sigmoid | 0.797 | 0.708 | 0.812 |  |  |  |
+| last-mlp-nbhd-ln-softmax | 0.910 | 0.708 | 0.749 | 0.430 | 0.298 | 0.314 |
+| L12-mlp-nbhd-ln-sigmoid | 0.805 | 0.707 | 0.752 |  |  |  |
+| L8-mlp-token-ln-softmax | 0.843 | 0.707 | 0.783 |  |  |  |
+| L4-mlp-nbhd-ln-sigmoid | 0.785 | 0.706 | 0.724 |  |  |  |
+| L4-mlp-token-ln-sigmoid | 0.822 | 0.706 | 0.736 |  |  |  |
+| L16-mlp-nbhd-ln-softmax | 0.863 | 0.705 | 0.805 |  |  |  |
+| L20-mlp-nbhd-ln-softmax | 0.915 | 0.705 | 0.845 |  |  |  |
+| L20-mlp-nbhd-ln-sigmoid | 0.797 | 0.704 | 0.810 |  |  |  |
+| L8-mlp-nbhd-ln-sigmoid | 0.719 | 0.697 | 0.750 |  |  |  |
+| L12-linear-token-ln-softmax | 0.813 | 0.695 | 0.804 |  |  |  |
+| L12-linear-token-raw-softmax | 0.811 | 0.694 | 0.818 |  |  |  |
+| L16-linear-token-raw-sigmoid | 0.795 | 0.693 | 0.739 |  |  |  |
+| L16-linear-token-ln-sigmoid | 0.794 | 0.692 | 0.734 |  |  |  |
+| L12-mlp-nbhd-ln-softmax | 0.867 | 0.691 | 0.759 |  |  |  |
+| L4-linear-token-raw-sigmoid | 0.817 | 0.689 | 0.837 |  |  |  |
+| L4-linear-token-ln-sigmoid | 0.813 | 0.687 | 0.834 |  |  |  |
+| L12-linear-token-raw-sigmoid | 0.788 | 0.686 | 0.704 |  |  |  |
+| L8-linear-token-raw-sigmoid | 0.791 | 0.686 | 0.710 |  |  |  |
+| L12-linear-token-ln-sigmoid | 0.782 | 0.685 | 0.704 |  |  |  |
+| L8-linear-token-ln-sigmoid | 0.784 | 0.684 | 0.710 |  |  |  |
+| L16-linear-token-raw-softmax | 0.862 | 0.683 | 0.764 |  |  |  |
+| L20-linear-token-raw-sigmoid | 0.778 | 0.680 | 0.674 |  |  |  |
+| L20-linear-token-ln-sigmoid | 0.771 | 0.678 | 0.669 |  |  |  |
+| L4-linear-nbhd-raw-sigmoid | 0.682 | 0.677 | 0.748 |  |  |  |
+| L4-mlp-token-ln-softmax | 0.790 | 0.677 | 0.705 |  |  |  |
+| L4-linear-nbhd-ln-sigmoid | 0.686 | 0.675 | 0.748 |  |  |  |
+| L20-linear-token-raw-softmax | 0.841 | 0.673 | 0.704 |  |  |  |
+| L8-mlp-nbhd-ln-softmax | 0.707 | 0.673 | 0.687 |  |  |  |
+| L8-linear-nbhd-ln-sigmoid | 0.624 | 0.671 | 0.711 |  |  |  |
+| L8-linear-nbhd-raw-sigmoid | 0.616 | 0.671 | 0.697 |  |  |  |
+| last-linear-token-raw-sigmoid | 0.798 | 0.671 | 0.669 | 0.428 | 0.332 | 0.355 |
+| L12-linear-nbhd-raw-sigmoid | 0.627 | 0.670 | 0.754 |  |  |  |
+| last-linear-token-ln-sigmoid | 0.797 | 0.670 | 0.669 | 0.433 | 0.332 | 0.354 |
+| L12-linear-nbhd-ln-sigmoid | 0.629 | 0.669 | 0.738 |  |  |  |
+| L16-linear-nbhd-raw-sigmoid | 0.636 | 0.667 | 0.737 |  |  |  |
+| L4-mlp-nbhd-ln-softmax | 0.638 | 0.667 | 0.672 |  |  |  |
+| L16-linear-nbhd-ln-sigmoid | 0.637 | 0.666 | 0.728 |  |  |  |
+| L16-linear-token-ln-softmax | 0.858 | 0.657 | 0.700 |  |  |  |
+| L8-linear-token-raw-softmax | 0.784 | 0.655 | 0.795 |  |  |  |
+| L20-linear-nbhd-raw-sigmoid | 0.597 | 0.653 | 0.709 |  |  |  |
+| last-linear-nbhd-ln-sigmoid | 0.618 | 0.652 | 0.698 | 0.457 | 0.332 | 0.310 |
+| last-linear-nbhd-raw-sigmoid | 0.615 | 0.652 | 0.694 | 0.458 | 0.332 | 0.295 |
+| L12-linear-nbhd-ln-softmax | 0.792 | 0.650 | 0.752 |  |  |  |
+| L12-linear-nbhd-raw-softmax | 0.791 | 0.650 | 0.744 |  |  |  |
+| L8-linear-token-ln-softmax | 0.788 | 0.646 | 0.794 |  |  |  |
+| L20-linear-nbhd-raw-softmax | 0.847 | 0.645 | 0.779 |  |  |  |
+| L20-linear-token-ln-softmax | 0.835 | 0.645 | 0.687 |  |  |  |
+| L20-linear-nbhd-ln-sigmoid | 0.593 | 0.644 | 0.695 |  |  |  |
+| L16-linear-nbhd-raw-softmax | 0.821 | 0.639 | 0.745 |  |  |  |
+| L16-linear-nbhd-ln-softmax | 0.800 | 0.623 | 0.716 |  |  |  |
+| L20-linear-nbhd-ln-softmax | 0.838 | 0.620 | 0.725 |  |  |  |
+| L4-linear-token-ln-softmax | 0.720 | 0.620 | 0.687 |  |  |  |
+| L8-linear-nbhd-raw-softmax | 0.674 | 0.620 | 0.733 |  |  |  |
+| L8-linear-nbhd-ln-softmax | 0.687 | 0.615 | 0.741 |  |  |  |
+| last-linear-nbhd-ln-softmax | 0.714 | 0.608 | 0.693 | 0.450 | 0.332 | 0.335 |
+| L4-linear-token-raw-softmax | 0.684 | 0.604 | 0.692 |  |  |  |
+| L4-linear-nbhd-ln-softmax | 0.639 | 0.600 | 0.696 |  |  |  |
+| L4-linear-nbhd-raw-softmax | 0.634 | 0.597 | 0.676 |  |  |  |
+| last-linear-nbhd-raw-softmax | 0.700 | 0.595 | 0.684 | 0.441 | 0.332 | 0.338 |
+| last-linear-token-ln-softmax | 0.708 | 0.577 | 0.646 | 0.464 | 0.331 | 0.328 |
+| last-linear-token-raw-softmax | 0.692 | 0.565 | 0.636 | 0.448 | 0.331 | 0.323 |
+| last-linear-global-ln-softmax | 0.596 | 0.375 | 0.357 | 0.465 | 0.323 | 0.323 |
+| last-linear-global-raw-softmax | 0.598 | 0.375 | 0.357 | 0.455 | 0.321 | 0.323 |
+| L8-linear-global-ln-softmax | 0.599 | 0.365 | 0.387 |  |  |  |
+| L20-linear-global-ln-softmax | 0.618 | 0.364 | 0.348 |  |  |  |
+| L20-linear-global-ln-sigmoid | 0.702 | 0.363 | 0.369 |  |  |  |
+| L8-linear-global-raw-softmax | 0.608 | 0.363 | 0.388 |  |  |  |
+| L20-linear-global-raw-sigmoid | 0.686 | 0.361 | 0.370 |  |  |  |
+| L20-linear-global-raw-softmax | 0.613 | 0.360 | 0.334 |  |  |  |
+| L4-linear-global-ln-sigmoid | 0.803 | 0.360 | 0.333 |  |  |  |
+| L4-linear-global-raw-sigmoid | 0.808 | 0.360 | 0.333 |  |  |  |
+| L4-linear-global-raw-softmax | 0.818 | 0.355 | 0.259 |  |  |  |
+| last-linear-global-raw-sigmoid | 0.649 | 0.355 | 0.350 | 0.545 | 0.336 | 0.323 |
+| L12-linear-global-ln-softmax | 0.682 | 0.354 | 0.359 |  |  |  |
+| L16-linear-global-ln-sigmoid | 0.651 | 0.354 | 0.374 |  |  |  |
+| L4-linear-global-ln-softmax | 0.814 | 0.354 | 0.249 |  |  |  |
+| last-linear-global-ln-sigmoid | 0.648 | 0.354 | 0.355 | 0.541 | 0.335 | 0.315 |
+| L12-linear-global-ln-sigmoid | 0.752 | 0.353 | 0.338 |  |  |  |
+| L12-linear-global-raw-sigmoid | 0.756 | 0.353 | 0.338 |  |  |  |
+| L12-linear-global-raw-softmax | 0.679 | 0.353 | 0.359 |  |  |  |
+| L16-linear-global-raw-sigmoid | 0.632 | 0.351 | 0.374 |  |  |  |
+| L16-linear-global-ln-softmax | 0.561 | 0.350 | 0.346 |  |  |  |
+| last-mlp-global-ln-sigmoid | 0.589 | 0.350 | 0.376 | 0.570 | 0.344 | 0.333 |
+| last-mlp-global-raw-sigmoid | 0.597 | 0.350 | 0.376 | 0.574 | 0.344 | 0.333 |
+| L8-linear-global-ln-sigmoid | 0.648 | 0.349 | 0.342 |  |  |  |
+| L8-linear-global-raw-sigmoid | 0.651 | 0.349 | 0.342 |  |  |  |
+| L16-linear-global-raw-softmax | 0.547 | 0.344 | 0.340 |  |  |  |
+| last-mlp-global-ln-softmax | 0.504 | 0.339 | 0.352 | 0.571 | 0.328 | 0.333 |
+| last-mlp-global-raw-softmax | 0.503 | 0.339 | 0.352 | 0.570 | 0.328 | 0.333 |
+
 ## Blockade (label-free)
 
 ```json
