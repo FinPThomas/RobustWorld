@@ -35,9 +35,11 @@
    "code": "c2bc906"
   },
   "pretrained": {
-   "state": "running",
-   "started": "2026-10-04 21:26",
-   "code": "c2bc906"
+   "state": "done",
+   "started": "2026-10-06 12:37",
+   "code": "b4ec0b9",
+   "minutes": 17.7,
+   "finished": "2026-10-06 12:55"
   },
   "plain-before": {
    "state": "running",
@@ -56,5 +58,5 @@
  "choices": {
   "held_out": {}
  },
- "last_push": "2026-10-04 21:26"
+ "last_push": "2026-10-04 22:11"
 }
