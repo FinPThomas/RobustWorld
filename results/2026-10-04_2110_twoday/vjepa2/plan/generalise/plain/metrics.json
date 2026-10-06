@@ -1,0 +1,92 @@
+{
+ "run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/plain-all",
+ "groups": {
+  "other side (from L)": {
+   "n": 83,
+   "n_through": 32,
+   "n_hidden": 3,
+   "n_bounce": 48,
+   "real": {
+    "outcome_auroc": 0.98,
+    "outcome_accuracy": 0.59,
+    "blocked_called_through": 33,
+    "through_called_blocked": 1,
+    "peak_far_mean": {
+     "through": 0.973,
+     "hidden": 0.629,
+     "bounce": 0.499
+    },
+    "bounce_auroc": 0.993,
+    "outcome3_accuracy": 0.578,
+    "p_correct": {
+     "through": 0.973,
+     "hidden": 0.248,
+     "bounce": 0.442
+    },
+    "p_correct_balanced": 0.554,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.271
+    },
+    "balanced_accuracy": 0.424,
+    "cell_auroc": 0.983,
+    "argmax_hit_rate": 0.999
+   },
+   "before": {
+    "outcome_auroc": 0.643,
+    "outcome_accuracy": 0.386,
+    "blocked_called_through": 51,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.742,
+     "hidden": 0.7,
+     "bounce": 0.73
+    },
+    "bounce_auroc": 0.181,
+    "outcome3_accuracy": 0.386,
+    "p_correct": {
+     "through": 0.742,
+     "hidden": 0.254,
+     "bounce": 0.037
+    },
+    "p_correct_balanced": 0.344,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.643,
+    "argmax_hit_rate": 0.156
+   },
+   "after": {
+    "outcome_auroc": 0.388,
+    "outcome_accuracy": 0.361,
+    "blocked_called_through": 46,
+    "through_called_blocked": 7,
+    "peak_far_mean": {
+     "through": 0.595,
+     "hidden": 0.51,
+     "bounce": 0.634
+    },
+    "bounce_auroc": 0.285,
+    "outcome3_accuracy": 0.325,
+    "p_correct": {
+     "through": 0.595,
+     "hidden": 0.291,
+     "bounce": 0.116
+    },
+    "p_correct_balanced": 0.334,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.689,
+    "argmax_hit_rate": 0.192
+   }
+  }
+ }
+}
