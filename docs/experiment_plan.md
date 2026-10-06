@@ -189,7 +189,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-06 13:26 UTC from Colab (Tesla T4), code `b4ec0b9`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-06 15:46 UTC from Colab (Tesla T4), code `b4ec0b9`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -198,7 +198,7 @@ _Last update: 2026-10-06 13:26 UTC from Colab (Tesla T4), code `b4ec0b9`. Result
 | 1 | pretrained: pretrained V-JEPA 2, frozen decoder | done | 17.7 | 2026-10-06 12:55 |
 | 1 | tapnext: TAPNext + rules, with and without the coded blockade | done | 11.8 | 2026-10-06 13:07 |
 | 2 | plain-before: plain: pretrained predictor, scored the plain way | done | 18.9 | 2026-10-06 13:26 |
-| 2 | plain-after: plain: post-trained 10 epochs | to do |  |  |
+| 2 | plain-after: plain: post-trained 10 epochs | done | 140.4 | 2026-10-06 15:46 |
 | 2 | commit-after: commit: post-trained 10 epochs | to do |  |  |
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | to do |  |  |
 | 2 | codes-after: codes: post-trained 10 epochs | to do |  |  |
@@ -222,5 +222,6 @@ _Last update: 2026-10-06 13:26 UTC from Colab (Tesla T4), code `b4ec0b9`. Result
 | V-JEPA 2 pretrained | before | 0.422 | [0.348, 0.487] | - | - |
 | TAPNext + straight line (no blockade) | baseline | 0.536 | [0.46, 0.609] | - | - |
 | TAPNext + coded blockade (fitted on outcomes; reference) | baseline | 0.848 | [0.797, 0.894] | - | - |
+| V-JEPA 2 plain-after | after | 0.884 | [0.841, 0.921] | [0.38, 0.542] | 0.0 |
 | V-JEPA 2 plain-before | before | 0.422 | [0.348, 0.487] | - | - |
 <!-- status:end -->

@@ -62,10 +62,17 @@
    "code": "b4ec0b9",
    "minutes": 11.8,
    "finished": "2026-10-06 13:07"
+  },
+  "plain-after": {
+   "state": "done",
+   "started": "2026-10-06 13:26",
+   "code": "b4ec0b9",
+   "minutes": 140.4,
+   "finished": "2026-10-06 15:46"
   }
  },
  "choices": {
   "held_out": {}
  },
- "last_push": "2026-10-06 13:07"
+ "last_push": "2026-10-06 13:26"
 }
