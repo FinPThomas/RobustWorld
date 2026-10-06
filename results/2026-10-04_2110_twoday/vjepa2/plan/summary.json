@@ -1,1 +1,35 @@
-[]
+[
+ {
+  "method": "V-JEPA 2: real target frames (ceiling)",
+  "variant": "real frames",
+  "phase": "ceiling",
+  "n": 254,
+  "outcome_auroc": 0.998,
+  "auroc_ci": [
+   0.995,
+   1.0
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.673,
+  "balanced_accuracy": 0.725,
+  "cell_auroc": 0.971
+ },
+ {
+  "method": "V-JEPA 2 pretrained",
+  "variant": "pretrained",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.422,
+  "auroc_ci": [
+   0.348,
+   0.487
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.328,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.658,
+  "argmax_hit_rate": 0.199
+ }
+]
