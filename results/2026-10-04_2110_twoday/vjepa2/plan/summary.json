@@ -31,5 +31,37 @@
   "balanced_accuracy": 0.333,
   "cell_auroc": 0.658,
   "argmax_hit_rate": 0.199
+ },
+ {
+  "method": "TAPNext + straight line (no blockade)",
+  "variant": "tapnext_continue",
+  "phase": "baseline",
+  "n": 254,
+  "outcome_auroc": 0.536,
+  "auroc_ci": [
+   0.46,
+   0.609
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.333,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.596
+ },
+ {
+  "method": "TAPNext + coded blockade (fitted on outcomes; reference)",
+  "variant": "tapnext_blockade",
+  "phase": "baseline",
+  "n": 254,
+  "outcome_auroc": 0.848,
+  "auroc_ci": [
+   0.797,
+   0.894
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.52,
+  "balanced_accuracy": 0.525,
+  "cell_auroc": 0.554
  }
 ]
