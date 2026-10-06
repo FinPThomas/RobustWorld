@@ -733,6 +733,36 @@ def cmd_report(args) -> None:
               "|---|" + "---|" * len(KEYS)]
     for r in sorted(results, key=lambda r: -(r["target"].get("far_cell_auroc") or 0)):
         lines.append(f"| {r['name']} | " + " | ".join(fmt(r.get(p, {}).get(k)) for p, k, _ in KEYS) + " |")
+    rs = OUT / "rescore.json"
+    if rs.exists():
+        rsd = json.loads(rs.read_text())
+        t = rsd.pop("truth_labels")
+        lines += ["", "## Three-way outcome with the away-from-plank bounce readout", "",
+                  "Most \"hidden\" passes stop at the plank edge still partly visible (only 26 of 77 vanish fully), "
+                  "so `returned()` (gone, then back on the near side) can't tell bounce from hidden even on ground truth. "
+                  "`away_from_plank` scores whether the visible ball moves away from the plank over the first 8 target "
+                  "steps; it fits nothing.", "",
+                  f"Ceiling (same readout on tracker ball cells): bounce-vs-hidden AUROC {t['bounce_vs_hidden_auroc']}, "
+                  f"P(correct) {t['p_correct_balanced']}, balanced accuracy {t['balanced_accuracy']}.", "",
+                  "| config | real: bounce-vs-hidden AUROC | real: P(correct) | real: balanced acc | imagined: bounce-vs-hidden AUROC | imagined: P(correct) | imagined: balanced acc |",
+                  "|---|---|---|---|---|---|---|"]
+        for name, v in sorted(rsd.items(), key=lambda kv: -kv[1]["target"]["p_correct_balanced"]):
+            im = v.get("imagined", {})
+            lines.append(f"| {name} | {fmt(v['target']['bounce_vs_hidden_auroc'])} | {fmt(v['target']['p_correct_balanced'])} | "
+                         f"{fmt(v['target']['balanced_accuracy'])} | {fmt(im.get('bounce_vs_hidden_auroc'))} | "
+                         f"{fmt(im.get('p_correct_balanced'))} | {fmt(im.get('balanced_accuracy'))} |")
+    tr = OUT / "transfer.json"
+    if tr.exists():
+        trd = json.loads(tr.read_text())
+        lines += ["", "## Other side: right-trained probes on left-segment clips", "",
+                  "Fitted on all right clips' real context; the left clips (ball from the other side) are never seen.", "",
+                  "| config | ctx cell AUROC | tgt cell AUROC | far cell AUROC | tgt hit | outcome AUROC | bounce-vs-hidden (away) | P(correct, away) | imag outcome AUROC |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+        for name, v in trd.items():
+            t = v["target"]
+            lines.append(f"| {name} | {fmt(v['context']['cell_auroc'])} | {fmt(t['cell_auroc'])} | {fmt(t.get('far_cell_auroc'))} | "
+                         f"{fmt(t['hit_rate'])} | {fmt(t['outcome_auroc'])} | {fmt(t['away']['bounce_vs_hidden_auroc'])} | "
+                         f"{fmt(t['away']['p_correct_balanced'])} | {fmt(v.get('imagined', {}).get('outcome_auroc'))} |")
     bl = OUT / "blockade.json"
     if bl.exists():
         lines += ["", "## Blockade (label-free)", "", "```json", bl.read_text().strip(), "```"]
@@ -763,6 +793,100 @@ def cmd_report(args) -> None:
     plt.close(fig)
 
 
+# ----------------------------------------------------------------------------------------- rescore
+
+def away_rows(maps, rows, cfg_head: str, far, dist) -> list[dict]:
+    from robust_world.eval.ball import away_from_plank
+    out = []
+    for m, r in zip(maps, rows):
+        f = (m * far).max((1, 2)) if cfg_head == "sigmoid" else (m * far).sum((1, 2))
+        out.append({"clip_id": r["clip_id"], "outcome": r["outcome"], "far": f.tolist(), "away": away_from_plank(m, dist)})
+    return out
+
+
+def away_metrics(out: list[dict]) -> dict:
+    from robust_world.eval.ball import outcome_probs_away, three_way_metrics
+    blocked = [r for r in out if r["outcome"] != "through"]
+    tw = three_way_metrics(out, outcome_probs_away)
+    return {"bounce_vs_hidden_auroc": auc([r["outcome"] == "bounce" for r in blocked], [r["away"] for r in blocked]),
+            "p_correct_balanced": tw["p_correct_balanced"], "balanced_accuracy": tw["balanced_accuracy"],
+            "p_correct": tw["p_correct"], "recall": tw["recall"]}
+
+
+def cmd_rescore(args) -> None:
+    """Rescore every saved probe map with the away-from-plank bounce readout (fits nothing). The
+    ceiling is the same readout on the tracker's own ball cells."""
+    from robust_world.eval.ball import plank_distance
+    clips = encoded_clips(args)
+    rows, geo = truth(clips)
+    far, dist = geo["far"], plank_distance(geo["scene"])
+    k = rows[0]["ctx_steps"]
+    res = {"truth_labels": away_metrics(away_rows([r["labels"][k:].astype(float) for r in rows], rows, "sigmoid", far, dist))}
+    for r in sweep_results():
+        z = np.load(OUT / "maps" / f"{r['name']}.npz")
+        res[r["name"]] = {"target": away_metrics(away_rows(list(z["tgt_maps"].astype(np.float32)), rows, r["head"], far, dist))}
+        if "img_maps" in z:
+            res[r["name"]]["imagined"] = away_metrics(away_rows(list(z["img_maps"].astype(np.float32)), rows, r["head"], far, dist))
+    (OUT / "rescore.json").write_text(json.dumps(res, indent=1))
+    t = res["truth_labels"]
+    log(f"rescore: truth labels bounce-vs-hidden AUROC {t['bounce_vs_hidden_auroc']}, P(correct) {t['p_correct_balanced']}")
+
+
+# ---------------------------------------------------------------------------------------- transfer
+
+LEFT = REPO / "data" / "processed" / "clips" / "manifest_left.jsonl"
+TRANSFER = [Config(layer, model, i, "ln", h) for layer in ("L8", "L12", "L16", "last") for model in ("linear", "mlp")
+            for i in ("token", "nbhd") for h in ("sigmoid", "softmax")]
+
+
+def cmd_transfer(args) -> None:
+    """Other side: probes fitted on ALL right-segment clips (real context, same-frame labels) read
+    left-segment clips, where the ball rolls in from the other side (held out from everything). Far
+    and near swap. Scored on left context frames, real target frames and imagined target (last layer)."""
+    from robust_world.eval.ball import plank_distance
+    import eval_decoder
+    a = argparse.Namespace(**{**vars(args), "manifest": LEFT, "limit": None})
+    cmd_encode(a)
+    train, test = encoded_clips(args), encoded_clips(a)
+    rows_tr, _ = truth(train)
+    rows_te, geo = truth(test)
+    far, near = geo["near"], geo["far"]                       # ball comes from the left: far side is the right
+    dist = plank_distance(geo["scene"])
+    k = rows_te[0]["ctx_steps"]
+    path = OUT / "transfer.json"
+    res = json.loads(path.read_text()) if path.exists() else {}
+    loaded, feats = None, None
+    for cfg in TRANSFER:
+        if cfg.name in res:
+            continue
+        if cfg.layer != loaded:
+            feats = None
+            feats = [load(c["clip_id"], f"ctx_{cfg.layer}") for c in train]
+            loaded = cfg.layer
+        t0 = time.perf_counter()
+        probe = fit_probe(cfg, [eval_decoder.examples_from({"context": torch.from_numpy(f)}, r["labels"])
+                                for f, r in zip(feats, rows_tr)])
+        out = {}
+        parts = [("context", "ctx", lambda c: load(c["clip_id"], f"ctx_{cfg.layer}"), slice(0, k)),
+                 ("target", "tgt", lambda c: load(c["clip_id"], f"tgt_{cfg.layer}"), slice(k, None))]
+        if cfg.layer == "last":
+            parts.append(("imagined", "img", lambda c: load(c["clip_id"], "imag"), slice(k, None)))
+        for part, _, get, sl in parts:
+            mv = [apply(probe, get(c)) for c in test]
+            maps, vis = [m for m, _ in mv], [v for _, v in mv]
+            out[part] = location_metrics(maps, vis, [r["labels"][sl] for r in rows_te], [r["centres"][sl] for r in rows_te], far)
+            if part != "context":
+                out[part].update(outcome_metrics(*outcome_rows(maps, rows_te, cfg, far, near)))
+                out[part]["away"] = away_metrics(away_rows(maps, rows_te, cfg.head, far, dist))
+        res[cfg.name] = {**cfg.as_dict(), "n_train": len(train), "n_test": len(test),
+                         "seconds": round(time.perf_counter() - t0, 1), **out}
+        path.write_text(json.dumps(res, indent=1))
+        t = out["target"]
+        log(f"transfer {cfg.name}: ctx cell {out['context']['cell_auroc']}, tgt cell {t['cell_auroc']}, "
+            f"far cell {t.get('far_cell_auroc')}, hit {t['hit_rate']}, outcome {t['outcome_auroc']}"
+            + (f" | imagined outcome {out['imagined']['outcome_auroc']}" if "imagined" in out else ""))
+
+
 # ----------------------------------------------------------------------------------------- publish
 
 def cmd_publish(args) -> None:
@@ -790,6 +914,16 @@ def cmd_publish(args) -> None:
     log(f"publish: {dest.name} " + ("pushed" if r.returncode == 0 else f"not pushed: {(r.stderr or r.stdout).strip()[-200:]}"))
 
 
+def cmd_followups(args) -> None:
+    """Follow-ups after the first night: rescore with the away-from-plank readout, then the
+    other-side (left segment) transfer test; report and publish after each."""
+    for stage in (cmd_rescore, cmd_report, cmd_publish, cmd_transfer, cmd_report, cmd_publish):
+        try:
+            stage(args)
+        except Exception as e:
+            log(f"{stage.__name__} FAILED: {e!r}")
+
+
 def cmd_all(args) -> None:
     cmd_encode(args)
     cmd_baseline(args)
@@ -807,7 +941,7 @@ def cmd_all(args) -> None:
 def main(argv: list[str] | None = None) -> int:
     global OUT
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("stage", choices=["encode", "baseline", "sweep", "blockade", "report", "publish", "all"])
+    p.add_argument("stage", choices=["encode", "baseline", "sweep", "blockade", "rescore", "transfer", "followups", "report", "publish", "all"])
     p.add_argument("--manifest", type=Path, default=MANIFEST)
     p.add_argument("--limit", type=int, default=None, help="first N clips only (quick checks)")
     p.add_argument("--threads", type=int, default=6)

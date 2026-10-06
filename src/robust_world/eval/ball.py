@@ -161,7 +161,39 @@ def outcome_probs(row: dict) -> dict:
     return {"through": p_through, "bounce": p_bounce, "hidden": 1 - p_through - p_bounce}
 
 
-def three_way_metrics(rows: list[dict]) -> dict:
+def plank_distance(scene: dict, grid: int = GRID) -> np.ndarray:
+    """[grid, grid] distance in px from each cell centre to the occluder outline (0 inside it)."""
+    occluder = np.array(scene["occluder_polygon"], np.float32)
+    cell = CLIP_SIZE / grid
+    return np.array([[max(0.0, -cv2.pointPolygonTest(occluder, ((x + 0.5) * cell, (y + 0.5) * cell), True))
+                      for x in range(grid)] for y in range(grid)])
+
+
+def away_from_plank(maps: np.ndarray, dist: np.ndarray, start: int = 0, end: int = 7) -> float:
+    """Bounce score: how far the visible ball's expected distance from the plank grows between
+    target steps start..start+1 and end..end+1 (px). A blocked ball that stops at the plank edge
+    ("hidden": most never vanish fully) stays put; a bounce rolls back out. Fits nothing; on tracker
+    ground truth it separates bounce from hidden at AUROC ~0.99, where returned() is ~0.5."""
+    outside = dist > 0
+    w = maps * outside
+    mass = w.sum(axis=(1, 2))
+    d = (w * dist).sum(axis=(1, 2)) / np.maximum(mass, 1e-9)
+    a, b = slice(start, start + 2), slice(end, end + 2)
+    if mass[a].sum() <= 0 or mass[b].sum() <= 0:
+        return 0.0
+    return round(float(np.average(d[b], weights=mass[b] + 1e-9) - np.average(d[a], weights=mass[a] + 1e-9)), 2)
+
+
+def outcome_probs_away(row: dict, scale: float = CLIP_SIZE / GRID) -> dict:
+    """P(through, bounce, hidden) with the bounce score from away_from_plank ("away", px): through =
+    peak P(ball beyond the plank); bounce = not through, and moving away from the plank (logistic in
+    units of one cell, fixed, not fitted); hidden = the rest."""
+    p_through = max(row["far"])
+    p_bounce = (1 - p_through) / (1 + np.exp(-row["away"] / scale))
+    return {"through": p_through, "bounce": float(p_bounce), "hidden": float(1 - p_through - p_bounce)}
+
+
+def three_way_metrics(rows: list[dict], probs_fn=None) -> dict:
     """Headline outcome scores, each outcome counting equally however many clips it has:
     p_correct      mean P(true outcome), per outcome and averaged over outcomes
     recall         share of clips whose most likely outcome is the true one, per outcome and averaged
@@ -170,7 +202,7 @@ def three_way_metrics(rows: list[dict]) -> dict:
     pc, rec = {}, {}
     for o in present:
         grp = [r for r in rows if r["outcome"] == o]
-        probs = [outcome_probs(r) for r in grp]
+        probs = [(probs_fn or outcome_probs)(r) for r in grp]
         pc[o] = round(float(np.mean([p[o] for p in probs])), 3)
         rec[o] = round(float(np.mean([max(p, key=p.get) == o for p in probs])), 3)
     return {"p_correct": pc, "p_correct_balanced": round(float(np.mean(list(pc.values()))), 3),
