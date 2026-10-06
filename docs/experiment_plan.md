@@ -88,6 +88,15 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
 10. `generalise.py`: held-out other-side and new-ball scoring.
 11. `interpret.py`: change maps and layer patching.
 12. A paired bootstrap of before vs after on the same clips.
+13. (2026-10-06, after a Colab GPU timeout) Training saves its full state after every epoch
+    (`<fold>.partial.pt`, backed up to Drive) and carries on from there, so a stop costs at most one epoch;
+    batch 4 x 2 instead of 1 x 8 (same effective batch; batch 1 used 1.15 GB of the T4); and generalisation and
+    interpretation of `plain` run straight after `plain-after`, before the other variants.
+
+First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
+gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows
+clearly past the plank (P(blocked) ~0.97 for every pass, unnormalised), so the gain is in where the predicted
+ball mass lies, not yet a clean "ball comes out" picture.
 
 ## The plan
 

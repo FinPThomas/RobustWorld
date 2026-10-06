@@ -63,7 +63,8 @@ SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; backed
 PY = sys.executable
 
 EPOCHS, LONG_EPOCHS = 10, 30
-T4 = ["--batch-size", "1", "--accum", "8"]          # effective batch 8, fits a 16 GB T4
+# Effective batch 8. Batch 1 x 8 used 1.15 GB of the T4's 16 GB (plain-after), so 4 x 2 fits and keeps the GPU busier.
+T4 = ["--batch-size", "4", "--accum", "2"]
 VARIANTS = {                                        # name: (posttrain.py flags, the "before" it is compared with)
     "plain": ([], "plain"),
     "commit": (["--loss", "commit"], "plain"),
@@ -284,24 +285,37 @@ def step_frac(frac: float):
     return fn
 
 
-def step_generalise(args, state, log):
+def generalise_variant(v: str, args, state, log) -> None:
+    out = PLAN / "generalise" / v
+    if (out / "metrics.json").exists():
+        print(f"== generalisation for {v} is done already ({out})", flush=True)
+        return
     if not state["choices"].get("held_out"):
         step_split(args, state, log)                # recordings may have arrived since stage 1
         if not state["choices"].get("held_out"):
             raise Waiting("no clips from the other side or a new ball yet")
     step_encode(args, state, log)                   # held-out clips that arrived later (cached ones are skipped)
-    v = best_variants(state)[0]
     must([PY, HERE / "posttrain.py", "train", "--all", "--run", f"plan/{v}-all", "--epochs", str(EPOCHS),
           "--manifest", SEEN, "--resume", *VARIANTS[v][0], *T4, *args.extra], log)
-    must([PY, HERE / "generalise.py", "score", "--run", CKPT / f"{v}-all", "--manifest", MANIFEST], log)
+    must([PY, HERE / "generalise.py", "score", "--run", CKPT / f"{v}-all", "--manifest", MANIFEST, "--out", out], log)
     for f in ("log.json", "run_info.json"):
         if (CKPT / f"{v}-all" / f).exists():
-            shutil.copy2(CKPT / f"{v}-all" / f, PLAN / "generalise" / f"train_{f}")
+            shutil.copy2(CKPT / f"{v}-all" / f, out / f"train_{f}")
+
+
+def interpret_variant(v: str, args, log) -> None:
+    if (PLAN / "interpret" / f"{v}-after" / "interpret.json").exists():
+        print(f"== interpretation of {v}-after is done already", flush=True)
+        return
+    must([PY, HERE / "interpret.py", "--run", CKPT / f"{v}-after", "--manifest", manifest()], log)
+
+
+def step_generalise(args, state, log):
+    generalise_variant(best_variants(state)[0], args, state, log)
 
 
 def step_interpret(args, state, log):
-    v = best_variants(state)[0]
-    must([PY, HERE / "interpret.py", "--run", CKPT / f"{v}-after", "--manifest", manifest()], log)
+    interpret_variant(best_variants(state)[0], args, log)
 
 
 STEPS: list[Step] = [
@@ -309,7 +323,13 @@ STEPS: list[Step] = [
     Step(1, "encode", "encode every clip once (frozen encoder)", step_encode),
     Step(1, "pretrained", "pretrained V-JEPA 2, frozen decoder", step_pretrained),
     Step(1, "tapnext", "TAPNext + rules, with and without the coded blockade", step_tapnext),
-    *variant_steps(2, STAGE2),
+    *variant_steps(2, STAGE2[:1]),
+    # Results first: generalisation and interpretation of the first post-trained run straight away (Colab may
+    # stop at any time); stages 5 and 6 repeat them for the best variant if that turns out to be another one.
+    Step(2, "generalise-plain", "plain: ball from the other side, before vs after",
+         lambda a, s, log: generalise_variant("plain", a, s, log)),
+    Step(2, "interpret-plain", "plain: change maps and layer patching", lambda a, s, log: interpret_variant("plain", a, log)),
+    *variant_steps(2, STAGE2[1:]),
     *variant_steps(3, STAGE3),
     Step(4, "long-1", f"best variant, {LONG_EPOCHS} epochs", step_long(0)),
     Step(4, "long-2", f"second-best variant, {LONG_EPOCHS} epochs", step_long(1)),
@@ -429,12 +449,11 @@ def report(state: dict) -> str:
             "balanced_accuracy", "cell_auroc", "far_cell_auroc", "argmax_hit_rate", "overfit_folds", "best_epochs"]
     table = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     table += ["| " + " | ".join(fmt(r.get(h)) for h in head) + " |" for r in rows]
-    gen = PLAN / "generalise" / "metrics.json"
     gen_md = []
-    if gen.exists():
+    for gen in sorted((PLAN / "generalise").glob("*/metrics.json")):
         g = json.loads(gen.read_text())
-        gen_md = ["", "### Generalisation (held out, never trained on)", "",
-                  "| group | clips | AUROC before | AUROC after | AUROC real frames |", "|---|---|---|---|---|"]
+        gen_md += ["", f"### Generalisation of {gen.parent.name} (held out, never trained on)", "",
+                   "| group | clips | AUROC before | AUROC after | AUROC real frames |", "|---|---|---|---|---|"]
         gen_md += [f"| {k} | {v['n']} | {v['before']['outcome_auroc']} | {v['after']['outcome_auroc']} | "
                    f"{v['real']['outcome_auroc']} |" for k, v in g["groups"].items()]
     interp = sorted((PLAN / "interpret").glob("*/interpret.json"))

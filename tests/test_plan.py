@@ -78,6 +78,10 @@ def test_plan_runs_resumes_and_waits(fake, monkeypatch):
     best = json.loads(plan.STATE.read_text())["choices"]["best"]
     assert len(best) == 2 and f"plan/{best[0]}-long" in trained and f"plan/{best[0]}-frac25" in trained
     assert any("interpret.py" in c[1] for c in calls)
+    order = [" ".join(c) for c in calls]                              # results first: plain is interpreted
+    first_interp = next(i for i, c in enumerate(order) if "interpret.py" in c and "plain-after" in c)
+    assert first_interp < next(i for i, c in enumerate(order) if "plan/commit-after" in c)
+    assert state["generalise-plain"]["state"] == "waiting"
 
     calls.clear(), fail.clear()
     plan.main(["run", "--stage", "all"])                              # second session: only what's left

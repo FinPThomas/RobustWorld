@@ -4,7 +4,8 @@ The plan works on Colab's local disk, which never drops, and keeps Drive as the 
 Drive -> local once per runtime, and plan.py copies local -> Drive after every step and every few
 minutes. A file is copied when it is missing there or newer (never an older one over a newer one); it is
 written to "<name>.part" and renamed, so a copy cut off by a Drive drop never leaves a half file.
-Files are never deleted. The encoded-feature cache is left out (plan.py re-encodes it on Colab's
+Files are never deleted, except a fold's per-epoch training state ("*.partial.pt") once that fold is
+finished and its state is gone from the source. The encoded-feature cache is left out (plan.py re-encodes it on Colab's
 disk in a few minutes), which keeps Drive reads, and so Drive drops, to a minimum.
 
     python scripts/drive_sync.py <from> <to> [<excluded relative path> ...]
@@ -18,6 +19,7 @@ from pathlib import Path
 
 SKIP = (".part", ".tmp")
 NOT_BACKED_UP = ("vjepa2/cache",)       # under outputs/: ~2 GB of features, quicker to re-encode than to read from Drive
+MIRRORED = ".partial.pt"                # per-epoch training state (~0.4 GB): removed from the copy once the fold is saved
 
 
 def sync(src: Path, dst: Path, exclude: tuple[str, ...] = ()) -> int:
@@ -45,6 +47,9 @@ def sync(src: Path, dst: Path, exclude: tuple[str, ...] = ()) -> int:
         shutil.copy2(f, part)
         part.replace(d)
         copied += 1
+    for d in dst.rglob(f"*{MIRRORED}") if dst.is_dir() else ():
+        if not (src / d.relative_to(dst)).exists():
+            d.unlink(missing_ok=True)
     return copied
 
 
