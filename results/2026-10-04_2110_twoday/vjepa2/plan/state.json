@@ -99,6 +99,13 @@
    "code": "3b6b3d1",
    "minutes": 90.9,
    "finished": "2026-10-07 03:49"
+  },
+  "codes-before": {
+   "state": "done",
+   "started": "2026-10-07 03:49",
+   "code": "3b6b3d1",
+   "minutes": 11.5,
+   "finished": "2026-10-07 04:01"
   }
  },
  "choices": {
@@ -111,5 +118,5 @@
    }
   }
  },
- "last_push": "2026-10-07 02:18"
+ "last_push": "2026-10-07 03:49"
 }
