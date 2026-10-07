@@ -19,4 +19,10 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 |---|---|---|---|---|
 | other side (from L) | 83 | 0.643 | 0.388 | 0.98 |
 
+### Interpretation: plain-after
+
+- Feature change on the plank: 0.188 of the total (the plank is 0.172 of the frame), correlation 0.355.
+- Patching in one group: highest AUROC from `layer 11` (0.426); before 0.422, after 0.885.
+- Figures: `vjepa2/plan/interpret/plain-after/change_map.png`, `layer_patching.png`.
+
 ![summary](summary.png)

@@ -1,0 +1,59 @@
+{
+ "run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/plain-after",
+ "auroc_before": 0.422,
+ "auroc_after": 0.885,
+ "feature_change": {
+  "share_on_plank": 0.188,
+  "plank_share_of_frame": 0.172,
+  "correlation_with_plank": 0.355
+ },
+ "ball_change_through": {
+  "share_on_plank": 0.119,
+  "plank_share_of_frame": 0.172,
+  "correlation_with_plank": -0.12
+ },
+ "ball_change_blocked": {
+  "share_on_plank": 0.062,
+  "plank_share_of_frame": 0.172,
+  "correlation_with_plank": -0.135
+ },
+ "ball_beyond_plank_change": {
+  "through": 0.0394,
+  "hidden": -0.0443,
+  "bounce": -0.0774
+ },
+ "patching": {
+  "patch_in": {
+   "embeddings": 0.296,
+   "layer 00": 0.375,
+   "layer 01": 0.381,
+   "layer 02": 0.378,
+   "layer 03": 0.361,
+   "layer 04": 0.396,
+   "layer 05": 0.392,
+   "layer 06": 0.399,
+   "layer 07": 0.408,
+   "layer 08": 0.418,
+   "layer 09": 0.416,
+   "layer 10": 0.423,
+   "layer 11": 0.426,
+   "output norm + proj": 0.42
+  },
+  "revert": {
+   "embeddings": 0.708,
+   "layer 00": 0.808,
+   "layer 01": 0.791,
+   "layer 02": 0.817,
+   "layer 03": 0.746,
+   "layer 04": 0.691,
+   "layer 05": 0.827,
+   "layer 06": 0.87,
+   "layer 07": 0.866,
+   "layer 08": 0.882,
+   "layer 09": 0.887,
+   "layer 10": 0.884,
+   "layer 11": 0.877,
+   "output norm + proj": 0.894
+  }
+ }
+}
