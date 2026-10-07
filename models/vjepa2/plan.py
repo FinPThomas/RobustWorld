@@ -339,6 +339,9 @@ STEPS: list[Step] = [
     *variant_steps(3, ["gate"]),
     Step(2, "interpret-plain", "plain: change maps and layer patching", lambda a, s, log: interpret_variant("plain", a, log)),
     *variant_steps(3, ["hyp"]),
+    # commit came out best in the first Kaggle session (2026-10-07), so check that it carries over too
+    Step(2, "generalise-commit", "commit: ball from the other side, before vs after",
+         lambda a, s, log: generalise_variant("commit", a, s, log)),
     *variant_steps(2, [v for v in STAGE2 if v not in ("plain", "commit")]),
     *variant_steps(3, [v for v in STAGE3 if v not in ("gate", "hyp")]),
     Step(4, "long-1", f"best variant, {LONG_EPOCHS} epochs", step_long(0)),
@@ -490,7 +493,7 @@ def report(state: dict) -> str:
           "![summary](summary.png)"]
     (PLAN / "summary.md").write_text("\n".join(md) + "\n")
 
-    lines = [f"_Last update: {dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M} UTC from Colab ({gpu()}), "
+    lines = [f"_Last update: {dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M} UTC from {'Kaggle' if Path('/kaggle').exists() else 'Colab'} ({gpu()}), "
              f"code `{commit()}`. Results: [results/{state['results_folder']}](../results/{state['results_folder']}/README.md)._",
              "", "| stage | step | state | minutes | finished (UTC) |", "|---|---|---|---|---|"]
     for s in STEPS:
