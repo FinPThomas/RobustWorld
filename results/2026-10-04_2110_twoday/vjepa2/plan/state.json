@@ -106,6 +106,13 @@
    "code": "3b6b3d1",
    "minutes": 11.5,
    "finished": "2026-10-07 04:01"
+  },
+  "generalise-commit": {
+   "state": "done",
+   "started": "2026-10-07 09:24",
+   "code": "aaca21d",
+   "minutes": 30.8,
+   "finished": "2026-10-07 09:55"
   }
  },
  "choices": {
