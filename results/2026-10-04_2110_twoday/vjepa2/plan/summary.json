@@ -133,6 +133,26 @@
   "best_epochs": "10/7/10/9/10"
  },
  {
+  "method": "V-JEPA 2 codes-before",
+  "variant": "codes",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.44,
+  "auroc_ci": [
+   0.369,
+   0.519
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.33,
+  "balanced_accuracy": 0.329,
+  "cell_auroc": 0.571,
+  "far_cell_auroc": 0.504,
+  "argmax_hit_rate": 0.134,
+  "overfit_folds": "0/5",
+  "best_epochs": "0/0/0/0/0"
+ },
+ {
   "method": "V-JEPA 2 gate-after",
   "variant": "gate",
   "phase": "after",
