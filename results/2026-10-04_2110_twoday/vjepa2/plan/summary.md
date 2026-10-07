@@ -15,6 +15,12 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 gate-after | after | 0.885 | [0.842, 0.924] | [0.383, 0.544] | 0.0 | 0.371 | 0.383 | 0.803 | 0.769 | 0.478 | 0/5 | 10/10/9/10/10 |
 | V-JEPA 2 hyp-after | after | 0.423 | [0.355, 0.488] | [-0.072, 0.075] | 0.521 | 0.328 | 0.333 | 0.665 | 0.544 | 0.23 | 1/5 | 10/3/7/2/1 |
 
+### Generalisation of commit (held out, never trained on)
+
+| group | clips | AUROC before | AUROC after | AUROC real frames |
+|---|---|---|---|---|
+| other side (from L) | 83 | 0.643 | 0.35 | 0.98 |
+
 ### Generalisation of plain (held out, never trained on)
 
 | group | clips | AUROC before | AUROC after | AUROC real frames |
