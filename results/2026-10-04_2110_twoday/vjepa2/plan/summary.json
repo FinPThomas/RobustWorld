@@ -154,5 +154,28 @@
   "argmax_hit_rate": 0.478,
   "overfit_folds": "0/5",
   "best_epochs": "10/10/9/10/10"
+ },
+ {
+  "method": "V-JEPA 2 hyp-after",
+  "variant": "hyp",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.423,
+  "auroc_ci": [
+   0.355,
+   0.488
+  ],
+  "delta_vs_before_ci": [
+   -0.072,
+   0.075
+  ],
+  "p_no_gain": 0.521,
+  "one_ball_p_correct": 0.328,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.665,
+  "far_cell_auroc": 0.544,
+  "argmax_hit_rate": 0.23,
+  "overfit_folds": "1/5",
+  "best_epochs": "10/3/7/2/1"
  }
 ]
