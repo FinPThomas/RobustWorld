@@ -120,6 +120,13 @@
    "code": "aaca21d",
    "minutes": 120.3,
    "finished": "2026-10-07 11:55"
+  },
+  "rollout-before": {
+   "state": "done",
+   "started": "2026-10-07 11:55",
+   "code": "aaca21d",
+   "minutes": 34.0,
+   "finished": "2026-10-07 12:29"
   }
  },
  "choices": {
@@ -132,5 +139,5 @@
    }
   }
  },
- "last_push": "2026-10-07 09:55"
+ "last_push": "2026-10-07 11:55"
 }
