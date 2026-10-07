@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-07 02:18 UTC from Colab (Tesla T4), code `3b6b3d1`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-07 03:49 UTC from Colab (Tesla T4), code `3b6b3d1`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@ _Last update: 2026-10-07 02:18 UTC from Colab (Tesla T4), code `3b6b3d1`. Result
 | 2 | commit-after: commit: post-trained 10 epochs | done | 126.1 | 2026-10-06 21:11 |
 | 3 | gate-after: gate: post-trained 10 epochs | done | 123.8 | 2026-10-06 23:15 |
 | 2 | interpret-plain: plain: change maps and layer patching | done | 183.7 | 2026-10-07 02:18 |
-| 3 | hyp-after: hyp: post-trained 10 epochs | to do |  |  |
+| 3 | hyp-after: hyp: post-trained 10 epochs | done | 90.9 | 2026-10-07 03:49 |
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | to do |  |  |
 | 2 | codes-after: codes: post-trained 10 epochs | to do |  |  |
 | 2 | rollout-before: rollout: pretrained predictor, scored the rollout way | to do |  |  |
@@ -39,6 +39,7 @@ _Last update: 2026-10-07 02:18 UTC from Colab (Tesla T4), code `3b6b3d1`. Result
 | V-JEPA 2 plain-before | before | 0.422 | [0.348, 0.487] | - | - |
 | V-JEPA 2 commit-after | after | 0.934 | [0.903, 0.961] | [0.434, 0.591] | 0.0 |
 | V-JEPA 2 gate-after | after | 0.885 | [0.842, 0.924] | [0.383, 0.544] | 0.0 |
+| V-JEPA 2 hyp-after | after | 0.423 | [0.355, 0.488] | [-0.072, 0.075] | 0.521 |
 
 ### Generalisation of plain (held out, never trained on)
 
