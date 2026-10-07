@@ -176,6 +176,26 @@
   "best_epochs": "0/0/0/0/0"
  },
  {
+  "method": "V-JEPA 2 rollout-before",
+  "variant": "rollout",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.415,
+  "auroc_ci": [
+   0.346,
+   0.481
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.333,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.675,
+  "far_cell_auroc": 0.548,
+  "argmax_hit_rate": 0.154,
+  "overfit_folds": "0/5",
+  "best_epochs": "0/0/0/0/0"
+ },
+ {
   "method": "V-JEPA 2 gate-after",
   "variant": "gate",
   "phase": "after",
