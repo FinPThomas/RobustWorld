@@ -287,7 +287,7 @@ def step_frac(frac: float):
 
 def generalise_variant(v: str, args, state, log) -> None:
     out = PLAN / "generalise" / v
-    if (out / "metrics.json").exists():
+    if (out / "metrics.json").exists() and "mirror_after" in json.dumps(json.loads((out / "metrics.json").read_text())):
         print(f"== generalisation for {v} is done already ({out})", flush=True)
         return
     if not state["choices"].get("held_out"):
@@ -341,6 +341,12 @@ STEPS: list[Step] = [
     *variant_steps(3, ["hyp"]),
     # commit came out best in the first Kaggle session (2026-10-07), so check that it carries over too
     Step(2, "generalise-commit", "commit: ball from the other side, before vs after",
+         lambda a, s, log: generalise_variant("commit", a, s, log)),
+    # Fin, 2026-10-07: did it learn a rule for one direction, or where the blockade is? Rescores the other
+    # side with the clips mirrored and against the height the ball reaches the plank (generalise.py).
+    Step(2, "mirror-plain", "plain: other side mirrored, and by height at the plank",
+         lambda a, s, log: generalise_variant("plain", a, s, log)),
+    Step(2, "mirror-commit", "commit: other side mirrored, and by height at the plank",
          lambda a, s, log: generalise_variant("commit", a, s, log)),
     *variant_steps(2, [v for v in STAGE2 if v not in ("plain", "commit")]),
     *variant_steps(3, [v for v in STAGE3 if v not in ("gate", "hyp")]),
@@ -466,9 +472,21 @@ def report(state: dict) -> str:
     for gen in sorted((PLAN / "generalise").glob("*/metrics.json")):
         g = json.loads(gen.read_text())
         gen_md += ["", f"### Generalisation of {gen.parent.name} (held out, never trained on)", "",
-                   "| group | clips | AUROC before | AUROC after | AUROC real frames |", "|---|---|---|---|---|"]
-        gen_md += [f"| {k} | {v['n']} | {v['before']['outcome_auroc']} | {v['after']['outcome_auroc']} | "
-                   f"{v['real']['outcome_auroc']} |" for k, v in g["groups"].items()]
+                   "| group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | "
+                   "mirrored: after | mirrored: real frames |", "|---|---|---|---|---|---|---|---|"]
+        a = lambda v, k: v.get(k, {}).get("outcome_auroc", "-")  # noqa: E731
+        gen_md += [f"| {k} | {v['n']} | {a(v, 'before')} | {a(v, 'after')} | {a(v, 'real')} | "
+                   f"{a(v, 'mirror_before')} | {a(v, 'mirror_after')} | {a(v, 'mirror_real')} |"
+                   for k, v in g["groups"].items()]
+        for k, v in g["groups"].items():
+            h = v.get("height") or {}
+            if h.get("range"):
+                vs = h["auroc_vs_height_rule"]
+                gen_md += ["", f"{k}, by height at the plank: the blockade range fitted on the seen clips "
+                           f"({h['range'][0]}-{h['range'][1]} px) gets {h['accuracy_on_real_outcomes']} of these "
+                           f"outcomes right. How well the \"gets through\" score follows that range (AUROC): real "
+                           f"frames {vs.get('real')}, before {vs.get('before')}, after {vs.get('after')}, mirrored "
+                           f"after {vs.get('mirror_after')}. Figure: `vjepa2/plan/generalise/{gen.parent.name}/height.png`."]
     interp = sorted((PLAN / "interpret").glob("*/interpret.json"))
     int_md = []
     for path in interp:
@@ -641,7 +659,7 @@ def step_hours(name: str) -> float:
         return 2.8                                  # interpret may first retrain the weights it reads
     if name.startswith("frac"):
         return 1.5
-    if name.startswith("generalise"):
+    if name.startswith(("generalise", "mirror")):
         return 1.0
     return 0.7
 

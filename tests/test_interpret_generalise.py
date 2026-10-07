@@ -63,6 +63,9 @@ def world(tmp_path, monkeypatch):
     import robust_world.eval.io as io
     monkeypatch.setattr(io, "read_video", lambda path: np.zeros((ALL * 2, 512, 512, 3), np.uint8))
     monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    import ball_probe_cv
+    monkeypatch.setattr(ball_probe_cv, "normalisation",
+                        lambda model_id: (np.full(3, 0.45, np.float32), np.full(3, 0.22, np.float32)))
     return tmp_path, manifest
 
 
@@ -80,7 +83,9 @@ def test_split_score_and_interpret(world):
     assert generalise.main(["score", "--manifest", str(manifest), "--run", str(tmp_path / "ck" / "all"),
                             "--out", str(out)]) == 0
     g = json.loads((out / "metrics.json").read_text())["groups"]["other side (from L)"]
-    assert g["n"] == 4 and {"before", "after", "real"} <= set(g)
+    assert g["n"] == 4 and {"before", "after", "real", "mirror_before", "mirror_after", "mirror_real"} <= set(g)
+    assert g["height"]["range"] is not None and "after" in g["height"]["auroc_vs_height_rule"]
+    assert (out / "height.png").exists()
 
     posttrain.main(["train", "--run", "cv", *common])
     res_dir = tmp_path / "interp"
