@@ -133,6 +133,29 @@
   "best_epochs": "10/7/10/9/10"
  },
  {
+  "method": "V-JEPA 2 codes-after",
+  "variant": "codes",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.911,
+  "auroc_ci": [
+   0.87,
+   0.944
+  ],
+  "delta_vs_before_ci": [
+   0.383,
+   0.56
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.52,
+  "balanced_accuracy": 0.571,
+  "cell_auroc": 0.731,
+  "far_cell_auroc": 0.71,
+  "argmax_hit_rate": 0.463,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/10/10/10/9"
+ },
+ {
   "method": "V-JEPA 2 codes-before",
   "variant": "codes",
   "phase": "before",
