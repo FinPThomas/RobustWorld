@@ -204,7 +204,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-07 09:55 UTC from Kaggle (Tesla T4), code `aaca21d`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-07 11:55 UTC from Kaggle (Tesla T4), code `aaca21d`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -221,7 +221,7 @@ _Last update: 2026-10-07 09:55 UTC from Kaggle (Tesla T4), code `aaca21d`. Resul
 | 3 | hyp-after: hyp: post-trained 10 epochs | done | 90.9 | 2026-10-07 03:49 |
 | 2 | generalise-commit: commit: ball from the other side, before vs after | done | 30.8 | 2026-10-07 09:55 |
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | done | 11.5 | 2026-10-07 04:01 |
-| 2 | codes-after: codes: post-trained 10 epochs | to do |  |  |
+| 2 | codes-after: codes: post-trained 10 epochs | done | 120.3 | 2026-10-07 11:55 |
 | 2 | rollout-before: rollout: pretrained predictor, scored the rollout way | to do |  |  |
 | 2 | rollout-after: rollout: post-trained 10 epochs | to do |  |  |
 | 2 | codes_rollout-before: codes_rollout: pretrained predictor, scored the codes_rollout way | to do |  |  |
@@ -243,6 +243,7 @@ _Last update: 2026-10-07 09:55 UTC from Kaggle (Tesla T4), code `aaca21d`. Resul
 | V-JEPA 2 plain-after | after | 0.884 | [0.841, 0.921] | [0.38, 0.542] | 0.0 |
 | V-JEPA 2 plain-before | before | 0.422 | [0.348, 0.487] | - | - |
 | V-JEPA 2 commit-after | after | 0.934 | [0.903, 0.961] | [0.434, 0.591] | 0.0 |
+| V-JEPA 2 codes-after | after | 0.911 | [0.87, 0.944] | [0.383, 0.56] | 0.0 |
 | V-JEPA 2 codes-before | before | 0.44 | [0.369, 0.519] | - | - |
 | V-JEPA 2 gate-after | after | 0.885 | [0.842, 0.924] | [0.383, 0.544] | 0.0 |
 | V-JEPA 2 hyp-after | after | 0.423 | [0.355, 0.488] | [-0.072, 0.075] | 0.521 |
