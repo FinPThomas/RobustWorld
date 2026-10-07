@@ -1,0 +1,185 @@
+{
+ "model_id": "facebook/vjepa2-vitl-fpc64-256",
+ "device": "cuda",
+ "n_clips": 254,
+ "predictor_run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/codes-after",
+ "n_through": 111,
+ "n_hidden": 77,
+ "n_bounce": 66,
+ "folds": 5,
+ "real_cell_auroc": 0.971,
+ "future_cell_auroc_imagined": 0.731,
+ "future_cell_auroc_hold_last_context": 0.728,
+ "future_cell_auroc_imagined_encoder_space": 0.732,
+ "far_cell_auroc_real": 0.996,
+ "far_cell_auroc_imagined": 0.71,
+ "outcome_auroc_real": 0.99,
+ "outcome_auroc_imagined": 0.835,
+ "imagined_far_peak_mean": {
+  "through": 0.712,
+  "hidden": 0.317,
+  "bounce": 0.107
+ },
+ "outcomes_real": {
+  "outcome_auroc": 0.99,
+  "outcome_accuracy": 0.992,
+  "blocked_called_through": 0,
+  "through_called_blocked": 2,
+  "peak_far_mean": {
+   "through": 0.978,
+   "hidden": 0.02,
+   "bounce": 0.034
+  },
+  "bounce_auroc": 0.479,
+  "outcome3_accuracy": 0.705,
+  "p_correct": {
+   "through": 0.978,
+   "hidden": 0.463,
+   "bounce": 0.5
+  },
+  "p_correct_balanced": 0.647,
+  "recall": {
+   "through": 0.982,
+   "hidden": 0.468,
+   "bounce": 0.515
+  },
+  "balanced_accuracy": 0.655
+ },
+ "outcomes_imagined": {
+  "outcome_auroc": 0.835,
+  "outcome_accuracy": 0.748,
+  "blocked_called_through": 31,
+  "through_called_blocked": 33,
+  "peak_far_mean": {
+   "through": 0.712,
+   "hidden": 0.317,
+   "bounce": 0.107
+  },
+  "bounce_auroc": 0.297,
+  "outcome3_accuracy": 0.469,
+  "p_correct": {
+   "through": 0.712,
+   "hidden": 0.27,
+   "bounce": 0.3
+  },
+  "p_correct_balanced": 0.427,
+  "recall": {
+   "through": 0.703,
+   "hidden": 0.273,
+   "bounce": 0.303
+  },
+  "balanced_accuracy": 0.426
+ },
+ "ball_real": {
+  "hit_rate": 0.997,
+  "error_px": 17.4,
+  "phantom_rate": 0.07,
+  "steps_with_ball": 2364,
+  "steps_without_ball": 684
+ },
+ "ball_imagined": {
+  "hit_rate": 0.42,
+  "error_px": 44.6,
+  "phantom_rate": 0.285,
+  "steps_with_ball": 2364,
+  "steps_without_ball": 684
+ },
+ "outcomes_real_one_ball": {
+  "outcome_auroc": 0.998,
+  "outcome_accuracy": 0.988,
+  "blocked_called_through": 0,
+  "through_called_blocked": 3,
+  "peak_far_mean": {
+   "through": 0.939,
+   "hidden": 0.105,
+   "bounce": 0.037
+  },
+  "bounce_auroc": 0.735,
+  "outcome3_accuracy": 0.76,
+  "p_correct": {
+   "through": 0.939,
+   "hidden": 0.399,
+   "bounce": 0.68
+  },
+  "p_correct_balanced": 0.673,
+  "recall": {
+   "through": 0.973,
+   "hidden": 0.338,
+   "bounce": 0.864
+  },
+  "balanced_accuracy": 0.725
+ },
+ "outcomes_imagined_one_ball": {
+  "outcome_auroc": 0.911,
+  "outcome_accuracy": 0.823,
+  "blocked_called_through": 20,
+  "through_called_blocked": 25,
+  "peak_far_mean": {
+   "through": 0.744,
+   "hidden": 0.287,
+   "bounce": 0.077
+  },
+  "bounce_auroc": 0.464,
+  "outcome3_accuracy": 0.571,
+  "p_correct": {
+   "through": 0.744,
+   "hidden": 0.148,
+   "bounce": 0.668
+  },
+  "p_correct_balanced": 0.52,
+  "recall": {
+   "through": 0.82,
+   "hidden": 0.0,
+   "bounce": 0.894
+  },
+  "balanced_accuracy": 0.571
+ },
+ "outcomes_imagined_encoder_space_one_ball": {
+  "outcome_auroc": 0.902,
+  "outcome_accuracy": 0.807,
+  "blocked_called_through": 19,
+  "through_called_blocked": 30,
+  "peak_far_mean": {
+   "through": 0.671,
+   "hidden": 0.256,
+   "bounce": 0.069
+  },
+  "bounce_auroc": 0.463,
+  "outcome3_accuracy": 0.555,
+  "p_correct": {
+   "through": 0.671,
+   "hidden": 0.196,
+   "bounce": 0.633
+  },
+  "p_correct_balanced": 0.5,
+  "recall": {
+   "through": 0.784,
+   "hidden": 0.013,
+   "bounce": 0.879
+  },
+  "balanced_accuracy": 0.559
+ },
+ "ball_real_argmax": {
+  "hit_rate": 1.0,
+  "error_px": 17.4,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 2364,
+  "steps_without_ball": 684
+ },
+ "ball_imagined_argmax": {
+  "hit_rate": 0.463,
+  "error_px": 51.1,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 2364,
+  "steps_without_ball": 684
+ },
+ "ball_imagined_encoder_space_argmax": {
+  "hit_rate": 0.454,
+  "error_px": 52.5,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 2364,
+  "steps_without_ball": 684
+ },
+ "timing_seconds_per_clip": {},
+ "model_load_seconds": 1.5
+}
