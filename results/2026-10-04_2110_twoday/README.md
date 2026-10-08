@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-08 19:57 UTC
+- Saved: 2026-10-08 20:29 UTC
 - Code commit: `e717d1c`
-- Note: two-day plan, 16 steps done
+- Note: two-day plan, 17 steps done
 
 ## Figures
 
@@ -25,6 +25,7 @@
 - [vjepa2/plan/blocker/pretrained/blocker_map.png](vjepa2/plan/blocker/pretrained/blocker_map.png)
 - [vjepa2/plan/blocker/rollout-before/blocked_vs_crossing.png](vjepa2/plan/blocker/rollout-before/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/rollout-before/blocker_map.png](vjepa2/plan/blocker/rollout-before/blocker_map.png)
+- [vjepa2/plan/generalise/commit/height.png](vjepa2/plan/generalise/commit/height.png)
 - [vjepa2/plan/generalise/plain/height.png](vjepa2/plan/generalise/plain/height.png)
 - [vjepa2/plan/interpret/plain-after/change_map.png](vjepa2/plan/interpret/plain-after/change_map.png)
 - [vjepa2/plan/interpret/plain-after/layer_patching.png](vjepa2/plan/interpret/plain-after/layer_patching.png)
