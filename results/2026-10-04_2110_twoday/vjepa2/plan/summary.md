@@ -21,7 +21,9 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 
 | group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | mirrored: after | mirrored: real frames |
 |---|---|---|---|---|---|---|---|
-| other side (from L) | 83 | 0.643 | 0.35 | 0.98 | - | - | - |
+| other side (from L) | 83 | 0.643 | 0.355 | 0.98 | 0.726 | 0.53 | 0.996 |
+
+other side (from L), by height at the plank: the blockade range fitted on the seen clips (176.3-329.4 px) gets 0.855 of these outcomes right. How well the "gets through" score follows that range (AUROC): real frames 0.842948717948718, before 0.6503496503496504, after 0.31410256410256415, mirrored after 0.49533799533799533. Figure: `vjepa2/plan/generalise/commit/height.png`.
 
 ### Generalisation of plain (held out, never trained on)
 
