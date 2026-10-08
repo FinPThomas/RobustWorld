@@ -1,11 +1,11 @@
 {
  "run": "plan/commit-all",
- "code_version": "aaca21d",
+ "code_version": "e717d1c",
  "device": "cuda",
  "gpu": "Tesla T4",
  "torch": "2.11.0+cu128",
  "transformers": "5.16.1",
- "started": "2026-10-07 09:25:05 UTC",
+ "started": "2026-10-08 19:57:44 UTC",
  "n_clips": 254,
  "clips_per_outcome": {
   "through": 111,
@@ -55,18 +55,18 @@
  "folds": [
   {
    "split": "all",
-   "seconds": 1660.8,
+   "seconds": 1691.1,
    "best_epoch": 9,
    "overfit": {
     "val_rise_from_best": 0.001,
     "val_over_train": 1.008,
     "flag": false
    },
-   "final_weight_change": 0.007951,
+   "final_weight_change": 0.007958,
    "held_out_l1_pretrained": null,
    "held_out_l1_posttrained": null,
    "peak_gpu_gb": 2.31
   }
  ],
- "seconds": 1674.9
+ "seconds": 1705.7
 }
