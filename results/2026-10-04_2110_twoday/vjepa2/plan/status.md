@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-07 12:29 UTC from Kaggle (Tesla T4), code `aaca21d`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-08 19:57 UTC from Kaggle (Tesla T4), code `e717d1c`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -16,6 +16,8 @@ _Last update: 2026-10-07 12:29 UTC from Kaggle (Tesla T4), code `aaca21d`. Resul
 | 2 | interpret-plain: plain: change maps and layer patching | done | 183.7 | 2026-10-07 02:18 |
 | 3 | hyp-after: hyp: post-trained 10 epochs | done | 90.9 | 2026-10-07 03:49 |
 | 2 | generalise-commit: commit: ball from the other side, before vs after | done | 30.8 | 2026-10-07 09:55 |
+| 2 | mirror-plain: plain: other side mirrored, and by height at the plank | done | 38.2 | 2026-10-08 19:57 |
+| 2 | mirror-commit: commit: other side mirrored, and by height at the plank | to do |  |  |
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | done | 11.5 | 2026-10-07 04:01 |
 | 2 | codes-after: codes: post-trained 10 epochs | done | 120.3 | 2026-10-07 11:55 |
 | 2 | rollout-before: rollout: pretrained predictor, scored the rollout way | done | 34.0 | 2026-10-07 12:29 |
@@ -47,12 +49,14 @@ _Last update: 2026-10-07 12:29 UTC from Kaggle (Tesla T4), code `aaca21d`. Resul
 
 ### Generalisation of commit (held out, never trained on)
 
-| group | clips | AUROC before | AUROC after | AUROC real frames |
-|---|---|---|---|---|
-| other side (from L) | 83 | 0.643 | 0.35 | 0.98 |
+| group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | mirrored: after | mirrored: real frames |
+|---|---|---|---|---|---|---|---|
+| other side (from L) | 83 | 0.643 | 0.35 | 0.98 | - | - | - |
 
 ### Generalisation of plain (held out, never trained on)
 
-| group | clips | AUROC before | AUROC after | AUROC real frames |
-|---|---|---|---|---|
-| other side (from L) | 83 | 0.643 | 0.388 | 0.98 |
+| group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | mirrored: after | mirrored: real frames |
+|---|---|---|---|---|---|---|---|
+| other side (from L) | 83 | 0.643 | 0.39 | 0.98 | 0.726 | 0.523 | 0.996 |
+
+other side (from L), by height at the plank: the blockade range fitted on the seen clips (176.3-329.4 px) gets 0.855 of these outcomes right. How well the "gets through" score follows that range (AUROC): real frames 0.842948717948718, before 0.6503496503496504, after 0.32517482517482516, mirrored after 0.5308857808857809. Figure: `vjepa2/plan/generalise/plain/height.png`.

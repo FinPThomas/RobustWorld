@@ -19,15 +19,17 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 
 ### Generalisation of commit (held out, never trained on)
 
-| group | clips | AUROC before | AUROC after | AUROC real frames |
-|---|---|---|---|---|
-| other side (from L) | 83 | 0.643 | 0.35 | 0.98 |
+| group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | mirrored: after | mirrored: real frames |
+|---|---|---|---|---|---|---|---|
+| other side (from L) | 83 | 0.643 | 0.35 | 0.98 | - | - | - |
 
 ### Generalisation of plain (held out, never trained on)
 
-| group | clips | AUROC before | AUROC after | AUROC real frames |
-|---|---|---|---|---|
-| other side (from L) | 83 | 0.643 | 0.388 | 0.98 |
+| group | clips | AUROC before | AUROC after | AUROC real frames | mirrored: before | mirrored: after | mirrored: real frames |
+|---|---|---|---|---|---|---|---|
+| other side (from L) | 83 | 0.643 | 0.39 | 0.98 | 0.726 | 0.523 | 0.996 |
+
+other side (from L), by height at the plank: the blockade range fitted on the seen clips (176.3-329.4 px) gets 0.855 of these outcomes right. How well the "gets through" score follows that range (AUROC): real frames 0.842948717948718, before 0.6503496503496504, after 0.32517482517482516, mirrored after 0.5308857808857809. Figure: `vjepa2/plan/generalise/plain/height.png`.
 
 ### Interpretation: plain-after
 
