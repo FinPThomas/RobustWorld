@@ -1,0 +1,244 @@
+[
+ {
+  "method": "V-JEPA 2: real target frames (ceiling)",
+  "variant": "real frames",
+  "phase": "ceiling",
+  "n": 254,
+  "outcome_auroc": 0.998,
+  "auroc_ci": [
+   0.995,
+   1.0
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.673,
+  "balanced_accuracy": 0.725,
+  "cell_auroc": 0.971,
+  "far_cell_auroc": null
+ },
+ {
+  "method": "V-JEPA 2 pretrained",
+  "variant": "pretrained",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.422,
+  "auroc_ci": [
+   0.348,
+   0.487
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.328,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.658,
+  "far_cell_auroc": null,
+  "argmax_hit_rate": 0.199
+ },
+ {
+  "method": "TAPNext + straight line (no blockade)",
+  "variant": "tapnext_continue",
+  "phase": "baseline",
+  "n": 254,
+  "outcome_auroc": 0.536,
+  "auroc_ci": [
+   0.46,
+   0.609
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.333,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.596
+ },
+ {
+  "method": "TAPNext + coded blockade (fitted on outcomes; reference)",
+  "variant": "tapnext_blockade",
+  "phase": "baseline",
+  "n": 254,
+  "outcome_auroc": 0.848,
+  "auroc_ci": [
+   0.797,
+   0.894
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.52,
+  "balanced_accuracy": 0.525,
+  "cell_auroc": 0.554
+ },
+ {
+  "method": "V-JEPA 2 plain-after",
+  "variant": "plain",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.884,
+  "auroc_ci": [
+   0.841,
+   0.921
+  ],
+  "delta_vs_before_ci": [
+   0.38,
+   0.542
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.376,
+  "balanced_accuracy": 0.431,
+  "cell_auroc": 0.803,
+  "far_cell_auroc": null,
+  "argmax_hit_rate": 0.483,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/10/9/10/10"
+ },
+ {
+  "method": "V-JEPA 2 plain-before",
+  "variant": "plain",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.422,
+  "auroc_ci": [
+   0.348,
+   0.487
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.328,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.658,
+  "far_cell_auroc": null,
+  "argmax_hit_rate": 0.199,
+  "overfit_folds": "0/5",
+  "best_epochs": "0/0/0/0/0"
+ },
+ {
+  "method": "V-JEPA 2 commit-after",
+  "variant": "commit",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.934,
+  "auroc_ci": [
+   0.903,
+   0.961
+  ],
+  "delta_vs_before_ci": [
+   0.434,
+   0.591
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.46,
+  "balanced_accuracy": 0.586,
+  "cell_auroc": 0.834,
+  "far_cell_auroc": 0.807,
+  "argmax_hit_rate": 0.58,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/7/10/9/10"
+ },
+ {
+  "method": "V-JEPA 2 codes-after",
+  "variant": "codes",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.911,
+  "auroc_ci": [
+   0.87,
+   0.944
+  ],
+  "delta_vs_before_ci": [
+   0.383,
+   0.56
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.52,
+  "balanced_accuracy": 0.571,
+  "cell_auroc": 0.731,
+  "far_cell_auroc": 0.71,
+  "argmax_hit_rate": 0.463,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/10/10/10/9"
+ },
+ {
+  "method": "V-JEPA 2 codes-before",
+  "variant": "codes",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.44,
+  "auroc_ci": [
+   0.369,
+   0.519
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.33,
+  "balanced_accuracy": 0.329,
+  "cell_auroc": 0.571,
+  "far_cell_auroc": 0.504,
+  "argmax_hit_rate": 0.134,
+  "overfit_folds": "0/5",
+  "best_epochs": "0/0/0/0/0"
+ },
+ {
+  "method": "V-JEPA 2 rollout-before",
+  "variant": "rollout",
+  "phase": "before",
+  "n": 254,
+  "outcome_auroc": 0.415,
+  "auroc_ci": [
+   0.346,
+   0.481
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.333,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.675,
+  "far_cell_auroc": 0.548,
+  "argmax_hit_rate": 0.154,
+  "overfit_folds": "0/5",
+  "best_epochs": "0/0/0/0/0"
+ },
+ {
+  "method": "V-JEPA 2 gate-after",
+  "variant": "gate",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.885,
+  "auroc_ci": [
+   0.842,
+   0.924
+  ],
+  "delta_vs_before_ci": [
+   0.383,
+   0.544
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.371,
+  "balanced_accuracy": 0.383,
+  "cell_auroc": 0.803,
+  "far_cell_auroc": 0.769,
+  "argmax_hit_rate": 0.478,
+  "overfit_folds": "0/5",
+  "best_epochs": "10/10/9/10/10"
+ },
+ {
+  "method": "V-JEPA 2 hyp-after",
+  "variant": "hyp",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.423,
+  "auroc_ci": [
+   0.355,
+   0.488
+  ],
+  "delta_vs_before_ci": [
+   -0.072,
+   0.075
+  ],
+  "p_no_gain": 0.521,
+  "one_ball_p_correct": 0.328,
+  "balanced_accuracy": 0.333,
+  "cell_auroc": 0.665,
+  "far_cell_auroc": 0.544,
+  "argmax_hit_rate": 0.23,
+  "overfit_folds": "1/5",
+  "best_epochs": "10/3/7/2/1"
+ }
+]

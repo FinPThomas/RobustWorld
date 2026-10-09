@@ -81,7 +81,7 @@ def check(model, train: list[dict], test: list[dict], args, device) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     from transformers import VJEPA2Model
-    from robust_world.eval.ball import ball_labels, load_tracking, source_indices
+    from robust_world.eval.ball import ball_labels, load_tracking, source_indices, video_of
     from run import MODEL_ID, pick_device
 
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -95,8 +95,8 @@ def main(argv: list[str] | None = None) -> int:
 
     device = pick_device()
     model = VJEPA2Model.from_pretrained(a.model_id).to(device)
-    track, passes, _ = load_tracking()
     clips = training_clips(a.manifest)
+    track, passes, _ = load_tracking(video_of(clips))
     random.Random(0).shuffle(clips)
     data = []
     for c in clips[:a.clips]:

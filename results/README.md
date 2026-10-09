@@ -9,3 +9,4 @@ the Colab notebook does this at the end. This index is rebuilt from the folders.
 | run | headline |
 |---|---|
 | [2026-10-05_0425_vjepa-probing](2026-10-05_0425_vjepa-probing/README.md) | encoder probing, 104 probes: best far-side cell AUROC 0.9994 (L12-mlp-nbhd-ln-sigmoid), real-frame outcome AUROC 0.9996 |
+| [2026-10-04_2110_twoday](2026-10-04_2110_twoday/README.md) | best after: codes P(correct, one ball) 0.52, most likely cell within 48 px 0.463 |

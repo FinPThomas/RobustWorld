@@ -1,0 +1,12 @@
+{
+ "training_direction": "R",
+ "n_seen": 254,
+ "held_out": {
+  "other side (from L)": {
+   "n": 83,
+   "through": 32,
+   "hidden": 3,
+   "bounce": 48
+  }
+ }
+}
