@@ -114,3 +114,23 @@ def test_ball_probe_cv_scores_every_clip_holding_only_context_features(world, mo
     ball_probe_cv.main(["--manifest", str(manifest), "--out", str(out)])
     rows = json.loads((out / "per_clip.json").read_text())
     assert len(rows) == 16 and all("imagined_one_ball_far" in r for r in rows)
+
+
+def test_ball_probe_cv_both_directions_scores_each_side_and_keeps_positions(world, monkeypatch):
+    tmp_path, manifest = world
+    import ball_probe_cv
+
+    monkeypatch.setattr(ball_probe_cv, "cache_dir", posttrain.cache_dir)
+    monkeypatch.setattr(ball_probe_cv, "load_tracking", interpret.load_tracking)
+    both = tmp_path / "both.jsonl"
+    both.write_text(manifest.read_text() + (tmp_path / "manifest_left.jsonl").read_text())
+    out = tmp_path / "probe_both"
+    ball_probe_cv.main(["--manifest", str(both), "--out", str(out)])
+    rows = json.loads((out / "per_clip.json").read_text())
+    assert {r["side_in"] for r in rows} == {"R", "L"} and len(rows) == 20
+    steps = ALL - CTX
+    for r in rows:
+        assert len(r["true_pos"]) == len(r["real_pos"]) == len(r["imagined_pos"]) == steps
+        assert all(len(p) == 3 for p in r["imagined_pos"])
+    m = json.loads((out / "metrics.json").read_text())
+    assert set(m["by_side"]) == {"R", "L"} and m["by_side"]["L"]["n"] == 4
