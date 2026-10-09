@@ -17,6 +17,15 @@ With --predictor-run (checkpoints from posttrain.py), each fold's clips are imag
 predictor post-trained on that fold's training clips; the encoder, the cached features and the
 decoder are the same as for the pretrained model.
 
+The manifest may mix both directions (e.g. right- and left-entry clips): "far" and "near" follow each
+clip's own direction (passes.json side_in; far = the side opposite the one the ball came from), and
+metrics.json "by_side" scores each direction separately. Per clip, per target step, per_clip.json also
+keeps where the ball is: "true_pos" (tracker centre, px, or null; "true_pos_context" for the context
+steps), and "real_pos" / "imagined_pos" ([x, y, peak]: the decoder map's centre of mass over cells at least
+half its peak), so ball speed and acceleration can be measured from the imagined future without fitting
+anything. surprise.npz holds each clip's per-step, per-token prediction error (mean |imagined - real| over
+features, layer-normalised; label-free) for surprise maps.
+
 Outputs (outputs/vjepa2/ball_probe_cv/, or .../<run>/ with --predictor-run): curves.png,
 outcome.png, metrics.json, per_clip.json
 
@@ -43,7 +52,7 @@ sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
 from ball_probe import encode  # noqa: E402
 from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
-from robust_world.eval.ball import (OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
+from robust_world.eval.ball import (CLIP_SIZE, OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
                                     far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
                                     roc_auc_score_safe, source_indices, video_of)
 from robust_world.eval.io import read_video  # noqa: E402
@@ -56,6 +65,27 @@ def normalisation(model_id: str) -> tuple[np.ndarray, np.ndarray]:
     from transformers import AutoVideoProcessor
     proc = AutoVideoProcessor.from_pretrained(model_id)
     return np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
+
+
+def clip_side(clip: dict, passes: dict) -> str:
+    """The side the ball comes in from ("R" or "L"; right-entry when unknown, as the training segment)."""
+    return clip.get("side_in") or passes.get(clip["pass_id"], {}).get("side_in") or "R"
+
+
+def map_pos(m: np.ndarray) -> list[list[float]]:
+    """[steps, g, g] decoder maps -> per step [x, y, peak] in clip px: centre of mass of the cells at
+    least half the step's peak (finer than the argmax cell, and label-free)."""
+    g = m.shape[-1]
+    cell = CLIP_SIZE / g
+    yy, xx = np.mgrid[0:g, 0:g]
+    out = []
+    for s in m:
+        peak = float(s.max())
+        w = np.where(s >= 0.5 * peak, s, 0.0) if peak > 0 else np.ones_like(s)
+        w = w / w.sum()
+        out.append([round(float(((xx + 0.5) * cell * w).sum()), 1), round(float(((yy + 0.5) * cell * w).sum()), 1),
+                    round(peak, 3)])
+    return out
 
 
 def ram_gb() -> tuple[float, float] | None:
@@ -170,7 +200,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"not enough RAM to fit the decoder ({ram[0]:.1f} GB free, about {need:.1f} GB needed): "
                          "use a runtime with more RAM (Runtime > Change runtime type > High-RAM) or fewer clips")
 
-    far, near = far_cells(scene, grid), near_cells(scene, grid)
+    far_r, near_r = far_cells(scene, grid), near_cells(scene, grid)   # for a ball from the right
+    sides = {d["clip"]["clip_id"]: clip_side(d["clip"], passes) for d in data}
 
     y_out = np.array([d["clip"]["outcome"] == "through" for d in data], int)
     rows = [None] * len(data)
@@ -178,7 +209,6 @@ def main(argv: list[str] | None = None) -> int:
     # Far-side cells only (beyond the plank, where no context frame ever had the ball): can the
     # decoder find the ball where it comes out? Read from real target frames (ceiling) and imagined.
     far_lab, far_real, far_imag = [], [], []
-    far_mask = np.asarray(far, bool)
     track_maps = {"real": [], "imagined": [], "imagined_encoder_space": []}
     # Alternative to layer-normalising the decoder's input: map predictions into encoder space with
     # the encoder's own final layer norm (gamma * prediction + beta) and read them with the decoder
@@ -186,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     gamma = model.encoder.layernorm.weight.detach().float().cpu()
     beta = model.encoder.layernorm.bias.detach().float().cpu()
     track_centres = []
+    surprise = {}
     D = model.config.hidden_size
     for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
         examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
@@ -201,6 +232,9 @@ def main(argv: list[str] | None = None) -> int:
         for i in te:
             d = data[i]
             cs = d["cs"]
+            side = sides[d["clip"]["clip_id"]]
+            far, near = (far_r, near_r) if side == "R" else (near_r, far_r)
+            far_mask = np.asarray(far, bool)
             d["enc"] = load_cached(cache, d["clip"])
             m_real = decoder(d["enc"]["real"]).numpy()
             m_ctx = decoder(d["enc"]["context"]).numpy()
@@ -212,6 +246,8 @@ def main(argv: list[str] | None = None) -> int:
                 imag = d["enc"]["imagined"]
             m_imag = decoder(imag).numpy()
             m_alt = decoder_raw(target_space(imag.float()) * gamma + beta).numpy()
+            surprise[d["clip"]["clip_id"]] = (target_space(imag.float()) - target_space(d["enc"]["real"][cs:].float())
+                                              ).abs().mean(-1).half().numpy()
             fut_alt.append(m_alt.reshape(-1))
             track_maps["imagined_encoder_space"].append(m_alt)
             real_lab.append(d["lab"].reshape(-1)), real_map.append(m_real.reshape(-1))
@@ -222,7 +258,12 @@ def main(argv: list[str] | None = None) -> int:
             track_maps["real"].append(m_real[cs:]), track_maps["imagined"].append(m_imag)
             track_centres.append(d["centres"][cs:])
             rows[i] = {"clip_id": d["clip"]["clip_id"], "outcome": d["clip"]["outcome"], "fold": fold,
-                       "first_target_frame": cs * tub,
+                       "side_in": side, "first_target_frame": cs * tub,
+                       "true_pos": [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)]
+                                    for c in d["centres"][cs:]],
+                       "true_pos_context": [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)]
+                                            for c in d["centres"][:cs]],
+                       "real_pos": map_pos(m_real[cs:]), "imagined_pos": map_pos(m_imag),
                        "real_visible": m_real[cs:].max((1, 2)).round(3).tolist(),
                        "real_far": (m_real[cs:] * far).max((1, 2)).round(3).tolist(),
                        "real_near": (m_real[cs:] * near).max((1, 2)).round(3).tolist(),
@@ -271,12 +312,26 @@ def main(argv: list[str] | None = None) -> int:
                                         "n": int(len(v))} for k, v in t_arr.items()},
         "model_load_seconds": round(t_load, 1),
     }
+    if len(set(sides.values())) > 1:                  # both directions: each scored on its own as well
+        metrics["by_side"] = {}
+        for side in sorted(set(sides.values())):
+            idx = [k for k, r in enumerate(rows) if r["side_in"] == side]
+            sub = [rows[k] for k in idx]
+            metrics["by_side"][side] = {
+                "n": len(sub), **{f"n_{o}": sum(r["outcome"] == o for r in sub) for o in OUTCOMES},
+                **{f"outcomes_{kind}_one_ball": outcome_metrics([{"outcome": r["outcome"], "far": r[f"{kind}_one_ball_far"],
+                                                                  "near": r[f"{kind}_one_ball_near"]} for r in sub])
+                   for kind in ("real", "imagined")}}
+            print(f"  ball from {side}: {len(sub)} clips, through-vs-blocked AUROC imagined "
+                  f"{metrics['by_side'][side]['outcomes_imagined_one_ball']['outcome_auroc']}, real "
+                  f"{metrics['by_side'][side]['outcomes_real_one_ball']['outcome_auroc']}")
     old_metrics = args.out / "metrics.json"
     if not timings and old_metrics.exists():          # everything was cached: keep the last measured timings
         prev = json.loads(old_metrics.read_text())
         metrics["timing_seconds_per_clip"] = prev.get("timing_seconds_per_clip", {})
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=1))
     (args.out / "per_clip.json").write_text(json.dumps(rows, indent=1))
+    np.savez_compressed(args.out / "surprise.npz", **surprise)          # clip id -> [steps, g, g] float16
     plots(rows, args.out)
 
     print(f"  real features: ball cell AUROC {metrics['real_cell_auroc']}")

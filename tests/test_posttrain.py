@@ -389,3 +389,20 @@ def test_a_stopped_fold_carries_on_from_its_last_epoch(tmp_path, monkeypatch, ca
     other = SimpleNamespace(**{**vars(args), "lr": 1e-3})   # other settings: the saved state is not used
     log, _ = posttrain.train_one(model, base, clips[:10], clips[10:], other, "cpu", "fold0", partial)
     assert "carrying on" not in capsys.readouterr().out and len(log["epochs"]) == 3
+
+
+def test_loss_sampling_trains_and_resumes(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 15)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    monkeypatch.setattr(posttrain, "training_clips", lambda manifest: clips)
+    monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
+    argv = ["train", "--run", "s", "--fold", "0", "--epochs", "2", "--workers", "0", "--sample-by-loss", "0.25"]
+    posttrain.main(argv)
+    log = json.loads((tmp_path / "ck" / "s" / "log.json").read_text())[0]
+    assert len(log["train_loss"]) == 2 and all(np.isfinite(log["train_loss"]))
+    stamp = (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns
+    posttrain.main(argv + ["--resume"])                               # same settings: kept
+    assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns == stamp
+    posttrain.main(argv[:-2] + ["--resume"])                          # without sampling: a different run
+    assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns != stamp

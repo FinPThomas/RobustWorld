@@ -457,11 +457,13 @@ def split_validation(train: list[dict], frac: float, seed: int) -> tuple[list[di
 
 
 def train_one(model, base_state, train: list[dict], test: list[dict], args, device, tag: str,
-              partial: Path | None = None) -> tuple[dict, dict]:
+              partial: Path | None = None, snapshot=None) -> tuple[dict, dict]:
     """Train one split. Returns (log, inference mode {"rollout", "codebook"}).
 
     `partial`: after every epoch the whole training state (weights, optimiser, schedule, best epoch, log) is
     saved there, and a matching one is picked up again, so a disconnect costs at most one epoch.
+    `snapshot(epoch, predictor_state, mode, log)`: called after every epoch with the weights a run stopped
+    there would keep (the best validation epoch so far), for --save-at.
 
     Guards: train and held-out must not share clips or passes; a validation part of the training
     clips is scored every epoch (L1 in target space), the best epoch's weights are kept
@@ -509,6 +511,22 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
     opt = torch.optim.AdamW(groups, lr=args.lr, weight_decay=args.weight_decay)
     loader = torch.utils.data.DataLoader(tr, batch_size=args.batch_size, shuffle=True, drop_last=False,
                                          num_workers=args.workers, generator=torch.Generator().manual_seed(args.seed))
+    # --sample-by-loss: after the first epoch, draw each epoch's clips in proportion to their L1 in the
+    # previous epoch (hard, rare passes get more steps), never below `floor` x the mean so none drops out.
+    # It uses no outcome or label of any kind, only the predictor's own error on the real future.
+    sampling = getattr(args, "sample_by_loss", None)
+    clip_l1 = np.full(len(tr), np.nan)
+
+    def epoch_loader(epoch: int):
+        if not sampling or np.isnan(clip_l1).all():
+            return loader
+        l1 = np.where(np.isnan(clip_l1), np.nanmean(clip_l1), clip_l1)
+        w = np.maximum(l1, sampling * l1.mean())
+        sampler = torch.utils.data.WeightedRandomSampler(torch.tensor(w, dtype=torch.double), len(tr),
+                                                         replacement=True,
+                                                         generator=torch.Generator().manual_seed(args.seed + epoch))
+        return torch.utils.data.DataLoader(tr, batch_size=args.batch_size, sampler=sampler, drop_last=False,
+                                           num_workers=args.workers)
     total = max(1, args.epochs * math.ceil(len(loader) / args.accum))
     warm = max(1, int(0.1 * total))
     sched = torch.optim.lr_scheduler.LambdaLR(
@@ -542,6 +560,8 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             opt.load_state_dict(ck["opt"]), sched.load_state_dict(ck["sched"]), scaler.load_state_dict(ck["scaler"])
             log, best, start = ck["log"], ck["best"], ck["epoch"]
             rng.set_state(ck["rng"])
+            if ck.get("clip_l1") is not None:
+                clip_l1 = np.array(ck["clip_l1"], float)
             print(f"  [{tag}] carrying on after epoch {start} (saved when the last run stopped)", flush=True)
     t0 = time.perf_counter()
     for epoch in range(start, args.epochs):
@@ -552,7 +572,7 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
         t_epoch = time.perf_counter()
         if device == "cuda":
             torch.cuda.reset_peak_memory_stats()
-        for step, (ctx, tgt, last, ids) in enumerate(loader):
+        for step, (ctx, tgt, last, ids) in enumerate(epoch_loader(epoch)):
             ctx, tgt, last = ctx.to(device), tgt.to(device), last.to(device)
             neg = None
             if bank is not None:                  # other clips only: never a clip's own future
@@ -577,6 +597,9 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
                 opt.zero_grad(set_to_none=True)
                 sched.step()
             losses.append(loss.item())
+            if sampling:                              # this clip's error now, for the next epoch's draw
+                per = (imagined.float() - tgt).abs().mean(dim=tuple(range(1, tgt.dim()))).detach().cpu().numpy()
+                clip_l1[ids.numpy()] = per
         log["train_loss"].append(round(float(np.mean(losses)), 5))
         if parts:
             log["train_parts"].append({k: round(float(np.mean([p[k] for p in parts])), 5) for k in parts[0]})
@@ -601,11 +624,15 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
             elif patience and epoch + 1 - best[1] >= patience:
                 print(f"  [{tag}]   no validation gain for {patience} epochs: stopping early", flush=True)
                 break
+        if snapshot is not None:
+            keep = (best[2] if va and best[2] is not None and getattr(args, "keep_best", True)
+                    else base_state if va and best[1] == 0 and getattr(args, "keep_best", True) else pred.state_dict())
+            snapshot(epoch + 1, keep, mode, {**log, "best_epoch": best[1] if va else None})
         if partial is not None and epoch + 1 < args.epochs:
             save_atomic({"key": key, "epoch": epoch + 1, "pred": pred.state_dict(),
                          "heads": heads.state_dict() if heads is not None else None, "opt": opt.state_dict(),
                          "sched": sched.state_dict(), "scaler": scaler.state_dict(), "log": log, "best": best,
-                         "rng": rng.get_state()}, partial)
+                         "rng": rng.get_state(), "clip_l1": clip_l1.tolist()}, partial)
     if va:
         log["best_epoch"] = best[1]
         if best[2] is not None and getattr(args, "keep_best", True):
@@ -662,7 +689,8 @@ def scale_check(predictor, enc: dict, device) -> dict:
             "l1_vs_ln": round(float((pred - target_space(real)).abs().mean()), 4)}
 
 
-RESUME_KEYS = ("epochs", "loss", "lr", "rollout", "copy_gate", "hypotheses", "train_frac", "codes", "seed")
+RESUME_KEYS = ("epochs", "loss", "lr", "rollout", "copy_gate", "hypotheses", "train_frac", "codes", "seed",
+               "sample_by_loss")
 
 
 def resumable(path: Path, args, train: list[dict]) -> dict | None:
@@ -721,7 +749,18 @@ def train_all(args) -> None:
             log = done
         else:
             partial = out / f"{tag}.partial.pt"
-            log, mode = train_one(model, base_state, train, test, args, device, tag, partial)
+            save_at = {int(e): r for e, r in (x.split(":", 1) for x in getattr(args, "save_at", []) or [])}
+
+            def snapshot(epoch, state, mode, log, tag=tag, train=train):
+                if epoch in save_at:
+                    d = CKPT_ROOT / save_at[epoch]
+                    d.mkdir(parents=True, exist_ok=True)
+                    save_atomic({"predictor": state, **saved_mode(mode), "model_id": args.model_id, "split": tag,
+                                 "train_clip_ids": [c["clip_id"] for c in train],
+                                 "args": vars(args) | {"manifest": str(args.manifest), "epochs": epoch},
+                                 "log": log}, d / f"{tag}.pt")
+                    print(f"  [{tag}] epoch {epoch} weights (best so far) saved as {save_at[epoch]}", flush=True)
+            log, mode = train_one(model, base_state, train, test, args, device, tag, partial, snapshot)
             save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
                          "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
                          "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
@@ -769,6 +808,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hypotheses", type=int, default=1, help="K futures, trained winner-takes-all, with a picker")
     p.add_argument("--wta-relax", type=float, default=0.05, help="hypotheses: share of the loss for non-winners")
     p.add_argument("--train-frac", type=float, default=1.0, help="use this share of each fold's training clips")
+    p.add_argument("--sample-by-loss", type=float, default=None, metavar="FLOOR",
+                   help="draw each epoch's clips in proportion to their last L1 (weights floored at FLOOR x mean)")
+    p.add_argument("--save-at", nargs="*", default=[], metavar="EPOCH:RUN",
+                   help="also save each split's weights after EPOCH (best so far) as run RUN, e.g. 10:plan/x-e10")
     p.add_argument("--resume", action="store_true", help="skip splits already trained with the same settings")
     p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
     p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")

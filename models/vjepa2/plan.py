@@ -60,6 +60,7 @@ CLIPS = REPO / "data" / "processed" / "clips"
 # Other segments (manifest_left.jsonl) are held out for stage 5.
 MANIFEST = CLIPS / "manifest_right.jsonl" if (CLIPS / "manifest_right.jsonl").exists() else CLIPS / "manifest.jsonl"
 SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; backed up to Drive, so it survives restarts
+BOTH = PLAN / "manifest_both.jsonl"          # both directions: the training clips and the other side's (2026-10-09 scope)
 PY = sys.executable
 
 EPOCHS, LONG_EPOCHS = 10, 30
@@ -74,6 +75,12 @@ VARIANTS = {                                        # name: (posttrain.py flags,
     "gate": (["--copy-gate"], "plain"),
     "hyp": (["--hypotheses", "4"], "plain"),
     "gate_hyp_commit": (["--copy-gate", "--hypotheses", "4", "--loss", "commit"], "plain"),
+    # Research scope 2026-10-09 (results/overview/RESEARCH_SCOPE.md): both directions, and loss-weighted sampling
+    "both": ([], "both"),
+    "commit_both": (["--loss", "commit"], "both"),
+    # B: right clips, loss-weighted sampling, 20 epochs; its epoch-10 weights are scored as lossmix_e10
+    "lossmix_e20": (["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0"], "plain"),
+    "lossmix_e10": (["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0"], "plain"),
 }
 STAGE2 = ["plain", "commit", "codes", "rollout", "codes_rollout"]
 STAGE3 = ["gate", "hyp", "gate_hyp_commit"]
@@ -174,9 +181,9 @@ class Step:
     fn: Callable[[argparse.Namespace, dict, Path], None]
 
 
-def blocker_figs(name: str, before: str | None, log: Path) -> None:
+def blocker_figs(name: str, before: str | None, log: Path, man: Path | None = None) -> None:
     """Blocker figure for a scored run (a plotting failure never fails the step)."""
-    cmd = [PY, HERE / "blocker_figs.py", "--per-clip", SCORES / name / "per_clip.json", "--manifest", manifest(),
+    cmd = [PY, HERE / "blocker_figs.py", "--per-clip", SCORES / name / "per_clip.json", "--manifest", man or manifest(),
            "--label", name, "--out", PLAN / "blocker" / name]
     if before and (PLAN / "blocker" / before / "crossing.json").exists():
         cmd += ["--before", PLAN / "blocker" / before / "crossing.json"]
@@ -184,17 +191,39 @@ def blocker_figs(name: str, before: str | None, log: Path) -> None:
         print(f"!! blocker figure for {name} failed; carrying on", flush=True)
 
 
-def train_and_score(name: str, flags: list[str], epochs: int, before: str | None, args, log: Path) -> None:
+def export_weights(name: str) -> None:
+    """Copy a run's fold weights in float16 to $ROBUSTWORLD_WEIGHTS/<name>/ (on Kaggle: /kaggle/working, which is
+    kept as the notebook's output), so later scoring can load them instead of training again."""
+    dest = os.environ.get("ROBUSTWORLD_WEIGHTS")
+    if not dest:
+        return
+    import torch
+    out = Path(dest) / name
+    out.mkdir(parents=True, exist_ok=True)
+    for pt in sorted((CKPT / name).glob("fold*.pt")):
+        if pt.name.endswith(".partial.pt"):
+            continue
+        ck = torch.load(pt, map_location="cpu", weights_only=False)
+        ck["predictor"] = {k: v.half() if v.is_floating_point() else v for k, v in ck["predictor"].items()}
+        torch.save(ck, out / pt.name)
+    print(f"== {name}: fold weights (float16) saved to {out}", flush=True)
+
+
+def train_and_score(name: str, flags: list[str], epochs: int, before: str | None, args, log: Path,
+                    man: Path | None = None) -> None:
     """posttrain.py (resumes at the first fold not saved), then the frozen-decoder score."""
     run = f"plan/{name}"
-    must([PY, HERE / "posttrain.py", "train", "--run", run, "--epochs", str(epochs), "--manifest", manifest(),
+    man = man or manifest()
+    must([PY, HERE / "posttrain.py", "train", "--run", run, "--epochs", str(epochs), "--manifest", man,
           "--resume", *flags, *T4, *args.extra], log)
-    must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", manifest(),
+    must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", man,
           "--out", SCORES / name], log)
     for f in ("log.json", "run_info.json"):
         if (CKPT / name / f).exists():
             shutil.copy2(CKPT / name / f, SCORES / name / f"train_{f}")
-    blocker_figs(name, before, log)
+    blocker_figs(name, before, log, man)
+    if epochs:
+        export_weights(name)
     if epochs == 0:                                  # "before" weights are the pretrained ones: not kept
         for pt in (CKPT / name).glob("*.pt"):
             pt.unlink()
@@ -315,6 +344,34 @@ def interpret_variant(v: str, args, log) -> None:
     must([PY, HERE / "interpret.py", "--run", CKPT / f"{v}-after", "--manifest", manifest()], log)
 
 
+def both_manifest() -> Path:
+    """Every included clip of both directions: the training manifest's and the other segments' (left side)."""
+    import generalise
+    if not MANIFEST.exists():
+        raise Waiting(f"no clips on this machine ({MANIFEST.name})")
+    clips = generalise.included(MANIFEST) + generalise.other_segments(MANIFEST)
+    if not any(generalise.side_in(c) != generalise.side_in(clips[0]) for c in clips):
+        raise Waiting("only one direction of clips on this machine (add the left segment's zip)")
+    BOTH.parent.mkdir(parents=True, exist_ok=True)
+    BOTH.write_text("".join(json.dumps(c) + "\n" for c in clips))
+    return BOTH
+
+
+def step_lossmix(args, state, log):
+    """B: 20 epochs (cosine over 20), the epoch-10 weights saved on the way as lossmix_e10-after; both scored."""
+    flags = VARIANTS["lossmix_e20"][0] + ["--save-at", "10:plan/lossmix_e10-after"]
+    train_and_score("lossmix_e20-after", flags, 2 * EPOCHS, "plain-before", args, log)
+    must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / "lossmix_e10-after", "--manifest", manifest(),
+          "--out", SCORES / "lossmix_e10-after"], log)
+    blocker_figs("lossmix_e10-after", "plain-before", log)
+    export_weights("lossmix_e10-after")
+
+
+def step_other_ball(args, state, log):
+    """Other-ball clips, scored without training (scope D). Waits until they are packed and listed."""
+    raise Waiting("the other ball's clips aren't added yet (configs/heldout.json and their clips zip)")
+
+
 def step_generalise(args, state, log):
     generalise_variant(best_variants(state)[0], args, state, log)
 
@@ -348,14 +405,20 @@ STEPS: list[Step] = [
          lambda a, s, log: generalise_variant("plain", a, s, log)),
     Step(2, "mirror-commit", "commit: other side mirrored, and by height at the plank",
          lambda a, s, log: generalise_variant("commit", a, s, log)),
-    *variant_steps(2, [v for v in STAGE2 if v not in ("plain", "commit")]),
-    *variant_steps(3, [v for v in STAGE3 if v not in ("gate", "hyp")]),
-    Step(4, "long-1", f"best variant, {LONG_EPOCHS} epochs", step_long(0)),
-    Step(4, "long-2", f"second-best variant, {LONG_EPOCHS} epochs", step_long(1)),
-    Step(4, "frac-50", "best variant on 50% of the training clips", step_frac(0.5)),
-    Step(4, "frac-25", "best variant on 25% of the training clips", step_frac(0.25)),
-    Step(5, "generalise", "ball from the other side / new ball, before vs after", step_generalise),
-    Step(6, "interpret", "change maps and layer patching for the best run", step_interpret),
+    # Research scope (Fin, 2026-10-09; results/overview/RESEARCH_SCOPE.md) replaces the rest of the old queue
+    # (rollout, codes_rollout, gate_hyp_commit, 30-epoch and data-fraction runs, stages 5-6 for the best run).
+    # In Fin's priority order: the table slope (scoring pass with per-step ball positions, then B and A, whose
+    # imagined tracks slope.py reads), the narrow gap and training length (B at epoch 10 and 20), both
+    # directions (A), the other ball (D). slope.py and scope_report.py run in the report after every step.
+    *variant_steps(2, ["codes"]),
+    Step(2, "both-before", "slope S0-S2: pretrained, both directions, per-step ball positions",
+         lambda a, s, log: train_and_score("both-before", [], 0, None, a, log, both_manifest())),
+    Step(2, "lossmix_e20-after", "B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20)",
+         step_lossmix),
+    Step(2, "commit_both-after", "A. commit trained on both directions, each side scored",
+         lambda a, s, log: train_and_score("commit_both-after", VARIANTS["commit_both"][0], EPOCHS, "both-before",
+                                           a, log, both_manifest())),
+    Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
 ]
 
 
@@ -448,6 +511,11 @@ def report_rows() -> list[dict]:
                               {"cell_auroc": m.get("future_cell_auroc_imagined"), "far_cell_auroc": m.get("far_cell_auroc_imagined"),
                                "argmax_hit_rate": m.get("ball_imagined_argmax", {}).get("hit_rate"), **health(name)},
                               before_rows))
+        sides = sorted({r.get("side_in") for r in pc if r.get("side_in")})
+        for side in sides if len(sides) > 1 else []:        # both directions: each side on its own as well
+            sub = [r for r in pc if r.get("side_in") == side]
+            rows.append(score_row(f"V-JEPA 2 {name} (ball from {side})", variant, phase,
+                                  clip_rows(sub, "imagined_one_ball"), {}, before_rows))
     return rows
 
 
@@ -501,6 +569,11 @@ def report(state: dict) -> str:
                    f"after {r['auroc_after']}.",
                    f"- Figures: `vjepa2/plan/interpret/{path.parent.name}/change_map.png`, `layer_patching.png`."]
     figure(rows)
+    for mod in ("slope", "scope_report"):
+        try:
+            __import__(mod).main(["--plan", str(PLAN)])
+        except Exception as e:                        # a figure never stops the plan
+            print(f"!! {mod} report failed: {e!r}", flush=True)
     md = ["## Results", "",
           "Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cross-validated "
           "(5 folds, seed 0). `auroc_ci`: 95% bootstrap interval over clips. `delta_vs_before_ci` / `p_no_gain`: "
@@ -509,6 +582,9 @@ def report(state: dict) -> str:
           "reference, not an evaluation. Runs named -long / -frac use the variant picked as best on these same "
           "folds, so their numbers are slightly optimistic.", "", *table, *gen_md, *int_md, "",
           "![summary](summary.png)"]
+    for extra in (PLAN / "slope" / "slope.md", PLAN / "scope" / "scope.md"):
+        if extra.exists():
+            md += ["", extra.read_text()]
     (PLAN / "summary.md").write_text("\n".join(md) + "\n")
 
     lines = [f"_Last update: {dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M} UTC from {'Kaggle' if Path('/kaggle').exists() else 'Colab'} ({gpu()}), "
@@ -659,7 +735,11 @@ def step_hours(name: str) -> float:
         return 2.8                                  # interpret may first retrain the weights it reads
     if name.startswith("frac"):
         return 1.5
-    if name.startswith(("generalise", "mirror")):
+    if name == "commit_both-after":                 # a third more clips than the other runs
+        return 3.2
+    if name == "lossmix_e20-after":                 # 20 epochs, then two scoring passes
+        return 4.4
+    if name.startswith(("generalise", "mirror", "other-ball")):
         return 1.0
     return 0.7
 
