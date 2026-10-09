@@ -240,8 +240,11 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--plan", type=Path, default=REPO / "outputs" / "vjepa2" / "plan")
     p.add_argument("--scene", type=Path, default=REPO / "configs" / "scenes" / "whole.json")
-    p.add_argument("--plank-cm", type=float, default=None, help="the plank's real length, to give the slope in degrees")
+    p.add_argument("--plank-cm", type=float, default=None,
+                   help="the plank's real length, to give the slope in degrees (default: the scene file's plank_length_cm)")
     args = p.parse_args(argv)
+    if args.plank_cm is None and args.scene.exists():     # set "plank_length_cm" in the scene file once measured
+        args.plank_cm = json.loads(args.scene.read_text()).get("plank_length_cm")
     runs = {}
     for _, run, _ in SOURCES:
         f = args.plan / "scores" / run / "per_clip.json"
