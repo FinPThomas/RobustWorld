@@ -194,7 +194,7 @@ def blocker_figs(name: str, before: str | None, log: Path, man: Path | None = No
 def export_weights(name: str) -> None:
     """Copy a run's fold weights in float16 to $ROBUSTWORLD_WEIGHTS/<name>/ (on Kaggle: /kaggle/working, which is
     kept as the notebook's output), so later scoring can load them instead of training again."""
-    dest = os.environ.get("ROBUSTWORLD_WEIGHTS")
+    dest = os.environ.get("ROBUSTWORLD_WEIGHTS") or ("/kaggle/working/weights" if Path("/kaggle/working").exists() else None)
     if not dest:
         return
     import torch
