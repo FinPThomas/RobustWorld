@@ -15,6 +15,9 @@ post-training on PR #3 (`claude/colab-two-day-plan-3gn90a` @ `e717d1c`,
 `results/2026-10-04_2110_twoday/`), probing on PR #4 (`claude/vjepa-probing-overnight` @ `919d440`,
 `results/2026-10-05_0425_vjepa-probing/`), zero-shot on `main` (`docs/results/ball_comparison.md`).
 
+
+> **Next steps (2026-10-09):** see [NEXT_STEPS_PLAN.md](NEXT_STEPS_PLAN.md) for training length, the narrow gap, the other side and the slope, surprise maps, and the pick-up evaluation outline.
+
 ---
 
 ## 1. Setup in one paragraph
