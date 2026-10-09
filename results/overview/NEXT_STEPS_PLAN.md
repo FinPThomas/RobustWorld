@@ -1,5 +1,7 @@
 # RobustWorld: next-steps plan (2026-10-09)
 
+> **2026-10-09 update:** no new video is possible. The next session is scoped in [RESEARCH_SCOPE.md](RESEARCH_SCOPE.md) (narrow gap, both directions, downhill, other ball).
+
 Companion to [RESULTS_OVERVIEW.md](RESULTS_OVERVIEW.md). It answers Fin's questions of 2026-10-09
 and turns them into a plan sized for Kaggle's free tier: about 30 GPU hours a week, 12-hour
 sessions, and roughly 30 minutes of re-encoding at the start of each session.
