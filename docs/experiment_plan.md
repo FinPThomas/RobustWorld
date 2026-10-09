@@ -98,6 +98,14 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
     (`plan.py restore`), re-encodes the clips, runs steps until about 11 h (`--budget-hours`) and pushes after every
     step. Order is proof of concept first: plain, plain on the other side, commit, copy gate, interpretation of
     plain, multi-hypothesis, then the rest of the grid, then the long and smaller-data runs.
+15. (2026-10-09) Research scope (`results/overview/RESEARCH_SCOPE.md` on the overview branch) replaces the rest
+    of the queue (rollout, codes_rollout, gate_hyp_commit, 30-epoch and data-fraction runs are dropped). In order:
+    `both-before` (pretrained, both directions, per-step ball positions: slope S0-S2), `lossmix_e20-after` (B:
+    commit on right clips with `--sample-by-loss 0.25`, 20 epochs, its epoch-10 weights scored as
+    `lossmix_e10-after`), `commit_both-after` (A: commit, `cv_folds` over all 337 clips, each side scored),
+    `other-ball` (D, waits for its clips). `slope.py` (table slope from ball tracks, S0-S4) and
+    `scope_report.py` (narrow gap, both sides) run in every report. Fold weights are also saved in float16 to
+    `$ROBUSTWORLD_WEIGHTS` (`/kaggle/working/weights` on Kaggle).
 
 First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
 gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows

@@ -67,28 +67,30 @@ def fake(tmp_path, monkeypatch):
 
 def test_plan_runs_resumes_and_waits(fake, monkeypatch):
     calls, fail = fake
-    fail.add("rollout-after")
+    fail.add("lossmix_e20-after")
     plan.main(["run", "--stage", "all"])
     state = json.loads(plan.STATE.read_text())["steps"]
-    assert state["plain-after"]["state"] == "done" and state["rollout-after"]["state"] == "failed"
-    assert state["generalise"]["state"] == "waiting"                 # no other-side clips yet
+    assert state["plain-after"]["state"] == "done" and state["lossmix_e20-after"]["state"] == "failed"
+    assert state["both-before"]["state"] == "waiting"                 # no other-side clips on this machine
+    assert state["other-ball"]["state"] == "waiting"
     assert "commit-before" not in state and "gate-before" not in state   # same as plain-before
     trained = [c[c.index("--run") + 1] for c in calls if "posttrain.py" in c[1] and "train" in c]
     assert "plan/plain-after" in trained and all("--resume" in c for c in calls if "train" in c)
-    best = json.loads(plan.STATE.read_text())["choices"]["best"]
-    assert len(best) == 2 and f"plan/{best[0]}-long" in trained and f"plan/{best[0]}-frac25" in trained
+    b = next(c for c in calls if "posttrain.py" in c[1] and "plan/lossmix_e20-after" in c)
+    assert "--sample-by-loss" in b and "10:plan/lossmix_e10-after" in b and b[b.index("--epochs") + 1] == "20"
     assert any("interpret.py" in c[1] for c in calls)
     order = [" ".join(c) for c in calls]                              # results first: plain is interpreted
     first_interp = next(i for i, c in enumerate(order) if "interpret.py" in c and "plain-after" in c)
     first = lambda run: next(i for i, c in enumerate(order) if run in c)  # noqa: E731
     assert first("plan/plain-after") < first("plan/commit-after") < first("plan/gate-after") < first_interp
-    assert first_interp < first("plan/codes-after") < first("plan/codes_rollout-after") < first("-long")
+    assert first_interp < first("plan/codes-after") < first("plan/lossmix_e20-after")
+    assert not any("rollout" in c or "-long" in c for c in order)     # dropped from the queue (2026-10-09 scope)
     assert state["generalise-plain"]["state"] == "waiting"
 
     calls.clear(), fail.clear()
     plan.main(["run", "--stage", "all"])                              # second session: only what's left
     trained = [c[c.index("--run") + 1] for c in calls if "posttrain.py" in c[1] and "train" in c]
-    assert trained == ["plan/rollout-after"]
+    assert trained == ["plan/lossmix_e20-after"]
 
     summary = json.loads((plan.PLAN / "summary.json").read_text())
     after = next(r for r in summary if r["method"] == "V-JEPA 2 plain-after")
