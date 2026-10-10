@@ -114,7 +114,11 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
     through pass's imagined path with steady speed from its entry (downhill = ball from the right, uphill = from
     the left). New steps: `lossmix_both-after` (C: B's recipe on both directions, 20 epochs, weights saved after
     1, 2, 4, 7, 10, 15) and `lossmix_both-epochs` (scores those); `slope_test/epochs.png` plots slope and AUROC
-    per side against epochs.
+    per side against epochs. Open-table clips (`scripts/cut_open_clips.py`, 92 windows chosen from the tracker
+    alone where the ball rolls on open table across the context/target boundary; `robustworld_clips_open.zip`)
+    are scored only (`ball_probe_cv.py --extra-manifest`, each by the fold holding out the clip that shares its
+    frames) for every epoch; C waits until that zip is on the machine. Real slope from the tracker over the whole
+    video: 0.031 ball diameters/step² [0.028, 0.033], the same in every speed band.
 
 First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
 gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows

@@ -134,3 +134,38 @@ def test_ball_probe_cv_both_directions_scores_each_side_and_keeps_positions(worl
         assert all(len(p) == 3 for p in r["imagined_pos"])
     m = json.loads((out / "metrics.json").read_text())
     assert set(m["by_side"]) == {"R", "L"} and m["by_side"]["L"]["n"] == 4
+
+
+def test_ball_probe_cv_extra_clips_are_scored_only(world, monkeypatch):
+    """Open-table clips (no pass) come out in per_clip_open.json, each read by the fold that holds out the clip
+    sharing its frames; adding them changes nothing else (they fit nothing)."""
+    tmp_path, manifest = world
+    import ball_probe_cv
+
+    monkeypatch.setattr(ball_probe_cv, "cache_dir", posttrain.cache_dir)
+    monkeypatch.setattr(ball_probe_cv, "load_tracking", interpret.load_tracking)
+    track = interpret.load_tracking("start")[0]
+    cache = posttrain.cache_dir("x")
+    g = torch.Generator().manual_seed(1)
+    extra = []
+    for j, first in enumerate([3 * ALL * 2, len(track)]):    # inside clip c3's frames, then frames no clip has
+        if first == len(track):
+            track.extend((1, 300 - 20 * k, 250.0, 10.0) for k in range(ALL * 2))
+        real = torch.randn(ALL, G, G, D, generator=g)
+        torch.save({"real": real.half(), "context": real[:CTX].half(), "imagined": real[CTX:].half()},
+                   cache / f"open{j}.pt")
+        extra.append({"clip_id": f"open{j}", "source_video": "data/interim/start/start_512.mp4", "pass_id": None,
+                      "side_in": "R", "outcome": "open", "include": True, "n_frames": ALL * 2, "fps": 16,
+                      "source_fps": 16, "context_frames": [0, CTX * 2 - 1], "path": "x.mp4",
+                      "source_frames": [first, first + ALL * 2 - 1]})
+    em = tmp_path / "manifest_open.jsonl"
+    em.write_text("".join(json.dumps(c) + "\n" for c in extra))
+    ball_probe_cv.main(["--manifest", str(manifest), "--out", str(tmp_path / "a")])
+    ball_probe_cv.main(["--manifest", str(manifest), "--out", str(tmp_path / "b"), "--extra-manifest", str(em)])
+    assert (tmp_path / "a" / "per_clip.json").read_text() == (tmp_path / "b" / "per_clip.json").read_text()
+    rows = {r["clip_id"]: r for r in json.loads((tmp_path / "b" / "per_clip_open.json").read_text())}
+    main_rows = {r["clip_id"]: r for r in json.loads((tmp_path / "b" / "per_clip.json").read_text())}
+    assert set(rows) == {"open0", "open1"}
+    assert rows["open0"]["fold"] == main_rows["c3"]["fold"]
+    assert rows["open1"]["true_pos_context"][0] == [290.0, 250.0]    # mean of the step's two frames
+    assert len(rows["open1"]["imagined_pos"]) == ALL - CTX
