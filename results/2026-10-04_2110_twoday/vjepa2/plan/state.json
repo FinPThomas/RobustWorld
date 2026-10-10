@@ -148,6 +148,13 @@
    "code": "f6f56ce",
    "minutes": 13.9,
    "finished": "2026-10-10 00:46"
+  },
+  "lossmix_e20-after": {
+   "state": "done",
+   "started": "2026-10-10 00:46",
+   "code": "f6f56ce",
+   "minutes": 237.7,
+   "finished": "2026-10-10 04:44"
   }
  },
  "choices": {
@@ -160,5 +167,5 @@
    }
   }
  },
- "last_push": "2026-10-08 19:57"
+ "last_push": "2026-10-10 00:46"
 }

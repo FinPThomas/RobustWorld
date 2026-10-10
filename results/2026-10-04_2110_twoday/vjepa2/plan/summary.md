@@ -19,6 +19,8 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 both-before | before | 0.454 | [0.389, 0.516] | - | - | 0.337 | 0.396 | 0.666 | 0.56 | 0.177 | 0/5 | 0/0/0/0/0 |
 | V-JEPA 2 both-before (ball from L) | before | 0.66 | [0.541, 0.777] | - | - | 0.352 | 0.333 | - | - | - | - | - |
 | V-JEPA 2 both-before (ball from R) | before | 0.437 | [0.368, 0.511] | - | - | 0.329 | 0.333 | - | - | - | - | - |
+| V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 | 0.487 | 0.613 | 0.851 | 0.835 | 0.637 | - | - |
+| V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 | 0.551 | 0.651 | 0.872 | 0.88 | 0.701 | 0/5 | 18/20/17/17/18 |
 
 ### Generalisation of commit (held out, never trained on)
 
@@ -54,6 +56,8 @@ s: slope term along the table (px/step², downhill = left; 1 step = 1/8 s). Shar
 | S0t tracker (target steps) | 176 | 0.1014 | [-0.4539, 0.7696] | 0.04 | 0.4005 | [-0.0629, 0.9099] | [-0.4005, -0.8382] | 2.2894 | None | None |
 | S1 decoder, real frames | 176 | 0.2466 | [-0.8097, 1.3953] | 0.1 | -0.0916 | [-0.8077, 0.7091] | [0.0916, -0.3688] | 2.1962 | None | None |
 | S2 imagined, pretrained | 176 | 0.2957 | [-4.7895, 5.3487] | 0.12 | 1.0124 | [-1.7413, 3.8264] | [-1.0124, 1.5122] | 5.2198 | None | None |
+| S3 imagined, B right only @10 | 113 | 1.1506 | [-15.2029, 18.6548] | 0.48 | -0.2173 | [-7.1715, 7.2708] | [0.2173, -5.9285] | 42.7057 | -16.8352 | None |
+| S3 imagined, B right only @20 | 114 | -13.2919 | [-26.4122, 4.3605] | -5.49 | -2.8377 | [-10.4806, 5.1896] | [2.8377, -4.0594] | 33.2964 | -67.5737 | None |
 
 Figures: `slope/acc_vs_speed.png` (downhill and uphill acceleration by speed), `slope/gradient_map.png` (G per region).
 
@@ -71,6 +75,8 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | plain-after | R | 0.302 (n 82) | 0.255 (n 26) | 0.153 (n 106) | 0.787 (n 52) | 0.884 |
 | commit-after | R | 0.602 (n 82) | 0.437 (n 26) | 0.133 (n 106) | 0.869 (n 52) | 0.934 |
 | codes-after | R | 0.846 (n 82) | 0.486 (n 26) | 0.112 (n 106) | 0.868 (n 52) | 0.911 |
+| lossmix_e10-after | R | 0.642 (n 82) | 0.539 (n 26) | 0.121 (n 106) | 0.908 (n 52) | 0.949 |
+| lossmix_e20-after | R | 0.819 (n 82) | 0.786 (n 26) | 0.114 (n 106) | 0.923 (n 52) | 0.964 |
 | real frames | L | 0.966 (n 25) | 0.992 (n 7) | 0.481 (n 40) | 1.0 (n 10) | 0.98 |
 | both-before | L | 0.735 (n 25) | 0.699 (n 7) | 0.695 (n 40) | 1.0 (n 10) | 0.66 |
 | real frames | R | 0.959 (n 82) | 0.919 (n 26) | 0.07 (n 106) | 0.996 (n 52) | 0.999 |

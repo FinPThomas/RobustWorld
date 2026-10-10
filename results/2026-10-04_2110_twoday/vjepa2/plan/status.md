@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-10 00:46 UTC from Kaggle (Tesla T4), code `f6f56ce`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-10 04:44 UTC from Kaggle (Tesla T4), code `f6f56ce`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@ _Last update: 2026-10-10 00:46 UTC from Kaggle (Tesla T4), code `f6f56ce`. Resul
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | done | 11.5 | 2026-10-07 04:01 |
 | 2 | codes-after: codes: post-trained 10 epochs | done | 120.3 | 2026-10-07 11:55 |
 | 2 | both-before: slope S0-S2: pretrained, both directions, per-step ball positions | done | 13.9 | 2026-10-10 00:46 |
-| 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | to do |  |  |
+| 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | done | 237.7 | 2026-10-10 04:44 |
 | 2 | commit_both-after: A. commit trained on both directions, each side scored | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | to do |  |  |
 
@@ -42,6 +42,8 @@ _Last update: 2026-10-10 00:46 UTC from Kaggle (Tesla T4), code `f6f56ce`. Resul
 | V-JEPA 2 both-before | before | 0.454 | [0.389, 0.516] | - | - |
 | V-JEPA 2 both-before (ball from L) | before | 0.66 | [0.541, 0.777] | - | - |
 | V-JEPA 2 both-before (ball from R) | before | 0.437 | [0.368, 0.511] | - | - |
+| V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 |
+| V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 |
 
 ### Generalisation of commit (held out, never trained on)
 

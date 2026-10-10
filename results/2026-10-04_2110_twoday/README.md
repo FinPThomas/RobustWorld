@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-10 00:46 UTC
+- Saved: 2026-10-10 04:44 UTC
 - Code commit: `f6f56ce`
-- Note: two-day plan, 18 steps done
+- Note: two-day plan, 19 steps done
 
 ## Figures
 
@@ -19,6 +19,10 @@
 - [vjepa2/plan/blocker/gate-after/blocker_map.png](vjepa2/plan/blocker/gate-after/blocker_map.png)
 - [vjepa2/plan/blocker/hyp-after/blocked_vs_crossing.png](vjepa2/plan/blocker/hyp-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/hyp-after/blocker_map.png](vjepa2/plan/blocker/hyp-after/blocker_map.png)
+- [vjepa2/plan/blocker/lossmix_e10-after/blocked_vs_crossing.png](vjepa2/plan/blocker/lossmix_e10-after/blocked_vs_crossing.png)
+- [vjepa2/plan/blocker/lossmix_e10-after/blocker_map.png](vjepa2/plan/blocker/lossmix_e10-after/blocker_map.png)
+- [vjepa2/plan/blocker/lossmix_e20-after/blocked_vs_crossing.png](vjepa2/plan/blocker/lossmix_e20-after/blocked_vs_crossing.png)
+- [vjepa2/plan/blocker/lossmix_e20-after/blocker_map.png](vjepa2/plan/blocker/lossmix_e20-after/blocker_map.png)
 - [vjepa2/plan/blocker/plain-after/blocked_vs_crossing.png](vjepa2/plan/blocker/plain-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/plain-after/blocker_map.png](vjepa2/plan/blocker/plain-after/blocker_map.png)
 - [vjepa2/plan/blocker/plain-before/blocked_vs_crossing.png](vjepa2/plan/blocker/plain-before/blocked_vs_crossing.png)
@@ -44,6 +48,10 @@
 - [vjepa2/plan/scores/gate-after/outcome.png](vjepa2/plan/scores/gate-after/outcome.png)
 - [vjepa2/plan/scores/hyp-after/curves.png](vjepa2/plan/scores/hyp-after/curves.png)
 - [vjepa2/plan/scores/hyp-after/outcome.png](vjepa2/plan/scores/hyp-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_e10-after/curves.png](vjepa2/plan/scores/lossmix_e10-after/curves.png)
+- [vjepa2/plan/scores/lossmix_e10-after/outcome.png](vjepa2/plan/scores/lossmix_e10-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_e20-after/curves.png](vjepa2/plan/scores/lossmix_e20-after/curves.png)
+- [vjepa2/plan/scores/lossmix_e20-after/outcome.png](vjepa2/plan/scores/lossmix_e20-after/outcome.png)
 - [vjepa2/plan/scores/plain-after/curves.png](vjepa2/plan/scores/plain-after/curves.png)
 - [vjepa2/plan/scores/plain-after/outcome.png](vjepa2/plan/scores/plain-after/outcome.png)
 - [vjepa2/plan/scores/plain-before/curves.png](vjepa2/plan/scores/plain-before/curves.png)
