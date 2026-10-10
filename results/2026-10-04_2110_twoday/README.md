@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-10 04:44 UTC
+- Saved: 2026-10-10 07:20 UTC
 - Code commit: `f6f56ce`
-- Note: two-day plan, 19 steps done
+- Note: two-day plan, 20 steps done
 
 ## Figures
 
@@ -15,6 +15,8 @@
 - [vjepa2/plan/blocker/codes-before/blocker_map.png](vjepa2/plan/blocker/codes-before/blocker_map.png)
 - [vjepa2/plan/blocker/commit-after/blocked_vs_crossing.png](vjepa2/plan/blocker/commit-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/commit-after/blocker_map.png](vjepa2/plan/blocker/commit-after/blocker_map.png)
+- [vjepa2/plan/blocker/commit_both-after/blocked_vs_crossing.png](vjepa2/plan/blocker/commit_both-after/blocked_vs_crossing.png)
+- [vjepa2/plan/blocker/commit_both-after/blocker_map.png](vjepa2/plan/blocker/commit_both-after/blocker_map.png)
 - [vjepa2/plan/blocker/gate-after/blocked_vs_crossing.png](vjepa2/plan/blocker/gate-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/gate-after/blocker_map.png](vjepa2/plan/blocker/gate-after/blocker_map.png)
 - [vjepa2/plan/blocker/hyp-after/blocked_vs_crossing.png](vjepa2/plan/blocker/hyp-after/blocked_vs_crossing.png)
@@ -44,6 +46,8 @@
 - [vjepa2/plan/scores/codes-before/outcome.png](vjepa2/plan/scores/codes-before/outcome.png)
 - [vjepa2/plan/scores/commit-after/curves.png](vjepa2/plan/scores/commit-after/curves.png)
 - [vjepa2/plan/scores/commit-after/outcome.png](vjepa2/plan/scores/commit-after/outcome.png)
+- [vjepa2/plan/scores/commit_both-after/curves.png](vjepa2/plan/scores/commit_both-after/curves.png)
+- [vjepa2/plan/scores/commit_both-after/outcome.png](vjepa2/plan/scores/commit_both-after/outcome.png)
 - [vjepa2/plan/scores/gate-after/curves.png](vjepa2/plan/scores/gate-after/curves.png)
 - [vjepa2/plan/scores/gate-after/outcome.png](vjepa2/plan/scores/gate-after/outcome.png)
 - [vjepa2/plan/scores/hyp-after/curves.png](vjepa2/plan/scores/hyp-after/curves.png)

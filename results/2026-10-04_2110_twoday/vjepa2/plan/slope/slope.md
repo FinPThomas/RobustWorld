@@ -10,5 +10,6 @@ s: slope term along the table (px/step², downhill = left; 1 step = 1/8 s). Shar
 | S2 imagined, pretrained | 176 | 0.2957 | [-4.7895, 5.3487] | 0.12 | 1.0124 | [-1.7413, 3.8264] | [-1.0124, 1.5122] | 5.2198 | None | None |
 | S3 imagined, B right only @10 | 113 | 1.1506 | [-15.2029, 18.6548] | 0.48 | -0.2173 | [-7.1715, 7.2708] | [0.2173, -5.9285] | 42.7057 | -16.8352 | None |
 | S3 imagined, B right only @20 | 114 | -13.2919 | [-26.4122, 4.3605] | -5.49 | -2.8377 | [-10.4806, 5.1896] | [2.8377, -4.0594] | 33.2964 | -67.5737 | None |
+| S4 imagined, A both directions | 176 | -1.3353 | [-11.9186, 8.5185] | -0.55 | -0.1729 | [-4.2703, 4.1145] | [0.1729, 0.0307] | 34.209 | -27.9645 | None |
 
 Figures: `slope/acc_vs_speed.png` (downhill and uphill acceleration by speed), `slope/gradient_map.png` (G per region).
