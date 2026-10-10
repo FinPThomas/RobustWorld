@@ -83,3 +83,56 @@ def test_slope_recovers_a_known_slope(tmp_path):
     assert abs(res["S0 tracker (all steps)"]["2d"]["s_left"] - s_true) < 0.05
     assert abs(res["S4 imagined, A both directions"]["1d"]["s"] - s_true / 2) < 0.05
     assert (tmp_path / "slope" / "acc_vs_speed.png").exists()
+
+
+def test_slope_test_recovers_slope_through_the_camera_tilt(tmp_path):
+    """A tilted camera (ball radius changing across the frame) and a known slope: slope_test.py maps positions onto
+    the table with the ball's size and gives the slope back; without that mapping the pixels would mislead."""
+    import csv
+
+    import numpy as np
+    import slope_test
+
+    a_r, b_r, c_r = -0.004, 0.012, 5.0                      # radius px = a x + b y + c (bigger lower down)
+    s_true, fric = 0.01, 0.006                              # ball diameters / step^2
+    rng = np.random.default_rng(1)
+    fps = 16.0
+    dt = 1 / (fps * slope_test.STEP_S)                      # steps per frame
+
+    def to_image(q):                                        # inverse of Table: p = 2 q r(p)
+        q = np.asarray(q, float)
+        M = np.eye(2) - 2 * np.outer(q, [a_r, b_r])
+        return np.linalg.solve(M, 2 * q * c_r)
+
+    rows, frame = [], 0
+    for k in range(80):
+        y = rng.uniform(120, 400)
+        left = k % 2 == 0
+        x0 = 480.0 if left else 300.0
+        q = np.array([x0, y]) / (2 * (a_r * x0 + b_r * y + c_r))
+        v = rng.uniform(0.25, 0.6) * (-1 if left else 1)
+        for _ in range(40):                                 # gap: ball out of view
+            rows.append({"frame": frame, "t": frame / fps, "visible": 0, "x": "", "y": "", "radius": "", "fg_area": 0})
+            frame += 1
+        while True:
+            p = to_image(q)
+            if not (296 < p[0] < 484):
+                break
+            r = a_r * p[0] + b_r * p[1] + c_r
+            rows.append({"frame": frame, "t": frame / fps, "visible": 1, "x": p[0] + rng.normal(0, 0.3),
+                         "y": p[1] + rng.normal(0, 0.3), "radius": r + rng.normal(0, 0.1), "fg_area": 0})
+            frame += 1
+            along = (s_true if left else -s_true) - fric    # acceleration along the motion: slope -/+ friction
+            v += (-1 if left else 1) * along * dt
+            q = q + np.array([v * dt, 0.0])
+    track = tmp_path / "track.csv"
+    with track.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["frame", "t", "visible", "x", "y", "area", "radius", "occ_dist", "n_blobs",
+                                          "fg_area"])
+        w.writeheader()
+        for r in rows:
+            w.writerow({"area": "", "occ_dist": "", "n_blobs": 1, **r})
+    assert slope_test.main(["--plan", str(tmp_path / "plan"), "--track", str(track)]) == 0
+    res = json.loads((tmp_path / "plan" / "slope_test" / "slope_test.json").read_text())
+    assert res["calibration"]["ok"] and res["calibration"]["r2"] > 0.9
+    assert abs(res["real"]["s"] - s_true) < 0.004, res["real"]
