@@ -141,6 +141,13 @@
    "code": "e717d1c",
    "minutes": 32.8,
    "finished": "2026-10-08 20:29"
+  },
+  "both-before": {
+   "state": "done",
+   "started": "2026-10-10 00:32",
+   "code": "f6f56ce",
+   "minutes": 13.9,
+   "finished": "2026-10-10 00:46"
   }
  },
  "choices": {

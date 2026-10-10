@@ -1,0 +1,180 @@
+{
+ "height": {
+  "real frames / R": {
+   "wide gap (104-186)": {
+    "mean": 0.959,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.919,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.07,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.996,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.999,
+    "n": 254
+   }
+  },
+  "pretrained / R": {
+   "wide gap (104-186)": {
+    "mean": 0.175,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.189,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.185,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.451,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.422,
+    "n": 254
+   }
+  },
+  "plain-after / R": {
+   "wide gap (104-186)": {
+    "mean": 0.302,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.255,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.153,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.787,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.884,
+    "n": 254
+   }
+  },
+  "commit-after / R": {
+   "wide gap (104-186)": {
+    "mean": 0.602,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.437,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.133,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.869,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.934,
+    "n": 254
+   }
+  },
+  "codes-after / R": {
+   "wide gap (104-186)": {
+    "mean": 0.846,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.486,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.112,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.868,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.911,
+    "n": 254
+   }
+  },
+  "real frames / L": {
+   "wide gap (104-186)": {
+    "mean": 0.966,
+    "n": 25
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.992,
+    "n": 7
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.481,
+    "n": 40
+   },
+   "AUROC at y 300-380": {
+    "auroc": 1.0,
+    "n": 10
+   },
+   "AUROC all": {
+    "auroc": 0.98,
+    "n": 83
+   }
+  },
+  "both-before / L": {
+   "wide gap (104-186)": {
+    "mean": 0.735,
+    "n": 25
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.699,
+    "n": 7
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.695,
+    "n": 40
+   },
+   "AUROC at y 300-380": {
+    "auroc": 1.0,
+    "n": 10
+   },
+   "AUROC all": {
+    "auroc": 0.66,
+    "n": 83
+   }
+  },
+  "both-before / R": {
+   "wide gap (104-186)": {
+    "mean": 0.168,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.179,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.178,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.501,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.437,
+    "n": 254
+   }
+  }
+ }
+}

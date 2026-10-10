@@ -212,7 +212,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-08 20:29 UTC from Kaggle (Tesla T4), code `e717d1c`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-10 00:46 UTC from Kaggle (Tesla T4), code `f6f56ce`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -232,17 +232,10 @@ _Last update: 2026-10-08 20:29 UTC from Kaggle (Tesla T4), code `e717d1c`. Resul
 | 2 | mirror-commit: commit: other side mirrored, and by height at the plank | done | 32.8 | 2026-10-08 20:29 |
 | 2 | codes-before: codes: pretrained predictor, scored the codes way | done | 11.5 | 2026-10-07 04:01 |
 | 2 | codes-after: codes: post-trained 10 epochs | done | 120.3 | 2026-10-07 11:55 |
-| 2 | rollout-before: rollout: pretrained predictor, scored the rollout way | done | 34.0 | 2026-10-07 12:29 |
-| 2 | rollout-after: rollout: post-trained 10 epochs | to do |  |  |
-| 2 | codes_rollout-before: codes_rollout: pretrained predictor, scored the codes_rollout way | to do |  |  |
-| 2 | codes_rollout-after: codes_rollout: post-trained 10 epochs | to do |  |  |
-| 3 | gate_hyp_commit-after: gate_hyp_commit: post-trained 10 epochs | to do |  |  |
-| 4 | long-1: best variant, 30 epochs | failed (no stage 2/3 run has been scored yet: run those first) | 0.0 | 2026-10-04 21:24 |
-| 4 | long-2: second-best variant, 30 epochs | to do |  |  |
-| 4 | frac-50: best variant on 50% of the training clips | to do |  |  |
-| 4 | frac-25: best variant on 25% of the training clips | to do |  |  |
-| 5 | generalise: ball from the other side / new ball, before vs after | running |  |  |
-| 6 | interpret: change maps and layer patching for the best run | failed (no stage 2/3 run has been scored yet: run those first) | 0.0 | 2026-10-04 21:32 |
+| 2 | both-before: slope S0-S2: pretrained, both directions, per-step ball positions | done | 13.9 | 2026-10-10 00:46 |
+| 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | to do |  |  |
+| 2 | commit_both-after: A. commit trained on both directions, each side scored | to do |  |  |
+| 5 | other-ball: D. the other ball, scored without training | to do |  |  |
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain |
 |---|---|---|---|---|---|
@@ -258,6 +251,9 @@ _Last update: 2026-10-08 20:29 UTC from Kaggle (Tesla T4), code `e717d1c`. Resul
 | V-JEPA 2 rollout-before | before | 0.415 | [0.346, 0.481] | - | - |
 | V-JEPA 2 gate-after | after | 0.885 | [0.842, 0.924] | [0.383, 0.544] | 0.0 |
 | V-JEPA 2 hyp-after | after | 0.423 | [0.355, 0.488] | [-0.072, 0.075] | 0.521 |
+| V-JEPA 2 both-before | before | 0.454 | [0.389, 0.516] | - | - |
+| V-JEPA 2 both-before (ball from L) | before | 0.66 | [0.541, 0.777] | - | - |
+| V-JEPA 2 both-before (ball from R) | before | 0.437 | [0.368, 0.511] | - | - |
 
 ### Generalisation of commit (held out, never trained on)
 
