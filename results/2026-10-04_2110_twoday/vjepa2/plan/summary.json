@@ -290,5 +290,49 @@
   "p_no_gain": null,
   "one_ball_p_correct": 0.329,
   "balanced_accuracy": 0.333
+ },
+ {
+  "method": "V-JEPA 2 lossmix_e10-after",
+  "variant": "lossmix_e10",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.949,
+  "auroc_ci": [
+   0.921,
+   0.973
+  ],
+  "delta_vs_before_ci": [
+   0.459,
+   0.599
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.487,
+  "balanced_accuracy": 0.613,
+  "cell_auroc": 0.851,
+  "far_cell_auroc": 0.835,
+  "argmax_hit_rate": 0.637
+ },
+ {
+  "method": "V-JEPA 2 lossmix_e20-after",
+  "variant": "lossmix_e20",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.964,
+  "auroc_ci": [
+   0.939,
+   0.985
+  ],
+  "delta_vs_before_ci": [
+   0.472,
+   0.616
+  ],
+  "p_no_gain": 0.0,
+  "one_ball_p_correct": 0.551,
+  "balanced_accuracy": 0.651,
+  "cell_auroc": 0.872,
+  "far_cell_auroc": 0.88,
+  "argmax_hit_rate": 0.701,
+  "overfit_folds": "0/5",
+  "best_epochs": "18/20/17/17/18"
  }
 ]

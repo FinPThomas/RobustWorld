@@ -8,4 +8,4 @@ the Colab notebook does this at the end. This index is rebuilt from the folders.
 
 | run | headline |
 |---|---|
-| [2026-10-04_2110_twoday](2026-10-04_2110_twoday/README.md) | best after: codes P(correct, one ball) 0.52, most likely cell within 48 px 0.463 |
+| [2026-10-04_2110_twoday](2026-10-04_2110_twoday/README.md) | best after: lossmix_e20 P(correct, one ball) 0.551, most likely cell within 48 px 0.701 |
