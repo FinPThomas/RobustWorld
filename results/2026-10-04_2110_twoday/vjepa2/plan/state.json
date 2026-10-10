@@ -165,11 +165,35 @@
   },
   "other-ball": {
    "state": "waiting",
-   "started": "2026-10-10 14:13",
-   "code": "c7acf56",
+   "started": "2026-10-10 19:09",
+   "code": "a70bd48",
    "minutes": 0.0,
-   "finished": "2026-10-10 14:13",
+   "finished": "2026-10-10 19:09",
    "error": "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"
+  },
+  "lossmix_both-after": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  },
+  "lossmix_both-epochs": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  },
+  "lossmix_open-after": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
   }
  },
  "choices": {
@@ -182,5 +206,5 @@
    }
   }
  },
- "last_push": "2026-10-10 07:21"
+ "last_push": "2026-10-10 19:09"
 }
