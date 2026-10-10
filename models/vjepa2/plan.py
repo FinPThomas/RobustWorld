@@ -760,20 +760,18 @@ T_START = time.time()
 
 def step_hours(name: str) -> float:
     """A generous guess of a step's run time on a T4 (plain-after took 2.3 h), for --budget-hours."""
+    special = {"commit_both-after": 3.2,          # a third more clips than the other runs
+               "lossmix_e20-after": 4.4,          # 20 epochs, then two scoring passes
+               "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
+               "lossmix_both-epochs": 1.6}        # six scoring passes
+    if name in special:
+        return special[name]
     if name.startswith("long"):
         return 7.0
     if name.endswith("-after") or name.startswith("interpret"):
         return 2.8                                  # interpret may first retrain the weights it reads
     if name.startswith("frac"):
         return 1.5
-    if name == "commit_both-after":                 # a third more clips than the other runs
-        return 3.2
-    if name == "lossmix_e20-after":                 # 20 epochs, then two scoring passes
-        return 4.4
-    if name == "lossmix_both-after":                # 20 epochs on both directions (commit_both: 2.6 h for 10)
-        return 5.6
-    if name == "lossmix_both-epochs":               # six scoring passes
-        return 1.6
     if name.startswith(("generalise", "mirror", "other-ball")):
         return 1.0
     return 0.7
