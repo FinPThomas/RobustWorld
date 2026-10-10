@@ -212,7 +212,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-10 07:20 UTC from Kaggle (Tesla T4), code `f6f56ce`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-10 07:21 UTC from Kaggle (Tesla T4), code `f6f56ce`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -235,7 +235,7 @@ _Last update: 2026-10-10 07:20 UTC from Kaggle (Tesla T4), code `f6f56ce`. Resul
 | 2 | both-before: slope S0-S2: pretrained, both directions, per-step ball positions | done | 13.9 | 2026-10-10 00:46 |
 | 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | done | 237.7 | 2026-10-10 04:44 |
 | 2 | commit_both-after: A. commit trained on both directions, each side scored | done | 156.4 | 2026-10-10 07:20 |
-| 5 | other-ball: D. the other ball, scored without training | to do |  |  |
+| 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 07:21 |
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain |
 |---|---|---|---|---|---|
