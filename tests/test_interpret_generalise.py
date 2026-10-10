@@ -169,3 +169,37 @@ def test_ball_probe_cv_extra_clips_are_scored_only(world, monkeypatch):
     assert rows["open0"]["fold"] == main_rows["c3"]["fold"]
     assert rows["open1"]["true_pos_context"][0] == [290.0, 250.0]    # mean of the step's two frames
     assert len(rows["open1"]["imagined_pos"]) == ALL - CTX
+
+
+def test_extra_training_clips_stay_out_of_the_fold_that_scores_them(world, monkeypatch):
+    tmp_path, manifest = world
+    import ball_probe_cv
+    from robust_world.eval import ball
+
+    monkeypatch.setattr(ball, "load_tracking", interpret.load_tracking)
+    monkeypatch.setattr(ball_probe_cv, "cache_dir", posttrain.cache_dir)
+    monkeypatch.setattr(ball_probe_cv, "load_tracking", interpret.load_tracking)
+    cache = posttrain.cache_dir("x")
+    g = torch.Generator().manual_seed(2)
+    extra = []
+    for j in range(5):                                       # each inside one plank clip's frames
+        real = torch.randn(ALL, G, G, D, generator=g)
+        torch.save({"real": real.half(), "context": real[:CTX].half(), "imagined": real[CTX:].half()},
+                   cache / f"open{j}.pt")
+        first = (2 * j + 1) * ALL * 2
+        extra.append({"clip_id": f"open{j}", "source_video": "data/interim/start/start_512.mp4", "pass_id": None,
+                      "side_in": "R", "outcome": "open", "include": True, "n_frames": ALL * 2, "fps": 16,
+                      "source_fps": 16, "context_frames": [0, CTX * 2 - 1], "path": "x.mp4",
+                      "source_frames": [first, first + ALL * 2 - 1]})
+    em = tmp_path / "manifest_open.jsonl"
+    em.write_text("".join(json.dumps(c) + "\n" for c in extra))
+    posttrain.main(["train", "--run", "ex", "--epochs", "1", "--workers", "0", "--manifest", str(manifest),
+                    "--extra-train", str(em)])
+    ball_probe_cv.main(["--manifest", str(manifest), "--predictor-run", str(tmp_path / "ck" / "ex"),
+                        "--out", str(tmp_path / "s"), "--extra-manifest", str(em)])
+    scored = {r["clip_id"]: r["fold"] for r in json.loads((tmp_path / "s" / "per_clip_open.json").read_text())}
+    assert set(scored) == {f"open{j}" for j in range(5)}
+    for k in range(5):
+        ids = set(torch.load(tmp_path / "ck" / "ex" / f"fold{k}.pt", weights_only=False)["train_clip_ids"])
+        assert {c for c, f in scored.items() if f == k}.isdisjoint(ids)
+        assert {c for c, f in scored.items() if f != k} <= ids

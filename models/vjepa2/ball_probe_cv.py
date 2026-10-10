@@ -53,7 +53,7 @@ import eval_decoder  # noqa: E402
 from ball_probe import encode  # noqa: E402
 from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
 from robust_world.eval.ball import (CLIP_SIZE, OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
-                                    far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
+                                    extra_folds, far_cells, load_tracking, near_cells, one_ball_readouts, outcome_metrics,
                                     roc_auc_score_safe, source_indices, video_of)
 from robust_world.eval.io import read_video  # noqa: E402
 from run import MODEL_ID, SIZE, pick_device  # noqa: E402
@@ -85,28 +85,6 @@ def map_pos(m: np.ndarray) -> list[list[float]]:
         w = w / w.sum()
         out.append([round(float(((xx + 0.5) * cell * w).sum()), 1), round(float(((yy + 0.5) * cell * w).sum()), 1),
                     round(peak, 3)])
-    return out
-
-
-def assign_extra_folds(extra: list[dict], data: list[dict], folds, passes: dict, tub: int) -> list:
-    """Per extra clip, the fold whose held-out clips share its source frames (so that fold's predictor never
-    trained on them); a clip sharing frames with no clip goes to fold (its index mod folds); None if it shares
-    frames with held-out clips of two folds."""
-    fold_of = {}
-    for k, (_, te) in enumerate(folds):
-        for i in te:
-            fold_of[i] = k
-    spans = []
-    for i, d in enumerate(data):
-        c = d["clip"]
-        n = c.get("n_frames", 48)
-        src = source_indices(c, passes, n, c["context_frames"][1] + 1)
-        spans.append((src[0], src[-1], fold_of[i]))
-    out = []
-    for j, e in enumerate(extra):
-        a, b = e["span"]
-        hit = {f for lo, hi, f in spans if lo <= b and a <= hi}
-        out.append(hit.pop() if len(hit) == 1 else (j % len(folds)) if not hit else None)
     return out
 
 
@@ -229,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                            cache / f"{c['clip_id']}.pt")
             src = source_indices(c, passes, len(frames), n_ctx)
             _, centres = ball_labels(src, track, grid, tub)
-            extra.append({"clip": c, "centres": centres, "span": (src[0], src[-1]), "cs": n_ctx // tub})
+            extra.append({"clip": c, "centres": centres, "cs": n_ctx // tub})
             del frames
         print(f"  {len(extra)} extra clips (scored only) from {args.extra_manifest.name}")
     held = sum(d["ctx"].numel() * d["ctx"].element_size() for d in data) / 2**30
@@ -261,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     surprise = {}
     D = model.config.hidden_size
     folds = cv_folds([d["clip"] for d in data], args.folds, args.seed)
-    extra_fold = assign_extra_folds(extra, data, folds, passes, tub)
+    extra_fold = extra_folds([e["clip"] for e in extra], [d["clip"] for d in data], folds, passes)
     open_rows = []
     for fold, (tr, te) in enumerate(folds):
         examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
@@ -320,6 +298,8 @@ def main(argv: list[str] | None = None) -> int:
                           for side, v in one_ball_readouts(m, far, near).items()}}
             del d["enc"]                      # scored: free it
         for e in (e for e, f in zip(extra, extra_fold) if f == fold):
+            if args.predictor_run and e["clip"]["clip_id"] in set(meta["train_clip_ids"]):
+                raise SystemExit(f"fold{fold}.pt was trained on {e['clip']['clip_id']}, which it would score")
             enc = load_cached(cache, e["clip"])
             cs = e["cs"]
             if args.predictor_run:
