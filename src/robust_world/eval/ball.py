@@ -59,9 +59,12 @@ def load_tracking(name: str):
 
 
 def source_indices(clip: dict, passes: dict, n_frames: int, n_ctx: int) -> list[int]:
-    """Clip frame k -> source frame, exactly as robust_world.clips cut it."""
-    mid = passes[clip["pass_id"]]["occlusion_start_frame"] - 1
+    """Clip frame k -> source frame, exactly as robust_world.clips cut it (or scripts/cut_open_clips.py, for
+    clips with no pass: from their first source frame)."""
     step = clip["source_fps"] / clip["fps"]
+    if clip.get("pass_id") is None:
+        return [int(round(clip["source_frames"][0] + k * step)) for k in range(n_frames)]
+    mid = passes[clip["pass_id"]]["occlusion_start_frame"] - 1
     return [int(round(mid + (k - (n_ctx - 1)) * step)) for k in range(n_frames)]
 
 

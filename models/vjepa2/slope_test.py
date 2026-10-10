@@ -221,7 +221,7 @@ def entry(r: dict, table: Table, dist):
 
 def clip_accel(r: dict, src: dict, key: str, table: Table, dist) -> dict | None:
     """Least-squares a in e = a T^2 / 2 over the target steps where the source has the ball on open table."""
-    if r["outcome"] != "through":
+    if r["outcome"] not in ("through", "open"):
         return None
     e0 = entry(r, table, dist)
     if e0 is None:
@@ -275,18 +275,20 @@ def figures(res: dict, out: Path) -> None:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    ep = [x for x in res["epochs"] if x["model"]["s"] is not None or x["auroc_R"] is not None]
+    ep = res["epochs"]
     if ep:
         fig, (a1, a2) = plt.subplots(1, 2, figsize=(9, 3.4))
         e = [x["epoch"] for x in ep]
-        s = [x["model"]["s"] for x in ep]
-        lo = [x["model"]["ci"][0] if x["model"].get("ci") else np.nan for x in ep]
-        hi = [x["model"]["ci"][1] if x["model"].get("ci") else np.nan for x in ep]
-        a1.plot(e, [np.nan if v is None else v for v in s], "o-", color="tab:blue", label="imagined")
-        a1.fill_between(e, lo, hi, color="tab:blue", alpha=0.15)
-        for key, style, lab in (("tracker", "k--", "real ball (same clips)"), ("decoder_real", "k:", "decoder on real frames")):
-            if res["clips"].get(key, {}).get("s") is not None:
-                a1.axhline(res["clips"][key]["s"], ls=style[1:], color="k", lw=1, label=lab)
+        for k, col, lab in (("open", "tab:blue", "imagined, open-table clips"),
+                            ("through", "tab:orange", "imagined, through passes")):
+            s = [np.nan if x[k]["s"] is None else x[k]["s"] for x in ep]
+            if np.isfinite(s).any():
+                a1.plot(e, s, "o-", color=col, label=lab)
+                a1.fill_between(e, [x[k]["ci"][0] if x[k].get("ci") else np.nan for x in ep],
+                                [x[k]["ci"][1] if x[k].get("ci") else np.nan for x in ep], color=col, alpha=0.15)
+            real = ((res["sets"].get(k) or {}).get("tracker") or {}).get("s")
+            if real is not None:
+                a1.axhline(real, ls="--", color=col, lw=1, label=f"real ball, same {k} clips")
         if res["real"].get("s") is not None:
             a1.axhline(res["real"]["s"], color="tab:green", lw=1, label="real ball, whole video")
         a1.axhline(0, color="grey", lw=0.5)
@@ -321,6 +323,37 @@ def figures(res: dict, out: Path) -> None:
         plt.close(fig)
 
 
+def load_runs(plan: Path, fname: str) -> dict:
+    runs = {}
+    for name in ["both-before"] + [r for _, r in EPOCH_RUNS[1:]] + OTHER_RUNS:
+        f = plan / "scores" / name / fname
+        if f.exists():
+            rr = json.loads(f.read_text())
+            if any("true_pos" in r for r in rr):
+                runs[name] = rr
+    return runs
+
+
+def measure(runs: dict, table: Table, dist, rng) -> dict | None:
+    """Real (tracker, decoder on real frames) and imagined s for one clip set; the real tracks come from
+    both-before where it has the clip (the tracker's are the same in every run's file)."""
+    if not runs:
+        return None
+    base = {r["clip_id"]: r for rr in runs.values() for r in rr}
+    base.update({r["clip_id"]: r for r in runs.get("both-before", [])})   # its decoder folds are the both-directions ones
+
+    def per(rows_: list[dict], key: str) -> list[dict]:
+        return [x for r in rows_ if (x := clip_accel(base.get(r["clip_id"], r), r, key, table, dist)) is not None]
+
+    tracker = per(list(base.values()), "true_pos")
+    edges = speed_edges(np.array([x["speed"] for x in tracker if x["side"] == "R"]),
+                        np.array([x["speed"] for x in tracker if x["side"] == "L"]))
+    return {"tracker": model_slope(tracker, edges, rng),
+            "decoder_real": model_slope(per(list(base.values()), "real_pos"), edges, rng),
+            "runs": {n: model_slope(per(rr, "imagined_pos"), edges, rng) for n, rr in runs.items()},
+            "entry_speed_edges": [float(e) for e in edges]}
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--plan", type=Path, default=REPO / "outputs" / "vjepa2" / "plan")
@@ -345,36 +378,19 @@ def main(argv: list[str] | None = None) -> int:
         samples, note = real_samples(rows, fps, table, dist, scene["hand_min_px"])
         real = {**real_slope(samples, rng), **note}
 
-    runs = {}
-    for name in ["both-before"] + [r for _, r in EPOCH_RUNS[1:]] + OTHER_RUNS:
-        f = args.plan / "scores" / name / "per_clip.json"
-        if f.exists():
-            rr = json.loads(f.read_text())
-            if any("true_pos" in r for r in rr):
-                runs[name] = rr
-    if "both-before" not in runs and not rows:
+    runs = load_runs(args.plan, "per_clip.json")
+    open_runs = load_runs(args.plan, "per_clip_open.json")
+    if not runs and not open_runs and not rows:
         return 0
-    base = {r["clip_id"]: r for r in runs.get("both-before", [])}
-
-    def per(rows_: list[dict], key: str) -> list[dict]:
-        out = []
-        for r in rows_:
-            b = base.get(r["clip_id"], r)
-            x = clip_accel(b, r, key, table, dist)
-            if x is not None:
-                out.append(x)
-        return out
-
-    tracker = per(list(base.values()), "true_pos")
-    edges = speed_edges(np.array([x["speed"] for x in tracker if x["side"] == "R"]),
-                        np.array([x["speed"] for x in tracker if x["side"] == "L"]))
-    clips = {"tracker": model_slope(tracker, edges, rng),
-             "decoder_real": model_slope(per(list(base.values()), "real_pos"), edges, rng)}
-    by_run = {n: model_slope(per(rr, "imagined_pos"), edges, rng) for n, rr in runs.items()}
-    epochs = [{"epoch": e, "run": n, "model": by_run[n], "auroc_R": auroc_side(runs[n], "R"),
-               "auroc_L": auroc_side(runs[n], "L")} for e, n in EPOCH_RUNS if n in runs]
-    res = {"calibration": cal, "real": real, "clips": clips, "runs": by_run, "epochs": epochs,
-           "entry_speed_edges": [float(e) for e in edges]}
+    sets = {"open": measure(open_runs, table, dist, rng), "through": measure(runs, table, dist, rng)}
+    epochs = []
+    for e, n in EPOCH_RUNS:
+        if n in runs or n in open_runs:
+            epochs.append({"epoch": e, "run": n,
+                           **{k: (sets[k] or {}).get("runs", {}).get(n) or {"s": None} for k in sets},
+                           "auroc_R": auroc_side(runs[n], "R") if n in runs else None,
+                           "auroc_L": auroc_side(runs[n], "L") if n in runs else None})
+    res = {"calibration": cal, "real": real, "sets": sets, "epochs": epochs}
 
     out = args.plan / "slope_test"
     out.mkdir(parents=True, exist_ok=True)
@@ -384,7 +400,9 @@ def main(argv: list[str] | None = None) -> int:
           f"s = (downhill - uphill acceleration along the motion) / 2 at matched speed, in {unit} per step² "
           "(1 step = 1/8 s); friction cancels. " + ("Positions are mapped onto the table with the ball's size (camera "
           "calibration from real frames only). " if cal.get("ok") else "No tracker file here, so no camera calibration "
-          "and no whole-video measure. ") + "See models/vjepa2/slope_test.py.", ""]
+          "and no whole-video measure. ") + "Per clip: the ball's path over the target against steady speed from "
+          "its last context steps; open = the open-table clips (scripts/cut_open_clips.py, scored only), through = "
+          "through passes of the plank clips. See models/vjepa2/slope_test.py.", ""]
     if cal.get("ok"):
         md.append(f"Calibration: radius = {cal['coef'][0]:.4f} x + {cal['coef'][1]:.4f} y + {cal['coef'][2]:.2f} px "
                   f"(R² {cal['r2']}, {cal['n']} frames; radius {cal['radius_range_px']} px across the table).")
@@ -394,20 +412,22 @@ def main(argv: list[str] | None = None) -> int:
         md.append(f"| real ball, whole video ({real.get('stretches')} stretches) | {f5(real['s'])} | {real['ci']} | "
                   f"{f5(np.mean([x['a_down'] for x in b]))} | {f5(np.mean([x['a_up'] for x in b]))} | "
                   f"{real['n_down']} | {real['n_up']} |")
-    for label, r in (("real ball, through passes (tracker)", clips["tracker"]),
-                     ("decoder on real frames, through passes", clips["decoder_real"]),
-                     *((f"imagined: {n}", r) for n, r in by_run.items())):
-        md.append(f"| {label} | {f5(r['s'])} | {r.get('ci')} | {r.get('a_down')} | {r.get('a_up')} | "
-                  f"{r['n_down']} | {r['n_up']} |")
+    for k, m in sets.items():
+        if not m:
+            continue
+        for label, r in ((f"{k}: real ball (tracker)", m["tracker"]), (f"{k}: decoder on real frames", m["decoder_real"]),
+                         *((f"{k}: imagined, {n}", r) for n, r in m["runs"].items())):
+            md.append(f"| {label} | {f5(r['s'])} | {r.get('ci')} | {r.get('a_down')} | {r.get('a_up')} | "
+                      f"{r.get('n_down', 0)} | {r.get('n_up', 0)} |")
     if epochs:
         md += ["", "### Learning curve (C: both directions, loss-weighted sampling)", "",
-               "| epoch | s | 95% CI | n down / up | AUROC ball from R | AUROC ball from L |", "|---|---|---|---|---|---|"]
+               "| epoch | s, open clips | 95% CI | s, through passes | 95% CI | AUROC ball from R | AUROC ball from L |",
+               "|---|---|---|---|---|---|---|"]
         for x in epochs:
-            m = x["model"]
-            md.append(f"| {x['epoch']} | {f5(m['s'])} | {m.get('ci')} | {m['n_down']} / {m['n_up']} | "
-                      f"{x['auroc_R']} | {x['auroc_L']} |")
-    md += ["", "Model passes count only target steps where the imagined ball is clearly visible (map peak "
-           f">= {MIN_PEAK}) beyond the plank, so n shows how often the model draws the ball at all. Figures: "
+            md.append(f"| {x['epoch']} | {f5(x['open']['s'])} | {x['open'].get('ci')} | {f5(x['through']['s'])} | "
+                      f"{x['through'].get('ci')} | {x['auroc_R']} | {x['auroc_L']} |")
+    md += ["", "Imagined paths count only target steps where the imagined ball is clearly visible (map peak "
+           f">= {MIN_PEAK}) on open table, so n shows how often the model draws the ball at all. Figures: "
            "`slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`."]
     (out / "slope_test.json").write_text(json.dumps(res, indent=1, default=float))
     (out / "slope_test.md").write_text("\n".join(md) + "\n")

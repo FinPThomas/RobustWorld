@@ -88,6 +88,28 @@ def map_pos(m: np.ndarray) -> list[list[float]]:
     return out
 
 
+def assign_extra_folds(extra: list[dict], data: list[dict], folds, passes: dict, tub: int) -> list:
+    """Per extra clip, the fold whose held-out clips share its source frames (so that fold's predictor never
+    trained on them); a clip sharing frames with no clip goes to fold (its index mod folds); None if it shares
+    frames with held-out clips of two folds."""
+    fold_of = {}
+    for k, (_, te) in enumerate(folds):
+        for i in te:
+            fold_of[i] = k
+    spans = []
+    for i, d in enumerate(data):
+        c = d["clip"]
+        n = c.get("n_frames", 48)
+        src = source_indices(c, passes, n, c["context_frames"][1] + 1)
+        spans.append((src[0], src[-1], fold_of[i]))
+    out = []
+    for j, e in enumerate(extra):
+        a, b = e["span"]
+        hit = {f for lo, hi, f in spans if lo <= b and a <= hi}
+        out.append(hit.pop() if len(hit) == 1 else (j % len(folds)) if not hit else None)
+    return out
+
+
 def ram_gb() -> tuple[float, float] | None:
     """(free, total) GB of RAM from /proc/meminfo (Linux, e.g. Colab), else None."""
     try:
@@ -149,6 +171,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--model-id", default=MODEL_ID)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--predictor-run", type=Path, help="posttrain.py run folder with fold{k}.pt checkpoints")
+    p.add_argument("--extra-manifest", type=Path,
+                   help="more clips to imagine and locate the ball in, scored only (e.g. manifest_open.jsonl, the "
+                        "open-table clips for slope_test.py): never used to fit anything. Each is read by the fold "
+                        "whose held-out clips share its source frames (any fold if none does; left out if two "
+                        "folds do), so no predictor has trained on its frames. -> per_clip_open.json")
     args = p.parse_args(argv)
     if args.predictor_run and args.out == p.get_default("out"):
         args.out = args.out / args.predictor_run.name
@@ -190,6 +217,21 @@ def main(argv: list[str] | None = None) -> int:
         del enc, frames
         print(f"\r  {i + 1}/{len(clips)} clips ({len(timings)} newly encoded)", end="", flush=True)
     print()
+    extra = []                                        # scored only: nothing is fitted on them
+    if args.extra_manifest and args.extra_manifest.exists():
+        for c in (json.loads(line) for line in args.extra_manifest.open()):
+            if not c.get("include"):
+                continue
+            frames = read_video(REPO / c["path"])
+            n_ctx = c["context_frames"][1] + 1
+            if load_cached(cache, c) is None:
+                torch.save(encode(model, frames, n_ctx, *normalisation(args.model_id), device, imagine=True),
+                           cache / f"{c['clip_id']}.pt")
+            src = source_indices(c, passes, len(frames), n_ctx)
+            _, centres = ball_labels(src, track, grid, tub)
+            extra.append({"clip": c, "centres": centres, "span": (src[0], src[-1]), "cs": n_ctx // tub})
+            del frames
+        print(f"  {len(extra)} extra clips (scored only) from {args.extra_manifest.name}")
     held = sum(d["ctx"].numel() * d["ctx"].element_size() for d in data) / 2**30
     # Fitting the decoder makes a float32 copy of ~80% of these (2x their float16 size) plus a temporary for its
     # spread, and a fold's test clips are read back one at a time: about 3.5x what is held now, at the peak.
@@ -218,7 +260,10 @@ def main(argv: list[str] | None = None) -> int:
     track_centres = []
     surprise = {}
     D = model.config.hidden_size
-    for fold, (tr, te) in enumerate(cv_folds([d["clip"] for d in data], args.folds, args.seed)):
+    folds = cv_folds([d["clip"] for d in data], args.folds, args.seed)
+    extra_fold = assign_extra_folds(extra, data, folds, passes, tub)
+    open_rows = []
+    for fold, (tr, te) in enumerate(folds):
         examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
         decoder = eval_decoder.fit(examples, seed=args.seed)
         decoder_raw = eval_decoder.fit_raw_features(examples, seed=args.seed)
@@ -274,6 +319,23 @@ def main(argv: list[str] | None = None) -> int:
                                                                  ("imagined_encoder_space", m_alt))
                           for side, v in one_ball_readouts(m, far, near).items()}}
             del d["enc"]                      # scored: free it
+        for e in (e for e, f in zip(extra, extra_fold) if f == fold):
+            enc = load_cached(cache, e["clip"])
+            cs = e["cs"]
+            if args.predictor_run:
+                with torch.no_grad():
+                    imag = imagine_mode(model.predictor, enc["context"][None].float().to(device),
+                                        enc["real"].shape[0] - cs, meta)[0].float().cpu()
+            else:
+                imag = enc["imagined"]
+            m_real, m_imag = decoder(enc["real"]).numpy(), decoder(imag).numpy()
+            rnd = lambda cc: [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)] for c in cc]  # noqa: E731
+            open_rows.append({"clip_id": e["clip"]["clip_id"], "outcome": e["clip"]["outcome"], "fold": fold,
+                              "side_in": e["clip"].get("side_in"), "true_pos": rnd(e["centres"][cs:]),
+                              "true_pos_context": rnd(e["centres"][:cs]), "real_pos": map_pos(m_real[cs:]),
+                              "imagined_pos": map_pos(m_imag),
+                              "imagined_visible": m_imag.max((1, 2)).round(3).tolist()})
+            del enc
         print(f"\r  fold {fold + 1}/{args.folds} scored", end="", flush=True)
     print()
 
@@ -331,6 +393,10 @@ def main(argv: list[str] | None = None) -> int:
         metrics["timing_seconds_per_clip"] = prev.get("timing_seconds_per_clip", {})
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=1))
     (args.out / "per_clip.json").write_text(json.dumps(rows, indent=1))
+    if extra:
+        (args.out / "per_clip_open.json").write_text(json.dumps(open_rows, indent=1))
+        print(f"  extra clips: {len(open_rows)} scored, {sum(f is None for f in extra_fold)} left out (their frames "
+              "are in two folds' held-out clips)")
     np.savez_compressed(args.out / "surprise.npz", **surprise)          # clip id -> [steps, g, g] float16
     plots(rows, args.out)
 
