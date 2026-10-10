@@ -106,6 +106,15 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
     `other-ball` (D, waits for its clips). `slope.py` (table slope from ball tracks, S0-S4) and
     `scope_report.py` (narrow gap, both sides) run in every report. Fold weights are also saved in float16 to
     `$ROBUSTWORLD_WEIGHTS` (`/kaggle/working/weights` on Kaggle).
+16. (2026-10-10) The overnight run finished 15 (B best: 0.964; A lifted the left side to 0.77; slope.py
+    inconclusive: over the predicted steps even real frames can't show the slope in pixels). Fin: show the slope
+    is learnt, uphill vs downhill at matched speed, in ball sizes, with a learning curve. `slope_test.py` maps
+    positions onto the table with the ball's size (radius linear in image position, fitted on the tracker's real
+    frames: camera geometry only), measures the real slope over the whole video, and per run compares each
+    through pass's imagined path with steady speed from its entry (downhill = ball from the right, uphill = from
+    the left). New steps: `lossmix_both-after` (C: B's recipe on both directions, 20 epochs, weights saved after
+    1, 2, 4, 7, 10, 15) and `lossmix_both-epochs` (scores those); `slope_test/epochs.png` plots slope and AUROC
+    per side against epochs.
 
 First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
 gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows
