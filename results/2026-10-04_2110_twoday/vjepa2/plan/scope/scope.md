@@ -17,5 +17,7 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | both-before | L | 0.735 (n 25) | 0.699 (n 7) | 0.695 (n 40) | 1.0 (n 10) | 0.66 |
 | real frames | R | 0.959 (n 82) | 0.919 (n 26) | 0.07 (n 106) | 0.996 (n 52) | 0.999 |
 | both-before | R | 0.168 (n 82) | 0.179 (n 26) | 0.178 (n 106) | 0.501 (n 52) | 0.437 |
+| commit_both-after | L | 0.933 (n 25) | 0.438 (n 7) | 0.559 (n 40) | 0.571 (n 10) | 0.767 |
+| commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
 
 Figure: `scope/height_profile.png`. The slope (downhill) results are in `slope/` (slope.py).

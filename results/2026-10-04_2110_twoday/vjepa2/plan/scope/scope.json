@@ -219,6 +219,50 @@
     "auroc": 0.437,
     "n": 254
    }
+  },
+  "commit_both-after / L": {
+   "wide gap (104-186)": {
+    "mean": 0.933,
+    "n": 25
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.438,
+    "n": 7
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.559,
+    "n": 40
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.571,
+    "n": 10
+   },
+   "AUROC all": {
+    "auroc": 0.767,
+    "n": 83
+   }
+  },
+  "commit_both-after / R": {
+   "wide gap (104-186)": {
+    "mean": 0.67,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.445,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.13,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.92,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.917,
+    "n": 254
+   }
   }
  }
 }
