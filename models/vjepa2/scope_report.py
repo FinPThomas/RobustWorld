@@ -33,7 +33,7 @@ BANDS = {"wide gap (104-186)": (104, 186, "through"), "narrow gap (315-367)": (3
 NARROW_AUROC = (300, 380)
 # Runs compared, in this order, when their scores exist.
 RUNS = ["pretrained", "plain-after", "commit-after", "codes-after", "lossmix_e10-after", "lossmix_e20-after",
-        "both-before", "commit_both-after"]
+        "both-before", "commit_both-after", "lossmix_both-after"]
 
 
 def auroc(y, s):
@@ -112,7 +112,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--plan", type=Path, default=REPO / "outputs" / "vjepa2" / "plan")
     args = p.parse_args(argv)
     runs = {n: rows for n in RUNS if (rows := load(args.plan, n)) is not None}
-    if not any(n in runs for n in ("both-before", "commit_both-after", "lossmix_e10-after", "lossmix_e20-after")):
+    if not any(n in runs for n in ("both-before", "commit_both-after", "lossmix_e10-after", "lossmix_e20-after",
+                                       "lossmix_both-after")):
         return 0                                    # nothing from this scope yet
     out = args.plan / "scope"
     out.mkdir(parents=True, exist_ok=True)

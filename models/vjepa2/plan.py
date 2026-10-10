@@ -81,7 +81,10 @@ VARIANTS = {                                        # name: (posttrain.py flags,
     # B: right clips, loss-weighted sampling, 20 epochs; its epoch-10 weights are scored as lossmix_e10
     "lossmix_e20": (["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0"], "plain"),
     "lossmix_e10": (["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0"], "plain"),
+    # C (Fin, 2026-10-10): B's recipe on both directions, saved along the way for the learning curve (slope_test.py)
+    "lossmix_both": (["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0"], "both"),
 }
+C_EPOCHS = [1, 2, 4, 7, 10, 15]                     # C's weights are also saved and scored after these epochs
 STAGE2 = ["plain", "commit", "codes", "rollout", "codes_rollout"]
 STAGE3 = ["gate", "hyp", "gate_hyp_commit"]
 WAITING = 3
@@ -367,6 +370,28 @@ def step_lossmix(args, state, log):
     export_weights("lossmix_e10-after")
 
 
+def step_lossmix_both(args, state, log):
+    """C: commit + loss-weighted sampling on both directions, 20 epochs, weights saved after each of C_EPOCHS."""
+    flags = VARIANTS["lossmix_both"][0] + ["--save-at", *(f"{e}:plan/lossmix_both_e{e}-after" for e in C_EPOCHS)]
+    train_and_score("lossmix_both-after", flags, 2 * EPOCHS, "both-before", args, log, both_manifest())
+
+
+def step_lossmix_both_epochs(args, state, log):
+    """Score C's saved epochs (learning curve); each one's weights are deleted once scored (disk)."""
+    man = both_manifest()
+    for e in C_EPOCHS:
+        name = f"lossmix_both_e{e}-after"
+        if (SCORES / name / "per_clip.json").exists():
+            print(f"== {name} is scored already", flush=True)
+            continue
+        if len(list((CKPT / name).glob("fold*.pt"))) < 5:
+            raise RuntimeError(f"{name}: the saved weights aren't on this machine (C was trained in another session); "
+                               "train C again with --save-at, or score fewer epochs")
+        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", man,
+              "--out", SCORES / name], log)
+        shutil.rmtree(CKPT / name, ignore_errors=True)
+
+
 def step_other_ball(args, state, log):
     """Other-ball clips, scored without training (scope D). Waits until they are packed and listed."""
     raise Waiting("the other ball's clips aren't added yet (configs/heldout.json and their clips zip)")
@@ -418,6 +443,12 @@ STEPS: list[Step] = [
     Step(2, "commit_both-after", "A. commit trained on both directions, each side scored",
          lambda a, s, log: train_and_score("commit_both-after", VARIANTS["commit_both"][0], EPOCHS, "both-before",
                                            a, log, both_manifest())),
+    # Fin, 2026-10-10: show the slope is learnt (uphill vs downhill at matched speed, in ball sizes) and how it and
+    # the blockade grow with training: C, scored after 1, 2, 4, 7, 10, 15 and 20 epochs (slope_test.py).
+    Step(2, "lossmix_both-after", "C. both directions, loss-weighted sampling, 20 epochs (weights saved for the "
+         "learning curve)", step_lossmix_both),
+    Step(2, "lossmix_both-epochs", "C. learning curve: score the weights saved after 1, 2, 4, 7, 10 and 15 epochs",
+         step_lossmix_both_epochs),
     Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
 ]
 
@@ -569,7 +600,7 @@ def report(state: dict) -> str:
                    f"after {r['auroc_after']}.",
                    f"- Figures: `vjepa2/plan/interpret/{path.parent.name}/change_map.png`, `layer_patching.png`."]
     figure(rows)
-    for mod in ("slope", "scope_report"):
+    for mod in ("slope", "scope_report", "slope_test"):
         try:
             __import__(mod).main(["--plan", str(PLAN)])
         except Exception as e:                        # a figure never stops the plan
@@ -582,7 +613,7 @@ def report(state: dict) -> str:
           "reference, not an evaluation. Runs named -long / -frac use the variant picked as best on these same "
           "folds, so their numbers are slightly optimistic.", "", *table, *gen_md, *int_md, "",
           "![summary](summary.png)"]
-    for extra in (PLAN / "slope" / "slope.md", PLAN / "scope" / "scope.md"):
+    for extra in (PLAN / "slope_test" / "slope_test.md", PLAN / "slope" / "slope.md", PLAN / "scope" / "scope.md"):
         if extra.exists():
             md += ["", extra.read_text()]
     (PLAN / "summary.md").write_text("\n".join(md) + "\n")
@@ -739,6 +770,10 @@ def step_hours(name: str) -> float:
         return 3.2
     if name == "lossmix_e20-after":                 # 20 epochs, then two scoring passes
         return 4.4
+    if name == "lossmix_both-after":                # 20 epochs on both directions (commit_both: 2.6 h for 10)
+        return 5.6
+    if name == "lossmix_both-epochs":               # six scoring passes
+        return 1.6
     if name.startswith(("generalise", "mirror", "other-ball")):
         return 1.0
     return 0.7
