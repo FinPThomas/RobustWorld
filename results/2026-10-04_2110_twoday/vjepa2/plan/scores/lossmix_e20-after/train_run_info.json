@@ -1,0 +1,172 @@
+{
+ "run": "plan/lossmix_e20-after",
+ "code_version": "f6f56ce",
+ "device": "cuda",
+ "gpu": "Tesla T4",
+ "torch": "2.11.0+cu128",
+ "transformers": "5.16.1",
+ "started": "2026-10-10 00:46:39 UTC",
+ "n_clips": 254,
+ "clips_per_outcome": {
+  "through": 111,
+  "hidden": 77,
+  "bounce": 66
+ },
+ "args": {
+  "stage": "train",
+  "manifest": "/tmp/RobustWorld/outputs/vjepa2/plan/manifest_seen.jsonl",
+  "model_id": "facebook/vjepa2-vitl-fpc64-256",
+  "run": "plan/lossmix_e20-after",
+  "folds": 5,
+  "fold": null,
+  "all": false,
+  "epochs": 20,
+  "batch_size": 4,
+  "accum": 2,
+  "lr": 3e-05,
+  "weight_decay": 0.04,
+  "workers": 2,
+  "seed": 0,
+  "loss": "commit",
+  "grad_checkpoint": true,
+  "val_frac": 0.1,
+  "patience": 0,
+  "keep_best": true,
+  "rollout": false,
+  "copy_gate": false,
+  "hypotheses": 1,
+  "wta_relax": 0.05,
+  "train_frac": 1.0,
+  "sample_by_loss": 0.25,
+  "save_at": [
+   "10:plan/lossmix_e10-after"
+  ],
+  "resume": true,
+  "codes": 256,
+  "code_tau": 0.05,
+  "motion_alpha": 4.0,
+  "contrast_weight": 0.1,
+  "tau": 0.02,
+  "negatives": 8
+ },
+ "scale_check": {
+  "pred_spread": 0.6176,
+  "target_spread_raw": 3.2694,
+  "target_spread_ln": 1.0005,
+  "l1_vs_raw": 2.0517,
+  "l1_vs_ln": 0.5922
+ },
+ "folds": [
+  {
+   "split": "fold0",
+   "seconds": 2578.0,
+   "best_epoch": 18,
+   "overfit": {
+    "val_rise_from_best": 0.0013,
+    "val_over_train": 1.01,
+    "flag": false
+   },
+   "final_weight_change": 0.010094,
+   "held_out_l1_pretrained": {
+    "through": 0.57606,
+    "hidden": 0.57706,
+    "bounce": 0.58946
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.51238,
+    "hidden": 0.51362,
+    "bounce": 0.52764
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold1",
+   "seconds": 2575.4,
+   "best_epoch": 20,
+   "overfit": {
+    "val_rise_from_best": 0.0,
+    "val_over_train": 1.011,
+    "flag": false
+   },
+   "final_weight_change": 0.010499,
+   "held_out_l1_pretrained": {
+    "through": 0.57476,
+    "hidden": 0.57695,
+    "bounce": 0.58818
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.51195,
+    "hidden": 0.51702,
+    "bounce": 0.53044
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold2",
+   "seconds": 2575.4,
+   "best_epoch": 17,
+   "overfit": {
+    "val_rise_from_best": 0.0002,
+    "val_over_train": 1.01,
+    "flag": false
+   },
+   "final_weight_change": 0.010297,
+   "held_out_l1_pretrained": {
+    "through": 0.57498,
+    "hidden": 0.57686,
+    "bounce": 0.58882
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.50699,
+    "hidden": 0.51505,
+    "bounce": 0.53379
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold3",
+   "seconds": 2576.7,
+   "best_epoch": 17,
+   "overfit": {
+    "val_rise_from_best": 0.0005,
+    "val_over_train": 1.011,
+    "flag": false
+   },
+   "final_weight_change": 0.010253,
+   "held_out_l1_pretrained": {
+    "through": 0.57552,
+    "hidden": 0.57507,
+    "bounce": 0.58396
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.50857,
+    "hidden": 0.51376,
+    "bounce": 0.52904
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold4",
+   "seconds": 2588.3,
+   "best_epoch": 18,
+   "overfit": {
+    "val_rise_from_best": 0.0006,
+    "val_over_train": 1.01,
+    "flag": false
+   },
+   "final_weight_change": 0.010424,
+   "held_out_l1_pretrained": {
+    "through": 0.57502,
+    "hidden": 0.57679,
+    "bounce": 0.59093
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.50806,
+    "hidden": 0.51262,
+    "bounce": 0.52863
+   },
+   "peak_gpu_gb": 2.31
+  }
+ ],
+ "seconds": 12983.0
+}

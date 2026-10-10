@@ -8,5 +8,7 @@ s: slope term along the table (px/step², downhill = left; 1 step = 1/8 s). Shar
 | S0t tracker (target steps) | 176 | 0.1014 | [-0.4539, 0.7696] | 0.04 | 0.4005 | [-0.0629, 0.9099] | [-0.4005, -0.8382] | 2.2894 | None | None |
 | S1 decoder, real frames | 176 | 0.2466 | [-0.8097, 1.3953] | 0.1 | -0.0916 | [-0.8077, 0.7091] | [0.0916, -0.3688] | 2.1962 | None | None |
 | S2 imagined, pretrained | 176 | 0.2957 | [-4.7895, 5.3487] | 0.12 | 1.0124 | [-1.7413, 3.8264] | [-1.0124, 1.5122] | 5.2198 | None | None |
+| S3 imagined, B right only @10 | 113 | 1.1506 | [-15.2029, 18.6548] | 0.48 | -0.2173 | [-7.1715, 7.2708] | [0.2173, -5.9285] | 42.7057 | -16.8352 | None |
+| S3 imagined, B right only @20 | 114 | -13.2919 | [-26.4122, 4.3605] | -5.49 | -2.8377 | [-10.4806, 5.1896] | [2.8377, -4.0594] | 33.2964 | -67.5737 | None |
 
 Figures: `slope/acc_vs_speed.png` (downhill and uphill acceleration by speed), `slope/gradient_map.png` (G per region).
