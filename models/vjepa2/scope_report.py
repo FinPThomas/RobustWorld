@@ -33,7 +33,7 @@ BANDS = {"wide gap (104-186)": (104, 186, "through"), "narrow gap (315-367)": (3
 NARROW_AUROC = (300, 380)
 # Runs compared, in this order, when their scores exist.
 RUNS = ["pretrained", "plain-after", "commit-after", "codes-after", "lossmix_e10-after", "lossmix_e20-after",
-        "both-before", "commit_both-after", "lossmix_both-after"]
+        "both-before", "commit_both-after", "lossmix_both-after", "lossmix_open-after"]
 
 
 def auroc(y, s):

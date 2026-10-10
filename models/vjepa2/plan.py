@@ -405,6 +405,18 @@ def step_lossmix_both_epochs(args, state, log):
         shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
+def step_lossmix_open(args, state, log):
+    """C + the open-table clips in training (each kept out of the fold that scores it): does seeing the ball roll
+    on open table teach the slope better than plank clips alone? Same 20 epochs; epoch 10 saved and scored too."""
+    extra = open_manifest()
+    flags = VARIANTS["lossmix_both"][0] + ["--extra-train", extra, "--save-at", "10:plan/lossmix_open_e10-after"]
+    train_and_score("lossmix_open-after", flags, 2 * EPOCHS, "both-before", args, log, both_manifest(), extra)
+    if not (SCORES / "lossmix_open_e10-after" / "per_clip.json").exists():
+        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / "lossmix_open_e10-after", "--manifest",
+              both_manifest(), "--out", SCORES / "lossmix_open_e10-after", "--extra-manifest", extra], log)
+        shutil.rmtree(CKPT / "lossmix_open_e10-after", ignore_errors=True)
+
+
 def step_other_ball(args, state, log):
     """Other-ball clips, scored without training (scope D). Waits until they are packed and listed."""
     raise Waiting("the other ball's clips aren't added yet (configs/heldout.json and their clips zip)")
@@ -463,6 +475,9 @@ STEPS: list[Step] = [
     Step(2, "lossmix_both-epochs", "C. learning curve: score the pretrained predictor and the weights saved after "
          "1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips",
          step_lossmix_both_epochs),
+    # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
+    Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
+         "scored at 10 and 20", step_lossmix_open),
     Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
 ]
 
@@ -777,7 +792,8 @@ def step_hours(name: str) -> float:
     special = {"commit_both-after": 3.2,          # a third more clips than the other runs
                "lossmix_e20-after": 4.4,          # 20 epochs, then two scoring passes
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
-               "lossmix_both-epochs": 1.9}        # seven scoring passes
+               "lossmix_both-epochs": 1.9,        # seven scoring passes
+               "lossmix_open-after": 7.2}         # C with about a fifth more clips, two scoring passes
     if name in special:
         return special[name]
     if name.startswith("long"):

@@ -68,6 +68,25 @@ def source_indices(clip: dict, passes: dict, n_frames: int, n_ctx: int) -> list[
     return [int(round(mid + (k - (n_ctx - 1)) * step)) for k in range(n_frames)]
 
 
+def extra_folds(extra: list[dict], clips: list[dict], folds, passes: dict) -> list:
+    """For clips outside the cross-validation (e.g. open-table clips): the fold whose held-out clips share
+    source frames with each one (so that fold's predictor never trains on those frames); a clip sharing frames
+    with no clip gets fold (its index mod the number of folds); None if it shares frames with two folds'
+    held-out clips. Used both to score them and, when they are added to training, to keep each out of the
+    predictor that scores it."""
+    fold_of = {i: k for k, (_, te) in enumerate(folds) for i in te}
+    spans = []
+    for i, c in enumerate(clips):
+        src = source_indices(c, passes, c.get("n_frames", 48), c["context_frames"][1] + 1)
+        spans.append((src[0], src[-1], fold_of[i]))
+    out = []
+    for j, e in enumerate(extra):
+        src = source_indices(e, passes, e.get("n_frames", 48), e["context_frames"][1] + 1)
+        hit = {f for lo, hi, f in spans if lo <= src[-1] and src[0] <= hi}
+        out.append(hit.pop() if len(hit) == 1 else (j % len(folds)) if not hit else None)
+    return out
+
+
 def ball_labels(src: list[int], track, grid: int = GRID, tubelet: int = STEP) -> tuple[np.ndarray, list]:
     """[steps, grid, grid] bool cells covered by the visible ball, and its centre per step (or None)."""
     steps = len(src) // tubelet
