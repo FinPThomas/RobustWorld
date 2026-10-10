@@ -220,3 +220,22 @@ def test_restore_brings_back_progress_saved_on_github(fake):
     assert plan.main(["restore"]) == 0
     assert json.loads(plan.STATE.read_text())["steps"]["plain-after"]["state"] == "done"
     assert (plan.PLAN / "scores" / "plain-after" / "per_clip.json").exists()
+
+
+def test_a_long_step_waiting_for_its_inputs_does_not_stop_the_next(fake, monkeypatch):
+    """E (7 h) waits for the open-table clips: checked before the time budget, so F still gets its turn."""
+    _, _ = fake
+    state = {"steps": {s.name: {"state": "done"} for s in plan.STEPS
+                       if s.name not in ("lossmix_open-after", "lossmix_both_e30-after", "other-ball")},
+             "choices": {}, "results_folder": "r"}
+    plan.STATE.parent.mkdir(parents=True, exist_ok=True)
+    plan.STATE.write_text(json.dumps(state))
+    monkeypatch.setattr(plan, "OPEN", plan.REPO / "no_open.jsonl")
+    ran = []
+    monkeypatch.setattr(plan, "STEPS", [s if s.name != "lossmix_both_e30-after" else
+                                        plan.Step(s.stage, s.name, s.title, lambda a, st, log, n=s.name: ran.append(n))
+                                        for s in plan.STEPS])
+    monkeypatch.setattr(plan, "T_START", plan.time.time() - 3600 * 2)      # 9 h left: F (8.6 h) fits, E+F don't
+    plan.main(["run", "--stage", "all", "--budget-hours", "11"])
+    steps = json.loads(plan.STATE.read_text())["steps"]
+    assert steps["lossmix_open-after"]["state"] == "waiting" and ran == ["lossmix_both_e30-after"]

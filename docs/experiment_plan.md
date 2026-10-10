@@ -121,7 +121,9 @@ This plan (PR for `claude/colab-two-day-plan-3gn90a`) adds:
     video: 0.031 ball diameters/step² [0.028, 0.033], the same in every speed band. Queued after C:
     `lossmix_open-after` (E: C with the open-table clips added to training via `posttrain.py --extra-train`,
     each kept out of the fold that scores it; scored at 10 and 20 epochs): does free rolling teach the slope
-    better? Then `other-ball` (D, waits for its clips).
+    better? Then `lossmix_both_e30-after` (F: C for 30 epochs, scored at 25 and 30: where does learning stop?),
+    then `other-ball` (D, waits for its clips). C and F run without the open-table zip (scoring only the plank
+    clips then); E waits for it, and a waiting step no longer stops later ones (`Step.waits_for`).
 
 First result (2026-10-06, `plain-after`): through-vs-blocked AUROC 0.42 pretrained -> 0.88 post-trained (paired
 gain 95% CI [0.38, 0.54]); TAPNext + coded blockade 0.85; real frames 0.998. The imagined ball still rarely shows

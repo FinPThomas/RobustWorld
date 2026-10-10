@@ -183,6 +183,8 @@ class Step:
     name: str
     title: str
     fn: Callable[[argparse.Namespace, dict, Path], None]
+    waits_for: Callable[[], str | None] | None = None   # a reason the step can't run yet, checked before the time
+                                                         # budget, so a long waiting step doesn't stop later ones
 
 
 def blocker_figs(name: str, before: str | None, log: Path, man: Path | None = None) -> None:
@@ -380,7 +382,7 @@ def open_manifest() -> Path:
 
 def step_lossmix_both(args, state, log):
     """C: commit + loss-weighted sampling on both directions, 20 epochs, weights saved after each of C_EPOCHS."""
-    extra = open_manifest()                             # wait for the open-table clips rather than train without them
+    extra = OPEN if OPEN.exists() else None             # open-table clips scored too when they are on this machine
     flags = VARIANTS["lossmix_both"][0] + ["--save-at", *(f"{e}:plan/lossmix_both_e{e}-after" for e in C_EPOCHS)]
     train_and_score("lossmix_both-after", flags, 2 * EPOCHS, "both-before", args, log, both_manifest(), extra)
 
@@ -388,8 +390,9 @@ def step_lossmix_both(args, state, log):
 def step_lossmix_both_epochs(args, state, log):
     """Score C's saved epochs (learning curve) and the pretrained predictor (epoch 0) on the open-table clips too;
     each epoch's weights are deleted once scored (disk)."""
-    man, extra = both_manifest(), open_manifest()
-    if not (SCORES / "both-before" / "per_clip_open.json").exists():
+    man, extra = both_manifest(), (OPEN if OPEN.exists() else None)
+    opt = ["--extra-manifest", extra] if extra else []
+    if extra and not (SCORES / "both-before" / "per_clip_open.json").exists():
         must([PY, HERE / "ball_probe_cv.py", "--manifest", man, "--out", SCORES / "both-before",
               "--extra-manifest", extra], log)
     for e in C_EPOCHS:
@@ -401,7 +404,7 @@ def step_lossmix_both_epochs(args, state, log):
             raise RuntimeError(f"{name}: the saved weights aren't on this machine (C was trained in another session); "
                                "train C again with --save-at, or score fewer epochs")
         must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", man,
-              "--out", SCORES / name, "--extra-manifest", extra], log)
+              "--out", SCORES / name, *opt], log)
         shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
@@ -415,6 +418,19 @@ def step_lossmix_open(args, state, log):
         must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / "lossmix_open_e10-after", "--manifest",
               both_manifest(), "--out", SCORES / "lossmix_open_e10-after", "--extra-manifest", extra], log)
         shutil.rmtree(CKPT / "lossmix_open_e10-after", ignore_errors=True)
+
+
+def step_lossmix_both_long(args, state, log):
+    """C for 30 epochs (cosine over 30), epoch 25 saved and scored too: where do blockade and slope stop
+    improving? (B and C were still improving at epochs 17-20.)"""
+    extra = OPEN if OPEN.exists() else None
+    flags = VARIANTS["lossmix_both"][0] + ["--save-at", "25:plan/lossmix_both_e25of30-after"]
+    train_and_score("lossmix_both_e30-after", flags, 3 * EPOCHS, "both-before", args, log, both_manifest(), extra)
+    name = "lossmix_both_e25of30-after"
+    if not (SCORES / name / "per_clip.json").exists():
+        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", both_manifest(),
+              "--out", SCORES / name, *(["--extra-manifest", extra] if extra else [])], log)
+        shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
 def step_other_ball(args, state, log):
@@ -477,7 +493,11 @@ STEPS: list[Step] = [
          step_lossmix_both_epochs),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
     Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
-         "scored at 10 and 20", step_lossmix_open),
+         "scored at 10 and 20", step_lossmix_open,
+         lambda: None if OPEN.exists() else "the open-table clips aren't on this machine (robustworld_clips_open.zip)"),
+    # Long-run queue (Fin, 2026-10-10: keep going for a long time on the existing footage): C for 30 epochs.
+    Step(2, "lossmix_both_e30-after", "F. C trained for 30 epochs (scored at 25 and 30): where does learning stop?",
+         step_lossmix_both_long),
     Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
 ]
 
@@ -793,7 +813,8 @@ def step_hours(name: str) -> float:
                "lossmix_e20-after": 4.4,          # 20 epochs, then two scoring passes
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
                "lossmix_both-epochs": 1.9,        # seven scoring passes
-               "lossmix_open-after": 7.2}         # C with about a fifth more clips, two scoring passes
+               "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
+               "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:
         return special[name]
     if name.startswith("long"):
@@ -846,6 +867,13 @@ def _run(args) -> None:
         st = state["steps"].get(s.name, {})
         if st.get("state") == "done" and not args.redo:
             print(f"== {s.name}: done already ({st.get('finished')}), skipping", flush=True)
+            continue
+        reason = s.waits_for() if s.waits_for else None
+        if reason:
+            print(f"== {s.name}: waiting ({reason}); carrying on with the next step", flush=True)
+            state["steps"][s.name] = {"state": "waiting", "error": reason, "minutes": 0.0,
+                                      "finished": f"{dt.datetime.now(dt.timezone.utc):%Y-%m-%d %H:%M}"}
+            save_state(state)
             continue
         if args.budget_hours:                         # e.g. Kaggle's 12 h sessions: don't start what can't finish
             used, need = (time.time() - T_START) / 3600, step_hours(s.name)
