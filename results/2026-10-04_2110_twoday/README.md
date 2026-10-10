@@ -1,12 +1,14 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-08 20:29 UTC
-- Code commit: `e717d1c`
-- Note: two-day plan, 17 steps done
+- Saved: 2026-10-10 00:46 UTC
+- Code commit: `f6f56ce`
+- Note: two-day plan, 18 steps done
 
 ## Figures
 
+- [vjepa2/plan/blocker/both-before/blocked_vs_crossing.png](vjepa2/plan/blocker/both-before/blocked_vs_crossing.png)
+- [vjepa2/plan/blocker/both-before/blocker_map.png](vjepa2/plan/blocker/both-before/blocker_map.png)
 - [vjepa2/plan/blocker/codes-after/blocked_vs_crossing.png](vjepa2/plan/blocker/codes-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/codes-after/blocker_map.png](vjepa2/plan/blocker/codes-after/blocker_map.png)
 - [vjepa2/plan/blocker/codes-before/blocked_vs_crossing.png](vjepa2/plan/blocker/codes-before/blocked_vs_crossing.png)
@@ -29,6 +31,9 @@
 - [vjepa2/plan/generalise/plain/height.png](vjepa2/plan/generalise/plain/height.png)
 - [vjepa2/plan/interpret/plain-after/change_map.png](vjepa2/plan/interpret/plain-after/change_map.png)
 - [vjepa2/plan/interpret/plain-after/layer_patching.png](vjepa2/plan/interpret/plain-after/layer_patching.png)
+- [vjepa2/plan/scope/height_profile.png](vjepa2/plan/scope/height_profile.png)
+- [vjepa2/plan/scores/both-before/curves.png](vjepa2/plan/scores/both-before/curves.png)
+- [vjepa2/plan/scores/both-before/outcome.png](vjepa2/plan/scores/both-before/outcome.png)
 - [vjepa2/plan/scores/codes-after/curves.png](vjepa2/plan/scores/codes-after/curves.png)
 - [vjepa2/plan/scores/codes-after/outcome.png](vjepa2/plan/scores/codes-after/outcome.png)
 - [vjepa2/plan/scores/codes-before/curves.png](vjepa2/plan/scores/codes-before/curves.png)
@@ -47,4 +52,6 @@
 - [vjepa2/plan/scores/pretrained/outcome.png](vjepa2/plan/scores/pretrained/outcome.png)
 - [vjepa2/plan/scores/rollout-before/curves.png](vjepa2/plan/scores/rollout-before/curves.png)
 - [vjepa2/plan/scores/rollout-before/outcome.png](vjepa2/plan/scores/rollout-before/outcome.png)
+- [vjepa2/plan/slope/acc_vs_speed.png](vjepa2/plan/slope/acc_vs_speed.png)
+- [vjepa2/plan/slope/gradient_map.png](vjepa2/plan/slope/gradient_map.png)
 - [vjepa2/plan/summary.png](vjepa2/plan/summary.png)
