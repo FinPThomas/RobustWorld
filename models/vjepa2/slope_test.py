@@ -358,7 +358,7 @@ def main(argv: list[str] | None = None) -> int:
         from robust_world import track as trk
         rows = trk.load(args.track)
         if len(rows) > 1:
-            fps = 1 / max(rows[1]["t"] - rows[0]["t"], 1e-6)
+            fps = (len(rows) - 1) / max(rows[-1]["t"] - rows[0]["t"], 1e-6)
     cal = fit_radius(rows, dist) if rows else {"ok": False, "n": 0}
     table = Table(cal)
     real = {"s": None}
