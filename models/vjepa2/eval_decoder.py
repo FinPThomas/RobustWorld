@@ -88,8 +88,10 @@ def _fit(examples: list[EvalExample], seed: int, epochs: int, normalise: bool) -
     if not examples or not all(isinstance(e, EvalExample) for e in examples):
         raise TypeError("fit() takes EvalExample objects built with examples_from()")
     d = examples[0].context_features.shape[-1]
-    x = torch.cat([e.context_features.reshape(-1, d) for e in examples])
-    x = token_space(x) if normalise else x.float()
+    # One clip at a time into float32 (layer norm is per token, so this is the same x), never a second full copy:
+    # 200+ clips' context tokens are ~2.5 GB in float32.
+    x = torch.cat([token_space(e.context_features.reshape(-1, d)) if normalise
+                   else e.context_features.reshape(-1, d).float() for e in examples])
     y = torch.cat([torch.from_numpy(e.context_labels.reshape(-1)) for e in examples]).float()
 
     torch.manual_seed(seed)

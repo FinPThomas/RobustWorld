@@ -23,7 +23,11 @@ STEP = 2           # frames per step (V-JEPA 2 tubelet)
 OUTCOMES = ("through", "hidden", "bounce")   # far side / never reappears / back out on the near side
 
 
-def included_clips(manifest: Path = REPO_ROOT / "data" / "processed" / "clips" / "manifest.jsonl") -> list[dict]:
+# Right-entry clips only. Segments (right/left) are never mixed; pass --manifest for another one.
+MANIFEST = REPO_ROOT / "data" / "processed" / "clips" / "manifest_right.jsonl"
+
+
+def included_clips(manifest: Path = MANIFEST) -> list[dict]:
     """Included clips with a known outcome (through, hidden or bounce), in manifest order (fixes the CV folds)."""
     clips = [json.loads(line) for line in manifest.open()]
     return [c for c in clips if c.get("include") and c["outcome"] in OUTCOMES]
@@ -35,7 +39,16 @@ def cv_folds(clips: list[dict], folds: int = 5, seed: int = 0):
     return list(StratifiedKFold(folds, shuffle=True, random_state=seed).split(y, y))
 
 
-def load_tracking(name: str = "start"):
+def video_of(clips: list[dict]) -> str:
+    """The one source video these clips come from (data/interim/<name>/<name>_512.mp4 -> <name>)."""
+    names = {Path(c["source_video"]).parent.name for c in clips}
+    if len(names) != 1:
+        raise SystemExit(f"clips come from {len(names)} videos ({sorted(names)}); expected exactly one")
+    return names.pop()
+
+
+def load_tracking(name: str):
+    """Tracker positions, passes and scene file for one source video (see video_of)."""
     interim = REPO_ROOT / "data" / "interim" / name
     track = []
     for r in csv.DictReader((interim / "track.csv").open()):
@@ -46,10 +59,32 @@ def load_tracking(name: str = "start"):
 
 
 def source_indices(clip: dict, passes: dict, n_frames: int, n_ctx: int) -> list[int]:
-    """Clip frame k -> source frame, exactly as robust_world.clips cut it."""
-    mid = passes[clip["pass_id"]]["occlusion_start_frame"] - 1
+    """Clip frame k -> source frame, exactly as robust_world.clips cut it (or scripts/cut_open_clips.py, for
+    clips with no pass: from their first source frame)."""
     step = clip["source_fps"] / clip["fps"]
+    if clip.get("pass_id") is None:
+        return [int(round(clip["source_frames"][0] + k * step)) for k in range(n_frames)]
+    mid = passes[clip["pass_id"]]["occlusion_start_frame"] - 1
     return [int(round(mid + (k - (n_ctx - 1)) * step)) for k in range(n_frames)]
+
+
+def extra_folds(extra: list[dict], clips: list[dict], folds, passes: dict) -> list:
+    """For clips outside the cross-validation (e.g. open-table clips): the fold whose held-out clips share
+    source frames with each one (so that fold's predictor never trains on those frames); a clip sharing frames
+    with no clip gets fold (its index mod the number of folds); None if it shares frames with two folds'
+    held-out clips. Used both to score them and, when they are added to training, to keep each out of the
+    predictor that scores it."""
+    fold_of = {i: k for k, (_, te) in enumerate(folds) for i in te}
+    spans = []
+    for i, c in enumerate(clips):
+        src = source_indices(c, passes, c.get("n_frames", 48), c["context_frames"][1] + 1)
+        spans.append((src[0], src[-1], fold_of[i]))
+    out = []
+    for j, e in enumerate(extra):
+        src = source_indices(e, passes, e.get("n_frames", 48), e["context_frames"][1] + 1)
+        hit = {f for lo, hi, f in spans if lo <= src[-1] and src[0] <= hi}
+        out.append(hit.pop() if len(hit) == 1 else (j % len(folds)) if not hit else None)
+    return out
 
 
 def ball_labels(src: list[int], track, grid: int = GRID, tubelet: int = STEP) -> tuple[np.ndarray, list]:

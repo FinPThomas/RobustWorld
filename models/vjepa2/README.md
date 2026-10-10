@@ -39,6 +39,11 @@ python models/vjepa2/run.py                              # surprise, all include
 python models/vjepa2/run.py --sample data/eval/sample5   # the committed 5-clip sample
 ```
 
+**Kinematic reference** (`kinematic.py`): fits a constant velocity to the tracked ball over the
+last 1/3 s of context and extrapolates, hidden while its centre is under the plank or out of
+frame. It is hard-coded (it learns nothing from outcomes), so it is a reference model, not an
+evaluation tool. It is not wired into `ball_probe_cv.py` yet.
+
 Encodings are cached in `outputs/vjepa2/cache/`, so reruns take seconds.
 
 **Post-training** (`posttrain.py`, or `notebooks/colab_vjepa2_posttrain.ipynb` on Colab).
@@ -100,6 +105,13 @@ reproduction of the scale mismatch and its fix.
 Unattended (overnight on Colab): `experiments.py run --resume --save-as overnight --push --branch <b>`
 saves and pushes `results/<date>_<time>_overnight/` after every run, logs and skips a run that
 fails, and with `--resume` skips runs already done (state in `outputs/vjepa2/experiments/grid.json`).
+
+**Two-day plan.** `plan.py` runs the whole plan in `docs/experiment_plan.md` stage by stage (Colab:
+`notebooks/colab_two_day_plan.ipynb`): baselines, the post-training grid, architecture options
+(`posttrain.py --copy-gate`, `--hypotheses K`), longer and data-fraction runs, held-out generalisation
+(`generalise.py`) and interpretation (`interpret.py`: change maps, layer patching). Progress is kept in
+`outputs/vjepa2/plan/state.json`, so it resumes after a disconnect; after every step it pushes
+`results/<date>_<time>_twoday/` and the status block in the plan file.
 
 `python scripts/save_results.py --name <name> --push` saves a run's scores, figures and logs to
 `results/<date>_<time>_<name>/` (never overwriting) and pushes them; the notebook does this at the

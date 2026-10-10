@@ -243,21 +243,21 @@ def write_figures(summary: dict, occluder, blocker, background: np.ndarray, out:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--per-clip", type=Path, default=REPO / "outputs" / "vjepa2" / "ball_probe_cv" / "per_clip.json")
-    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest.jsonl")
+    p.add_argument("--manifest", type=Path, default=REPO / "data" / "processed" / "clips" / "manifest_right.jsonl")
     p.add_argument("--out", type=Path, default=REPO / "outputs" / "vjepa2" / "blocker")
     p.add_argument("--label", default="", help="name for this run, e.g. 'base' or 'fine-tuned'")
     p.add_argument("--before", type=Path, help="crossing.json from an earlier run, overlaid dashed")
     args = p.parse_args(argv)
 
-    from robust_world.eval.ball import load_tracking
+    from robust_world.eval.ball import load_tracking, video_of
     from robust_world.eval.io import read_video
 
-    track, passes, scene = load_tracking()
-    occluder = scene["occluder_polygon"]
-    blocker = scene.get("blocker_polygon") if isinstance(scene.get("blocker_polygon"), list) else None
     probe = {r["clip_id"]: r for r in json.loads(args.per_clip.read_text())}
     clips = [json.loads(line) for line in args.manifest.open()]
     clips = [c for c in clips if c["clip_id"] in probe]
+    track, passes, scene = load_tracking(video_of(clips))
+    occluder = scene["occluder_polygon"]
+    blocker = scene.get("blocker_polygon") if isinstance(scene.get("blocker_polygon"), list) else None
     rows = [r for c in clips if (r := pass_row(c, probe[c["clip_id"]], track, passes, occluder, blocker))]
     summary = summarise(rows, occluder, blocker, args.label)
 

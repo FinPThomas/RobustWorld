@@ -1,0 +1,179 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  44%|████▍     | 257/587 [00:00<00:00, 2546.42it/s]
+Loading weights:  87%|████████▋ | 512/587 [00:00<00:00, 2514.58it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2534.37it/s]
+code version 3b6b3d1
+scale check: predicted token spread 0.6176, real target 3.2694 raw / 1.0005 layer-normalised (training and scoring use the layer-normalised space)
+post-training the V-JEPA 2 predictor on cuda: 254 clips, run 'plan/plain-after', 5 split(s)
+  [fold0] epoch 1/10: loss 0.5574 l1 0.5574 (128s)
+  [fold0]   grad norm mean 2.8059 max 6.2159 (clipped 96%, non-finite steps 0), weights moved 2.42e-03, lr 2.9e-05, peak GPU memory 1.68 GB, 127.7s
+  [fold0]   validation L1 0.5311 (training clips 0.5344)
+  [fold0] epoch 2/10: loss 0.5271 l1 0.5271 (262s)
+  [fold0]   grad norm mean 0.9679 max 1.5552 (clipped 44%, non-finite steps 0), weights moved 4.62e-03, lr 2.7e-05, peak GPU memory 1.68 GB, 126.7s
+  [fold0]   validation L1 0.5154 (training clips 0.5185)
+  [fold0] epoch 3/10: loss 0.5166 l1 0.5166 (396s)
+  [fold0]   grad norm mean 0.7082 max 1.0397 (clipped 9%, non-finite steps 0), weights moved 6.09e-03, lr 2.4e-05, peak GPU memory 1.68 GB, 127.1s
+  [fold0]   validation L1 0.5078 (training clips 0.5106)
+  [fold0] epoch 4/10: loss 0.5105 l1 0.5105 (531s)
+  [fold0]   grad norm mean 0.79 max 1.3181 (clipped 9%, non-finite steps 0), weights moved 7.15e-03, lr 2.0e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.5031 (training clips 0.5052)
+  [fold0] epoch 5/10: loss 0.5060 l1 0.5060 (665s)
+  [fold0]   grad norm mean 0.7966 max 1.3655 (clipped 17%, non-finite steps 0), weights moved 7.93e-03, lr 1.5e-05, peak GPU memory 1.68 GB, 127.3s
+  [fold0]   validation L1 0.5002 (training clips 0.5012)
+  [fold0] epoch 6/10: loss 0.5032 l1 0.5032 (799s)
+  [fold0]   grad norm mean 0.8852 max 1.5061 (clipped 26%, non-finite steps 0), weights moved 8.47e-03, lr 1.0e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.4977 (training clips 0.4987)
+  [fold0] epoch 7/10: loss 0.5013 l1 0.5013 (933s)
+  [fold0]   grad norm mean 0.7789 max 1.2462 (clipped 4%, non-finite steps 0), weights moved 8.80e-03, lr 6.2e-06, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.4966 (training clips 0.4974)
+  [fold0] epoch 8/10: loss 0.5000 l1 0.5000 (1068s)
+  [fold0]   grad norm mean 0.767 max 1.1255 (clipped 22%, non-finite steps 0), weights moved 8.98e-03, lr 2.9e-06, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.4960 (training clips 0.4967)
+  [fold0] epoch 9/10: loss 0.4993 l1 0.4993 (1202s)
+  [fold0]   grad norm mean 0.7629 max 1.1399 (clipped 17%, non-finite steps 0), weights moved 9.05e-03, lr 7.3e-07, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.4956 (training clips 0.4961)
+  [fold0] epoch 10/10: loss 0.4989 l1 0.4989 (1336s)
+  [fold0]   grad norm mean 0.6576 max 0.9936 (clipped 0%, non-finite steps 0), weights moved 9.06e-03, lr 0.0e+00, peak GPU memory 1.68 GB, 127.2s
+  [fold0]   validation L1 0.4955 (training clips 0.4960)
+  [fold0] held-out L1 pretrained {'through': 0.57606, 'hidden': 0.57706, 'bounce': 0.58946} -> post-trained {'through': 0.49685, 'hidden': 0.4937, 'bounce': 0.51289}
+  [fold1] epoch 1/10: loss 0.5575 l1 0.5575 (127s)
+  [fold1]   grad norm mean 2.8451 max 6.3394 (clipped 96%, non-finite steps 0), weights moved 2.41e-03, lr 2.9e-05, peak GPU memory 1.68 GB, 126.7s
+  [fold1]   validation L1 0.5328 (training clips 0.5340)
+  [fold1] epoch 2/10: loss 0.5269 l1 0.5269 (261s)
+  [fold1]   grad norm mean 0.9641 max 1.8652 (clipped 30%, non-finite steps 0), weights moved 4.63e-03, lr 2.7e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold1]   validation L1 0.5168 (training clips 0.5169)
+  [fold1] epoch 3/10: loss 0.5159 l1 0.5159 (396s)
+  [fold1]   grad norm mean 0.8342 max 1.7619 (clipped 22%, non-finite steps 0), weights moved 6.12e-03, lr 2.4e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold1]   validation L1 0.5096 (training clips 0.5086)
+  [fold1] epoch 4/10: loss 0.5095 l1 0.5095 (530s)
+  [fold1]   grad norm mean 1.024 max 1.8138 (clipped 39%, non-finite steps 0), weights moved 7.18e-03, lr 2.0e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold1]   validation L1 0.5048 (training clips 0.5026)
+  [fold1] epoch 5/10: loss 0.5049 l1 0.5049 (664s)
+  [fold1]   grad norm mean 0.9588 max 1.5256 (clipped 44%, non-finite steps 0), weights moved 7.99e-03, lr 1.5e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold1]   validation L1 0.5016 (training clips 0.4989)
+  [fold1] epoch 6/10: loss 0.5021 l1 0.5021 (798s)
+  [fold1]   grad norm mean 1.1651 max 1.8156 (clipped 65%, non-finite steps 0), weights moved 8.51e-03, lr 1.0e-05, peak GPU memory 1.68 GB, 127.3s
+  [fold1]   validation L1 0.4997 (training clips 0.4977)
+  [fold1] epoch 7/10: loss 0.5001 l1 0.5001 (932s)
+  [fold1]   grad norm mean 0.9386 max 1.6629 (clipped 44%, non-finite steps 0), weights moved 8.83e-03, lr 6.2e-06, peak GPU memory 1.68 GB, 126.8s
+  [fold1]   validation L1 0.4981 (training clips 0.4956)
+  [fold1] epoch 8/10: loss 0.4988 l1 0.4988 (1067s)
+  [fold1]   grad norm mean 0.7288 max 1.412 (clipped 4%, non-finite steps 0), weights moved 9.02e-03, lr 2.9e-06, peak GPU memory 1.68 GB, 127.4s
+  [fold1]   validation L1 0.4973 (training clips 0.4947)
+  [fold1] epoch 9/10: loss 0.4981 l1 0.4981 (1201s)
+  [fold1]   grad norm mean 0.7596 max 1.0818 (clipped 13%, non-finite steps 0), weights moved 9.09e-03, lr 7.3e-07, peak GPU memory 1.68 GB, 127.4s
+  [fold1]   validation L1 0.4972 (training clips 0.4943)
+  [fold1] epoch 10/10: loss 0.4979 l1 0.4979 (1335s)
+  [fold1]   grad norm mean 0.6319 max 1.0491 (clipped 4%, non-finite steps 0), weights moved 9.11e-03, lr 0.0e+00, peak GPU memory 1.68 GB, 127.0s
+  [fold1]   validation L1 0.4971 (training clips 0.4942)
+  [fold1] held-out L1 pretrained {'through': 0.57476, 'hidden': 0.57695, 'bounce': 0.58818} -> post-trained {'through': 0.49618, 'hidden': 0.49687, 'bounce': 0.51329}
+  [fold2] epoch 1/10: loss 0.5576 l1 0.5576 (127s)
+  [fold2]   grad norm mean 2.8295 max 6.5701 (clipped 96%, non-finite steps 0), weights moved 2.39e-03, lr 2.9e-05, peak GPU memory 1.68 GB, 126.9s
+  [fold2]   validation L1 0.5306 (training clips 0.5339)
+  [fold2] epoch 2/10: loss 0.5278 l1 0.5278 (261s)
+  [fold2]   grad norm mean 1.0311 max 1.8966 (clipped 35%, non-finite steps 0), weights moved 4.56e-03, lr 2.7e-05, peak GPU memory 1.68 GB, 127.1s
+  [fold2]   validation L1 0.5143 (training clips 0.5173)
+  [fold2] epoch 3/10: loss 0.5168 l1 0.5168 (396s)
+  [fold2]   grad norm mean 0.7461 max 1.162 (clipped 9%, non-finite steps 0), weights moved 6.04e-03, lr 2.4e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold2]   validation L1 0.5065 (training clips 0.5093)
+  [fold2] epoch 4/10: loss 0.5101 l1 0.5101 (530s)
+  [fold2]   grad norm mean 0.8437 max 1.4401 (clipped 26%, non-finite steps 0), weights moved 7.17e-03, lr 2.0e-05, peak GPU memory 1.68 GB, 127.2s
+  [fold2]   validation L1 0.5020 (training clips 0.5037)
+  [fold2] epoch 5/10: loss 0.5058 l1 0.5058 (664s)
+  [fold2]   grad norm mean 1.0187 max 1.658 (clipped 48%, non-finite steps 0), weights moved 7.96e-03, lr 1.5e-05, peak GPU memory 1.68 GB, 127.3s
+  [fold2]   validation L1 0.4991 (training clips 0.5009)
+  [fold2] epoch 6/10: loss 0.5028 l1 0.5028 (798s)
+  [fold2]   grad norm mean 0.9745 max 1.3989 (clipped 39%, non-finite steps 0), weights moved 8.50e-03, lr 1.0e-05, peak GPU memory 1.68 GB, 127.3s
+  [fold2]   validation L1 0.4963 (training clips 0.4980)
+  [fold2] epoch 7/10: loss 0.5008 l1 0.5008 (933s)
+  [fold2]   grad norm mean 0.9083 max 1.3201 (clipped 39%, non-finite steps 0), weights moved 8.83e-03, lr 6.2e-06, peak GPU memory 1.68 GB, 127.2s
+  [fold2]   validation L1 0.4950 (training clips 0.4964)
+  [fold2] epoch 8/10: loss 0.4994 l1 0.4994 (1067s)
+  [fold2]   grad norm mean 0.8773 max 1.4983 (clipped 26%, non-finite steps 0), weights moved 9.01e-03, lr 2.9e-06, peak GPU memory 1.68 GB, 127.4s
+  [fold2]   validation L1 0.4946 (training clips 0.4958)
+  [fold2] epoch 9/10: loss 0.4988 l1 0.4988 (1202s)
+  [fold2]   grad norm mean 0.8366 max 1.9101 (clipped 17%, non-finite steps 0), weights moved 9.08e-03, lr 7.3e-07, peak GPU memory 1.68 GB, 127.5s
+  [fold2]   validation L1 0.4941 (training clips 0.4955)
+  [fold2] epoch 10/10: loss 0.4985 l1 0.4985 (1336s)
+  [fold2]   grad norm mean 0.704 max 1.4373 (clipped 13%, non-finite steps 0), weights moved 9.09e-03, lr 0.0e+00, peak GPU memory 1.68 GB, 127.2s
+  [fold2]   validation L1 0.4941 (training clips 0.4954)
+  [fold2] held-out L1 pretrained {'through': 0.57498, 'hidden': 0.57686, 'bounce': 0.58882} -> post-trained {'through': 0.49272, 'hidden': 0.49544, 'bounce': 0.51516}
+  [fold3] epoch 1/10: loss 0.5580 l1 0.5580 (127s)
+  [fold3]   grad norm mean 2.9255 max 6.5492 (clipped 100%, non-finite steps 0), weights moved 2.41e-03, lr 2.9e-05, peak GPU memory 1.68 GB, 127.0s
+  [fold3]   validation L1 0.5334 (training clips 0.5356)
+  [fold3] epoch 2/10: loss 0.5275 l1 0.5275 (261s)
+  [fold3]   grad norm mean 0.8722 max 1.4118 (clipped 22%, non-finite steps 0), weights moved 4.64e-03, lr 2.7e-05, peak GPU memory 1.68 GB, 126.7s
+  [fold3]   validation L1 0.5164 (training clips 0.5183)
+  [fold3] epoch 3/10: loss 0.5168 l1 0.5168 (395s)
+  [fold3]   grad norm mean 0.8581 max 1.9046 (clipped 17%, non-finite steps 0), weights moved 6.13e-03, lr 2.4e-05, peak GPU memory 1.68 GB, 126.9s
+  [fold3]   validation L1 0.5109 (training clips 0.5115)
+  [fold3] epoch 4/10: loss 0.5108 l1 0.5108 (529s)
+  [fold3]   grad norm mean 1.0797 max 1.8208 (clipped 56%, non-finite steps 0), weights moved 7.13e-03, lr 2.0e-05, peak GPU memory 1.68 GB, 127.4s
+  [fold3]   validation L1 0.5047 (training clips 0.5046)
+  [fold3] epoch 5/10: loss 0.5063 l1 0.5063 (664s)
+  [fold3]   grad norm mean 1.0567 max 1.7257 (clipped 48%, non-finite steps 0), weights moved 7.90e-03, lr 1.5e-05, peak GPU memory 1.68 GB, 127.3s
+  [fold3]   validation L1 0.5016 (training clips 0.5010)
+  [fold3] epoch 6/10: loss 0.5034 l1 0.5034 (798s)
+  [fold3]   grad norm mean 0.8762 max 1.6716 (clipped 17%, non-finite steps 0), weights moved 8.44e-03, lr 1.0e-05, peak GPU memory 1.68 GB, 127.7s
+  [fold3]   validation L1 0.4995 (training clips 0.4989)
+  [fold3] epoch 7/10: loss 0.5012 l1 0.5012 (933s)
+  [fold3]   grad norm mean 0.827 max 1.9733 (clipped 9%, non-finite steps 0), weights moved 8.81e-03, lr 6.2e-06, peak GPU memory 1.68 GB, 127.4s
+  [fold3]   validation L1 0.4986 (training clips 0.4972)
+  [fold3] epoch 8/10: loss 0.4998 l1 0.4998 (1067s)
+  [fold3]   grad norm mean 0.6845 max 1.0213 (clipped 4%, non-finite steps 0), weights moved 8.99e-03, lr 2.9e-06, peak GPU memory 1.68 GB, 127.2s
+  [fold3]   validation L1 0.4975 (training clips 0.4963)
+  [fold3] epoch 9/10: loss 0.4991 l1 0.4991 (1202s)
+  [fold3]   grad norm mean 0.7014 max 1.0593 (clipped 9%, non-finite steps 0), weights moved 9.06e-03, lr 7.3e-07, peak GPU memory 1.68 GB, 127.4s
+  [fold3]   validation L1 0.4973 (training clips 0.4959)
+  [fold3] epoch 10/10: loss 0.4988 l1 0.4988 (1336s)
+  [fold3]   grad norm mean 0.6178 max 1.0193 (clipped 4%, non-finite steps 0), weights moved 9.07e-03, lr 0.0e+00, peak GPU memory 1.68 GB, 127.4s
+  [fold3]   validation L1 0.4972 (training clips 0.4959)
+  [fold3] held-out L1 pretrained {'through': 0.57552, 'hidden': 0.57507, 'bounce': 0.58396} -> post-trained {'through': 0.49652, 'hidden': 0.49321, 'bounce': 0.51046}
+  [fold4] epoch 1/10: loss 0.5574 l1 0.5574 (128s)
+  [fold4]   grad norm mean 2.7323 max 6.3493 (clipped 91%, non-finite steps 0), weights moved 2.42e-03, lr 2.9e-05, peak GPU memory 1.68 GB, 127.7s
+  [fold4]   validation L1 0.5326 (training clips 0.5336)
+  [fold4] epoch 2/10: loss 0.5271 l1 0.5271 (262s)
+  [fold4]   grad norm mean 0.9976 max 1.7176 (clipped 44%, non-finite steps 0), weights moved 4.60e-03, lr 2.7e-05, peak GPU memory 1.68 GB, 127.8s
+  [fold4]   validation L1 0.5178 (training clips 0.5184)
+  [fold4] epoch 3/10: loss 0.5166 l1 0.5166 (397s)
+  [fold4]   grad norm mean 0.7566 max 1.0454 (clipped 4%, non-finite steps 0), weights moved 6.05e-03, lr 2.4e-05, peak GPU memory 1.68 GB, 127.6s
+  [fold4]   validation L1 0.5099 (training clips 0.5097)
+  [fold4] epoch 4/10: loss 0.5099 l1 0.5099 (532s)
+  [fold4]   grad norm mean 0.7943 max 1.0717 (clipped 4%, non-finite steps 0), weights moved 7.15e-03, lr 2.0e-05, peak GPU memory 1.68 GB, 127.9s
+  [fold4]   validation L1 0.5060 (training clips 0.5046)
+  [fold4] epoch 5/10: loss 0.5056 l1 0.5056 (668s)
+  [fold4]   grad norm mean 0.8733 max 1.2522 (clipped 17%, non-finite steps 0), weights moved 7.97e-03, lr 1.5e-05, peak GPU memory 1.68 GB, 128.3s
+  [fold4]   validation L1 0.5021 (training clips 0.5003)
+  [fold4] epoch 6/10: loss 0.5023 l1 0.5023 (803s)
+  [fold4]   grad norm mean 0.9056 max 1.3134 (clipped 35%, non-finite steps 0), weights moved 8.51e-03, lr 1.0e-05, peak GPU memory 1.68 GB, 128.2s
+  [fold4]   validation L1 0.5000 (training clips 0.4985)
+  [fold4] epoch 7/10: loss 0.5003 l1 0.5003 (938s)
+  [fold4]   grad norm mean 0.7782 max 1.267 (clipped 9%, non-finite steps 0), weights moved 8.85e-03, lr 6.2e-06, peak GPU memory 1.68 GB, 127.9s
+  [fold4]   validation L1 0.4983 (training clips 0.4966)
+  [fold4] epoch 8/10: loss 0.4990 l1 0.4990 (1073s)
+  [fold4]   grad norm mean 0.7345 max 1.1179 (clipped 9%, non-finite steps 0), weights moved 9.04e-03, lr 2.9e-06, peak GPU memory 1.68 GB, 128.0s
+  [fold4]   validation L1 0.4975 (training clips 0.4958)
+  [fold4] epoch 9/10: loss 0.4983 l1 0.4983 (1208s)
+  [fold4]   grad norm mean 0.646 max 1.121 (clipped 9%, non-finite steps 0), weights moved 9.11e-03, lr 7.3e-07, peak GPU memory 1.68 GB, 127.9s
+  [fold4]   validation L1 0.4973 (training clips 0.4955)
+  [fold4] epoch 10/10: loss 0.4981 l1 0.4981 (1343s)
+  [fold4]   grad norm mean 0.6292 max 1.0692 (clipped 4%, non-finite steps 0), weights moved 9.12e-03, lr 0.0e+00, peak GPU memory 1.68 GB, 127.9s
+  [fold4]   validation L1 0.4972 (training clips 0.4955)
+  [fold4] held-out L1 pretrained {'through': 0.57502, 'hidden': 0.57679, 'bounce': 0.59093} -> post-trained {'through': 0.49475, 'hidden': 0.49673, 'bounce': 0.51233}
+-> /tmp/RobustWorld/checkpoints/vjepa2/plan/plain-after/ (fold0, fold1, fold2, fold3, fold4.pt, log.json, run_info.json)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  45%|████▌     | 266/587 [00:00<00:00, 2652.63it/s]
+Loading weights:  91%|█████████ | 532/587 [00:00<00:00, 2626.85it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2635.84it/s]
+
+  fold 1/5 read
+  fold 2/5 read
+  fold 3/5 read
+  fold 4/5 read
+  fold 5/5 read
+  AUROC before 0.422 -> after 0.885; feature change on plank 0.188 (plank is 0.172 of the frame)
+-> /tmp/RobustWorld/outputs/vjepa2/plan/interpret/plain-after/ (change_map.png, layer_patching.png, interpret.json)

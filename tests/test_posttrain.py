@@ -313,3 +313,96 @@ def test_grid_survives_failures_and_resumes(tmp_path, monkeypatch):
     assert trained == ["codes-after"]                                                 # only the failed one reruns
     grid2 = json.loads((tmp_path / "out" / "grid.json").read_text())
     assert grid2["results_folder"] == grid["results_folder"] and not grid2["failed"]
+
+
+def test_heads_start_as_the_pretrained_output_and_round_trip(tmp_path):
+    model = tiny_model()
+    ctx = torch.randn(2, CTX, G, G, D)
+    heads = posttrain.Heads(D, copy_gate=True, hypotheses=3).eval()
+    with torch.no_grad():
+        plain = posttrain.imagine(model.predictor, ctx, ALL - CTX)
+        hyps, logits = posttrain.apply_heads(heads, plain, ctx)
+        assert hyps.shape == (3, 2, ALL - CTX, G, G, D) and logits.shape == (2, 3)
+        assert torch.allclose(posttrain.pick(hyps, logits), plain, atol=0.02)     # near-identity at the start
+    path = tmp_path / "fold0.pt"
+    torch.save({"predictor": model.predictor.state_dict(), "train_clip_ids": [],
+                **posttrain.saved_mode({"rollout": False, "codebook": None, "heads": heads})}, path)
+    meta = posttrain.load_predictor(tiny_model(), path)
+    with torch.no_grad():
+        assert torch.allclose(posttrain.imagine_mode(model.predictor, ctx, ALL - CTX, meta),
+                              posttrain.imagine_mode(model.predictor, ctx, ALL - CTX,
+                                                     {"rollout": False, "codebook": None, "heads": heads}))
+
+
+def test_copy_gate_and_hypotheses_train(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=10,
+                           workers=0, seed=0, loss="l1", copy_gate=True, hypotheses=2, wta_relax=0.05)
+    log, mode = posttrain.train_one(model, base, clips[:8], clips[8:], args, "cpu", "fold0")
+    assert mode["heads"] is not None and {"l1", "pick_ce", "winner_spread"} <= set(log["train_parts"][0])
+    assert sum(log["held_out_l1_posttrained"].values()) < sum(log["held_out_l1_pretrained"].values())
+
+
+def test_train_frac_and_resume(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 25)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    monkeypatch.setattr(posttrain, "training_clips", lambda manifest: clips)
+    monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
+    argv = ["train", "--run", "t", "--fold", "0", "--epochs", "1", "--workers", "0", "--train-frac", "0.5"]
+    posttrain.main(argv)
+    log = json.loads((tmp_path / "ck" / "t" / "log.json").read_text())[0]
+    assert log["n_train"] == 9                                   # half of the 18 fitting clips (2 held for validation)
+    stamp = (tmp_path / "ck" / "t" / "fold0.pt").stat().st_mtime_ns
+    posttrain.main(argv + ["--resume"])                           # same settings: nothing retrained
+    assert (tmp_path / "ck" / "t" / "fold0.pt").stat().st_mtime_ns == stamp
+    posttrain.main(["train", "--run", "t", "--fold", "0", "--epochs", "2", "--workers", "0", "--resume"])
+    assert (tmp_path / "ck" / "t" / "fold0.pt").stat().st_mtime_ns != stamp   # new settings: retrained
+
+
+def test_a_stopped_fold_carries_on_from_its_last_epoch(tmp_path, monkeypatch, capsys):
+    clips, cache = fake_clips(tmp_path, 12)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    model = tiny_model()
+    base = {k: v.clone() for k, v in model.predictor.state_dict().items()}
+    args = SimpleNamespace(model_id="tiny", lr=3e-3, weight_decay=0.0, batch_size=2, accum=1, epochs=3,
+                           workers=0, seed=0, loss="l1", patience=0)
+    partial = tmp_path / "fold0.partial.pt"
+    real_record = posttrain.epoch_record
+
+    def stop_after_two(epoch, *a, **k):                # Colab disconnects during epoch 3
+        if epoch == 3:
+            raise KeyboardInterrupt
+        return real_record(epoch, *a, **k)
+    monkeypatch.setattr(posttrain, "epoch_record", stop_after_two)
+    with pytest.raises(KeyboardInterrupt):
+        posttrain.train_one(model, base, clips[:10], clips[10:], args, "cpu", "fold0", partial)
+    assert torch.load(partial, weights_only=False)["epoch"] == 2
+    monkeypatch.setattr(posttrain, "epoch_record", real_record)
+    log, _ = posttrain.train_one(model, base, clips[:10], clips[10:], args, "cpu", "fold0", partial)
+    assert "carrying on after epoch 2" in capsys.readouterr().out
+    assert [e["epoch"] for e in log["epochs"]] == [1, 2, 3] and len(log["train_loss"]) == 3
+
+    other = SimpleNamespace(**{**vars(args), "lr": 1e-3})   # other settings: the saved state is not used
+    log, _ = posttrain.train_one(model, base, clips[:10], clips[10:], other, "cpu", "fold0", partial)
+    assert "carrying on" not in capsys.readouterr().out and len(log["epochs"]) == 3
+
+
+def test_loss_sampling_trains_and_resumes(tmp_path, monkeypatch):
+    clips, cache = fake_clips(tmp_path, 15)
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    monkeypatch.setattr(posttrain, "training_clips", lambda manifest: clips)
+    monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
+    argv = ["train", "--run", "s", "--fold", "0", "--epochs", "2", "--workers", "0", "--sample-by-loss", "0.25"]
+    posttrain.main(argv)
+    log = json.loads((tmp_path / "ck" / "s" / "log.json").read_text())[0]
+    assert len(log["train_loss"]) == 2 and all(np.isfinite(log["train_loss"]))
+    stamp = (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns
+    posttrain.main(argv + ["--resume"])                               # same settings: kept
+    assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns == stamp
+    posttrain.main(argv[:-2] + ["--resume"])                          # without sampling: a different run
+    assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns != stamp

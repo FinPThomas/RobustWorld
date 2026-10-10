@@ -33,12 +33,15 @@ def git(*args, cwd=REPO, check=True) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=check, capture_output=True, text=True).stdout.strip()
 
 
-def collect(dest: Path, repo: Path = REPO) -> list[Path]:
-    """Copy result files (not caches or weights) from outputs/ and checkpoints/ into dest."""
+def collect(dest: Path, repo: Path = REPO, source: str = "outputs/vjepa2") -> list[Path]:
+    """Copy result files (not caches or weights) from `source` (under outputs/) and, for the default
+    source, checkpoints/ into dest. A non-default source (the two-day plan) also keeps its .txt step logs."""
     saved = []
-    sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / "outputs" / "vjepa2").rglob("*")
-               if p.suffix in (".json", ".md", ".png") and "cache" not in p.parts]
-    sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/*.json")]
+    kinds = (".json", ".md", ".png") if source == "outputs/vjepa2" else (".json", ".md", ".png", ".txt")
+    sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / source).rglob("*")
+               if p.suffix in kinds and "cache" not in p.parts]
+    if source == "outputs/vjepa2":
+        sources += [(p, p.relative_to(repo)) for p in (repo / "checkpoints" / "vjepa2").glob("*/*.json")]
     for src, rel in sources:
         if src.is_file() and src.stat().st_size <= MAX_BYTES:
             (dest / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -69,8 +72,9 @@ def describe(dest: Path, run_id: str, name: str, note: str, commit: str) -> None
 
 def headline(folder: Path) -> str:
     """One line for the index: best balanced P(correct) after post-training, if there is a summary."""
-    path = folder / "vjepa2" / "experiments" / "summary.json"
-    if not path.exists():
+    path = next((p for p in (folder / "vjepa2" / "experiments" / "summary.json",
+                             folder / "vjepa2" / "plan" / "summary.json") if p.exists()), None)
+    if path is None:
         return ""
     key = "one_ball_p_correct"
     rows = [r for r in json.loads(path.read_text()) if r.get("phase") == "after" and r.get(key) is not None]
@@ -102,7 +106,7 @@ def new_id(root: Path, name: str) -> str:
     return run_id
 
 
-def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None) -> Path:
+def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None, source: str = "outputs/vjepa2") -> Path:
     """New folder per call; with `into`, (re)write that one folder instead (a grid saving as it goes)."""
     root = repo / RESULTS
     root.mkdir(exist_ok=True)
@@ -110,19 +114,32 @@ def save(name: str, note: str = "", repo: Path = REPO, into: str | None = None) 
     if into and dest.exists():
         shutil.rmtree(dest)
     dest.mkdir()
-    saved = collect(dest, repo)
+    saved = collect(dest, repo, source)
     if not saved:
         dest.rmdir()
-        raise SystemExit("nothing to save: no results under outputs/vjepa2/")
+        raise SystemExit(f"nothing to save: no results under {source}/")
     describe(dest, dest.name, name, note, git("rev-parse", "--short", "HEAD", cwd=repo, check=False) or "unknown")
     write_index(root)
     print(f"saved {len(saved)} files -> {dest.relative_to(repo)}")
     return dest
 
 
-def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4, update: bool = False) -> None:
+STATUS_START, STATUS_END = "<!-- status:start -->", "<!-- status:end -->"
+
+
+def replace_status(text: str, block: str) -> str:
+    """Swap the text between the status markers (kept) for `block`; unchanged if there are no markers."""
+    if STATUS_START not in text or STATUS_END not in text:
+        return text
+    head, rest = text.split(STATUS_START, 1)
+    return head + STATUS_START + "\n" + block.strip() + "\n" + STATUS_END + rest.split(STATUS_END, 1)[1]
+
+
+def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4, update: bool = False,
+         status: tuple[str, str] | None = None) -> None:
     """Commit dest to `branch` from a fresh shallow clone, so local code edits are never pushed.
-    Retries if someone else pushed in between. `update` replaces that same folder (an unfinished grid)."""
+    Retries if someone else pushed in between. `update` replaces that same folder (an unfinished grid).
+    `status` (repo-relative .md path, text) also replaces that file's status block, and nothing else in it."""
     for attempt in range(1, tries + 1):
         with tempfile.TemporaryDirectory() as tmp:
             clone = Path(tmp) / "repo"
@@ -136,6 +153,10 @@ def push(dest: Path, branch: str, url: str, token: str = "", tries: int = 4, upd
             shutil.copytree(dest, target)
             write_index(root)
             git("add", "-A", RESULTS, cwd=clone)
+            if status and (clone / status[0]).exists():
+                doc = clone / status[0]
+                doc.write_text(replace_status(doc.read_text(), status[1]))
+                git("add", status[0], cwd=clone)
             if not git("status", "--porcelain", cwd=clone):
                 print(f"{RESULTS}/{dest.name} unchanged on {branch}")
                 return

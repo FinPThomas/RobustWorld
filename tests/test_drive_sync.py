@@ -1,0 +1,47 @@
+"""scripts/drive_sync.py: the Colab disk <-> Drive backup copies only newer files and never half files."""
+
+import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import drive_sync  # noqa: E402
+
+
+def test_copies_new_and_newer_never_older_over_newer(tmp_path):
+    local, drive = tmp_path / "local", tmp_path / "drive"
+    (local / "a").mkdir(parents=True)
+    (local / "a" / "state.json").write_text("new")
+    (local / "a" / "half.pt.tmp").write_text("x")              # being written: skipped
+    assert drive_sync.sync(local, drive) == 1
+    assert (drive / "a" / "state.json").read_text() == "new" and not (drive / "a" / "half.pt.tmp").exists()
+    assert drive_sync.sync(local, drive) == 0                   # nothing changed: nothing copied
+
+    old = drive / "a" / "state.json"                            # an older backup must not overwrite newer work
+    old.write_text("older backup!")
+    t = (local / "a" / "state.json").stat().st_mtime - 100
+    os.utime(old, (t, t))
+    assert drive_sync.sync(drive, local) == 0 and (local / "a" / "state.json").read_text() == "new"
+    assert drive_sync.sync(local, drive) == 1 and old.read_text() == "new"
+    assert not list(drive.rglob("*.part"))
+
+
+def test_feature_cache_is_not_backed_up(tmp_path):
+    local = tmp_path / "outputs"
+    for rel in ("vjepa2/cache/m/c1.pt", "vjepa2/plan/state.json"):
+        (local / rel).parent.mkdir(parents=True, exist_ok=True)
+        (local / rel).write_text("x")
+    assert drive_sync.sync(local, tmp_path / "drive", drive_sync.NOT_BACKED_UP) == 1
+    assert not (tmp_path / "drive" / "vjepa2" / "cache").exists()
+
+
+def test_finished_folds_per_epoch_state_is_removed_from_the_backup(tmp_path):
+    local, drive = tmp_path / "local", tmp_path / "drive"
+    (local / "run").mkdir(parents=True)
+    (local / "run" / "fold0.partial.pt").write_text("epoch 3")
+    drive_sync.sync(local, drive)
+    assert (drive / "run" / "fold0.partial.pt").exists()
+    (local / "run" / "fold0.partial.pt").unlink()            # fold finished
+    (local / "run" / "fold0.pt").write_text("done")
+    drive_sync.sync(local, drive)
+    assert not (drive / "run" / "fold0.partial.pt").exists() and (drive / "run" / "fold0.pt").exists()

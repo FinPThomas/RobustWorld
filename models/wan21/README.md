@@ -4,9 +4,9 @@ Video extension with [Wan 2.1 VACE](https://huggingface.co/Wan-AI/Wan2.1-VACE-1.
 through Diffusers. It's self-contained: it doesn't use the Cosmos code, and this folder
 can be deleted without affecting anything else.
 
-**How it predicts.** All 16 context frames are passed in unchanged. 17 grey frames
-follow, with a white mask marking them for generation. That makes 33 frames in total,
-because Wan needs a frame count of the form 4n+1. Generated frames 16–31 are compared
+**How it predicts.** All 24 context frames are passed in unchanged. 25 grey frames
+follow, with a white mask marking them for generation. That makes 49 frames in total,
+because Wan needs a frame count of the form 4n+1. Generated frames 24–47 are compared
 with the ground-truth target.
 
 **Run on Colab.** Open [`notebooks/colab_wan21.ipynb`](../../notebooks/colab_wan21.ipynb).

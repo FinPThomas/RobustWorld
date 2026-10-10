@@ -1,0 +1,210 @@
+{
+ "results_folder": "2026-10-04_2110_twoday",
+ "started": "2026-10-04_2110",
+ "steps": {
+  "split": {
+   "state": "done",
+   "started": "2026-10-04 21:10",
+   "code": "cedc57e",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:10"
+  },
+  "encode": {
+   "state": "done",
+   "started": "2026-10-04 21:44",
+   "code": "9083c06",
+   "minutes": 27.1,
+   "finished": "2026-10-04 22:11"
+  },
+  "gate-after": {
+   "state": "done",
+   "started": "2026-10-06 21:11",
+   "code": "3b6b3d1",
+   "minutes": 123.8,
+   "finished": "2026-10-06 23:15"
+  },
+  "long-1": {
+   "state": "failed",
+   "started": "2026-10-04 21:24",
+   "code": "c2bc906",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:24",
+   "error": "no stage 2/3 run has been scored yet: run those first"
+  },
+  "generalise": {
+   "state": "running",
+   "started": "2026-10-04 21:24",
+   "code": "c2bc906"
+  },
+  "pretrained": {
+   "state": "done",
+   "started": "2026-10-06 12:37",
+   "code": "b4ec0b9",
+   "minutes": 17.7,
+   "finished": "2026-10-06 12:55"
+  },
+  "plain-before": {
+   "state": "done",
+   "started": "2026-10-06 13:07",
+   "code": "b4ec0b9",
+   "minutes": 18.9,
+   "finished": "2026-10-06 13:26"
+  },
+  "interpret": {
+   "state": "failed",
+   "started": "2026-10-04 21:32",
+   "code": "c2bc906",
+   "minutes": 0.0,
+   "finished": "2026-10-04 21:32",
+   "error": "no stage 2/3 run has been scored yet: run those first"
+  },
+  "tapnext": {
+   "state": "done",
+   "started": "2026-10-06 12:55",
+   "code": "b4ec0b9",
+   "minutes": 11.8,
+   "finished": "2026-10-06 13:07"
+  },
+  "plain-after": {
+   "state": "done",
+   "started": "2026-10-06 13:26",
+   "code": "b4ec0b9",
+   "minutes": 140.4,
+   "finished": "2026-10-06 15:46"
+  },
+  "generalise-plain": {
+   "state": "done",
+   "started": "2026-10-06 18:34",
+   "code": "3b6b3d1",
+   "minutes": 31.0,
+   "finished": "2026-10-06 19:05"
+  },
+  "commit-after": {
+   "state": "done",
+   "started": "2026-10-06 19:05",
+   "code": "3b6b3d1",
+   "minutes": 126.1,
+   "finished": "2026-10-06 21:11"
+  },
+  "interpret-plain": {
+   "state": "done",
+   "started": "2026-10-06 23:15",
+   "code": "3b6b3d1",
+   "minutes": 183.7,
+   "finished": "2026-10-07 02:18"
+  },
+  "hyp-after": {
+   "state": "done",
+   "started": "2026-10-07 02:18",
+   "code": "3b6b3d1",
+   "minutes": 90.9,
+   "finished": "2026-10-07 03:49"
+  },
+  "codes-before": {
+   "state": "done",
+   "started": "2026-10-07 03:49",
+   "code": "3b6b3d1",
+   "minutes": 11.5,
+   "finished": "2026-10-07 04:01"
+  },
+  "generalise-commit": {
+   "state": "done",
+   "started": "2026-10-07 09:24",
+   "code": "aaca21d",
+   "minutes": 30.8,
+   "finished": "2026-10-07 09:55"
+  },
+  "codes-after": {
+   "state": "done",
+   "started": "2026-10-07 09:55",
+   "code": "aaca21d",
+   "minutes": 120.3,
+   "finished": "2026-10-07 11:55"
+  },
+  "rollout-before": {
+   "state": "done",
+   "started": "2026-10-07 11:55",
+   "code": "aaca21d",
+   "minutes": 34.0,
+   "finished": "2026-10-07 12:29"
+  },
+  "mirror-plain": {
+   "state": "done",
+   "started": "2026-10-08 19:18",
+   "code": "e717d1c",
+   "minutes": 38.2,
+   "finished": "2026-10-08 19:57"
+  },
+  "mirror-commit": {
+   "state": "done",
+   "started": "2026-10-08 19:57",
+   "code": "e717d1c",
+   "minutes": 32.8,
+   "finished": "2026-10-08 20:29"
+  },
+  "both-before": {
+   "state": "done",
+   "started": "2026-10-10 00:32",
+   "code": "f6f56ce",
+   "minutes": 13.9,
+   "finished": "2026-10-10 00:46"
+  },
+  "lossmix_e20-after": {
+   "state": "done",
+   "started": "2026-10-10 00:46",
+   "code": "f6f56ce",
+   "minutes": 237.7,
+   "finished": "2026-10-10 04:44"
+  },
+  "commit_both-after": {
+   "state": "done",
+   "started": "2026-10-10 04:44",
+   "code": "f6f56ce",
+   "minutes": 156.4,
+   "finished": "2026-10-10 07:20"
+  },
+  "other-ball": {
+   "state": "waiting",
+   "started": "2026-10-10 19:09",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:09",
+   "error": "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"
+  },
+  "lossmix_both-after": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  },
+  "lossmix_both-epochs": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  },
+  "lossmix_open-after": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  }
+ },
+ "choices": {
+  "held_out": {
+   "other side (from L)": {
+    "n": 83,
+    "through": 32,
+    "hidden": 3,
+    "bounce": 48
+   }
+  }
+ },
+ "last_push": "2026-10-10 19:09"
+}
