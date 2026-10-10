@@ -366,7 +366,8 @@ def encode_all(args) -> None:
     mean, std = np.array(proc.image_mean, np.float32), np.array(proc.image_std, np.float32)
     cache = cache_dir(args.model_id)
     cache.mkdir(parents=True, exist_ok=True)
-    clips = training_clips(args.manifest)
+    clips = [c for c in (json.loads(line) for line in args.manifest.open())
+             if c.get("include") and (c["outcome"] in OUTCOMES or c["outcome"] == "open")]   # open-table clips too
     t0, done = time.perf_counter(), 0
     for i, c in enumerate(clips):
         if load_cached(cache, c) is None:
@@ -693,6 +694,11 @@ RESUME_KEYS = ("epochs", "loss", "lr", "rollout", "copy_gate", "hypotheses", "tr
                "sample_by_loss")
 
 
+def plain_args(args) -> dict:
+    """The run's settings with paths as text (checkpoints must load with torch.load(weights_only=True))."""
+    return {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()}
+
+
 def resumable(path: Path, args, train: list[dict]) -> dict | None:
     """With --resume: the saved log of a split already trained with the same settings and clips."""
     if not path.exists():
@@ -740,9 +746,19 @@ def train_all(args) -> None:
                if args.fold is None or k == args.fold])
     print(f"post-training the V-JEPA 2 predictor on {device}: {len(clips)} clips, run '{args.run}', "
           f"{len(splits)} split(s)")
+    extra, extra_fold = [], []
+    if getattr(args, "extra_train", None):
+        from robust_world.eval.ball import extra_folds, load_tracking, video_of
+        extra = [c for c in (json.loads(line) for line in args.extra_train.open()) if c.get("include")]
+        extra_fold = extra_folds(extra, clips, cv_folds(clips, args.folds, args.seed),
+                                 load_tracking(video_of(clips))[1])
+        print(f"  + {len(extra)} extra training clips ({args.extra_train.name}); each is left out of the fold that "
+              f"scores it ({sum(f is None for f in extra_fold)} left out of every fold)", flush=True)
     logs = []
     for tag, tr, te in splits:
         train, test = [clips[i] for i in tr], [clips[i] for i in te]
+        k = int(tag[4:]) if tag.startswith("fold") else -1
+        train += [e for e, f in zip(extra, extra_fold) if f is not None and f != k]
         done = resumable(out / f"{tag}.pt", args, train) if args.resume else None
         if done is not None:
             print(f"  [{tag}] already trained with these settings: skipping (--resume)", flush=True)
@@ -757,13 +773,13 @@ def train_all(args) -> None:
                     d.mkdir(parents=True, exist_ok=True)
                     save_atomic({"predictor": state, **saved_mode(mode), "model_id": args.model_id, "split": tag,
                                  "train_clip_ids": [c["clip_id"] for c in train],
-                                 "args": vars(args) | {"manifest": str(args.manifest), "epochs": epoch},
+                                 "args": plain_args(args) | {"epochs": epoch},
                                  "log": log}, d / f"{tag}.pt")
                     print(f"  [{tag}] epoch {epoch} weights (best so far) saved as {save_at[epoch]}", flush=True)
             log, mode = train_one(model, base_state, train, test, args, device, tag, partial, snapshot)
             save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
                          "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
-                         "args": vars(args) | {"manifest": str(args.manifest)}, "log": log}, out / f"{tag}.pt")
+                         "args": plain_args(args), "log": log}, out / f"{tag}.pt")
             partial.unlink(missing_ok=True)       # the fold is saved: its per-epoch state is no longer needed
         logs.append(log)
         (out / "log.json").write_text(json.dumps(logs, indent=1))
@@ -813,6 +829,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--save-at", nargs="*", default=[], metavar="EPOCH:RUN",
                    help="also save each split's weights after EPOCH (best so far) as run RUN, e.g. 10:plan/x-e10")
     p.add_argument("--resume", action="store_true", help="skip splits already trained with the same settings")
+    p.add_argument("--extra-train", type=Path, default=None, metavar="MANIFEST",
+                   help="more training clips outside the cross-validation (e.g. manifest_open.jsonl); each is kept "
+                        "out of the fold whose held-out clips share its frames (eval.ball.extra_folds)")
     p.add_argument("--codes", type=int, default=256, help="codes: codebook size")
     p.add_argument("--code-tau", type=float, default=0.05, help="codes: softmax temperature (cosine)")
     p.add_argument("--motion-alpha", type=float, default=4.0, help="commit: extra weight on moving tokens")
