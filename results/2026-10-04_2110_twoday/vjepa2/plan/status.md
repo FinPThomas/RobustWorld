@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-10 14:14 UTC from Kaggle (Tesla T4), code `c7acf56`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-10 19:08 UTC from Kaggle (Tesla T4), code `a70bd48`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -23,6 +23,9 @@ _Last update: 2026-10-10 14:14 UTC from Kaggle (Tesla T4), code `c7acf56`. Resul
 | 2 | both-before: slope S0-S2: pretrained, both directions, per-step ball positions | done | 13.9 | 2026-10-10 00:46 |
 | 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | done | 237.7 | 2026-10-10 04:44 |
 | 2 | commit_both-after: A. commit trained on both directions, each side scored | done | 156.4 | 2026-10-10 07:20 |
+| 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
+| 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | to do |  |  |
+| 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 14:13 |
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain |

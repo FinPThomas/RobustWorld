@@ -170,6 +170,14 @@
    "minutes": 0.0,
    "finished": "2026-10-10 14:13",
    "error": "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"
+  },
+  "lossmix_both-after": {
+   "state": "waiting",
+   "started": "2026-10-10 19:08",
+   "code": "a70bd48",
+   "minutes": 0.0,
+   "finished": "2026-10-10 19:08",
+   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
   }
  },
  "choices": {
