@@ -61,6 +61,7 @@ CLIPS = REPO / "data" / "processed" / "clips"
 MANIFEST = CLIPS / "manifest_right.jsonl" if (CLIPS / "manifest_right.jsonl").exists() else CLIPS / "manifest.jsonl"
 SEEN = PLAN / "manifest_seen.jsonl"          # written by the split step; backed up to Drive, so it survives restarts
 BOTH = PLAN / "manifest_both.jsonl"          # both directions: the training clips and the other side's (2026-10-09 scope)
+OPEN = CLIPS / "manifest_open.jsonl"          # open-table clips (scripts/cut_open_clips.py): slope test, scored only
 PY = sys.executable
 
 EPOCHS, LONG_EPOCHS = 10, 30
@@ -213,14 +214,15 @@ def export_weights(name: str) -> None:
 
 
 def train_and_score(name: str, flags: list[str], epochs: int, before: str | None, args, log: Path,
-                    man: Path | None = None) -> None:
-    """posttrain.py (resumes at the first fold not saved), then the frozen-decoder score."""
+                    man: Path | None = None, extra: Path | None = None) -> None:
+    """posttrain.py (resumes at the first fold not saved), then the frozen-decoder score (`extra`: a manifest of
+    clips also imagined and located, scored only)."""
     run = f"plan/{name}"
     man = man or manifest()
     must([PY, HERE / "posttrain.py", "train", "--run", run, "--epochs", str(epochs), "--manifest", man,
           "--resume", *flags, *T4, *args.extra], log)
     must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", man,
-          "--out", SCORES / name], log)
+          "--out", SCORES / name, *(["--extra-manifest", extra] if extra else [])], log)
     for f in ("log.json", "run_info.json"):
         if (CKPT / name / f).exists():
             shutil.copy2(CKPT / name / f, SCORES / name / f"train_{f}")
@@ -370,15 +372,26 @@ def step_lossmix(args, state, log):
     export_weights("lossmix_e10-after")
 
 
+def open_manifest() -> Path:
+    if not OPEN.exists():
+        raise Waiting("the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)")
+    return OPEN
+
+
 def step_lossmix_both(args, state, log):
     """C: commit + loss-weighted sampling on both directions, 20 epochs, weights saved after each of C_EPOCHS."""
+    extra = open_manifest()                             # wait for the open-table clips rather than train without them
     flags = VARIANTS["lossmix_both"][0] + ["--save-at", *(f"{e}:plan/lossmix_both_e{e}-after" for e in C_EPOCHS)]
-    train_and_score("lossmix_both-after", flags, 2 * EPOCHS, "both-before", args, log, both_manifest())
+    train_and_score("lossmix_both-after", flags, 2 * EPOCHS, "both-before", args, log, both_manifest(), extra)
 
 
 def step_lossmix_both_epochs(args, state, log):
-    """Score C's saved epochs (learning curve); each one's weights are deleted once scored (disk)."""
-    man = both_manifest()
+    """Score C's saved epochs (learning curve) and the pretrained predictor (epoch 0) on the open-table clips too;
+    each epoch's weights are deleted once scored (disk)."""
+    man, extra = both_manifest(), open_manifest()
+    if not (SCORES / "both-before" / "per_clip_open.json").exists():
+        must([PY, HERE / "ball_probe_cv.py", "--manifest", man, "--out", SCORES / "both-before",
+              "--extra-manifest", extra], log)
     for e in C_EPOCHS:
         name = f"lossmix_both_e{e}-after"
         if (SCORES / name / "per_clip.json").exists():
@@ -388,7 +401,7 @@ def step_lossmix_both_epochs(args, state, log):
             raise RuntimeError(f"{name}: the saved weights aren't on this machine (C was trained in another session); "
                                "train C again with --save-at, or score fewer epochs")
         must([PY, HERE / "ball_probe_cv.py", "--predictor-run", CKPT / name, "--manifest", man,
-              "--out", SCORES / name], log)
+              "--out", SCORES / name, "--extra-manifest", extra], log)
         shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
@@ -447,7 +460,8 @@ STEPS: list[Step] = [
     # the blockade grow with training: C, scored after 1, 2, 4, 7, 10, 15 and 20 epochs (slope_test.py).
     Step(2, "lossmix_both-after", "C. both directions, loss-weighted sampling, 20 epochs (weights saved for the "
          "learning curve)", step_lossmix_both),
-    Step(2, "lossmix_both-epochs", "C. learning curve: score the weights saved after 1, 2, 4, 7, 10 and 15 epochs",
+    Step(2, "lossmix_both-epochs", "C. learning curve: score the pretrained predictor and the weights saved after "
+         "1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips",
          step_lossmix_both_epochs),
     Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
 ]
@@ -763,7 +777,7 @@ def step_hours(name: str) -> float:
     special = {"commit_both-after": 3.2,          # a third more clips than the other runs
                "lossmix_e20-after": 4.4,          # 20 epochs, then two scoring passes
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
-               "lossmix_both-epochs": 1.6}        # six scoring passes
+               "lossmix_both-epochs": 1.9}        # seven scoring passes
     if name in special:
         return special[name]
     if name.startswith("long"):
