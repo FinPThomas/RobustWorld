@@ -13,12 +13,13 @@ and it is the same for every run (CLAUDE.md rules 1-3, 5-6).
     real   the tracker over the whole video (every frame where the ball is visible on open table, no hand in
            shot): quadratic fits over 0.5 s windows give speed v and acceleration a along the motion. At the same
            speed friction cancels, so the slope term is s = (a_down - a_up) / 2 (down = rolling left).
-    model  through passes, scored per run: from the last context steps (real frames) the ball's position and
-           speed when it reaches the plank; the steady-speed position T steps later is p0 + v0 T. Each target
-           step where the ball is (or is imagined) visible beyond the plank gives the gap e = (p - p0 - v0 T) along
-           the motion; a per clip is the least-squares fit e = a T^2 / 2. Downhill passes (ball from the right)
-           against uphill ones (from the left) in speed bins: s = (a_down - a_up) / 2. Sources: the tracker
-           (true positions), the frozen decoder on real frames and on each run's imagined frames.
+    model  the same measure over the 12 target steps of each clip, from three tracks: the tracker (real ball),
+           the frozen decoder on real frames, and the decoder on each run's imagined frames. One quadratic fit
+           per clip over its longest run (5+ steps) where the ball is on open table (and, decoded, visible), so a
+           bounce or the plank elsewhere doesn't leak in; downhill vs uphill by the fitted direction, in the tracker's
+           speed bins; 95% intervals by bootstrap over clips. Two clip sets: the open-table clips
+           (scripts/cut_open_clips.py, where the ball rolls on open table through the target) and the plank
+           clips' target steps (mostly after the ball comes out or bounces back).
     epochs the model's s and the through-vs-blocked AUROC (per side) for the run saved after 1, 2, 4, 7, 10, 15
            and 20 epochs (C: both directions, loss-weighted sampling), against the real s.
 
@@ -46,7 +47,8 @@ EDGE_PX = 24                     # and this far inside the frame
 STEP_S = 1 / 8
 WINDOW_S = 0.5                   # real-video fits
 HAND_PAD_S = 0.5                 # frames this close to a hand in shot are left out (pushes, catches)
-MIN_PEAK = 0.5                   # decoded/imagined positions count when the ball map peaks this high
+MIN_PEAK = 0.2                   # decoded/imagined positions count when the ball map peaks this high
+MIN_RUN = 5                      # clip tracks: a quadratic fit over at least 5 target steps (0.625 s) in a row
 N_BOOT = 500
 SPEED_BINS = 3
 # Learning curve: (epoch, run). Epoch 0 is the pretrained predictor scored on both directions.
@@ -200,67 +202,55 @@ def ci(v) -> list | None:
 
 # ------------------------------------------------------------------------------------------- model test
 
-def entry(r: dict, table: Table, dist):
-    """(step index, table position, table velocity) of the real ball at its last open-table context steps."""
-    c = r.get("true_pos_context") or []
-    idx = [k for k, p in enumerate(c) if p is not None and dist(*p[:2]) > OPEN_PX / 2]
-    if len(idx) < 2:
-        return None
-    run = [idx[-1]]
-    for k in reversed(idx[:-1]):
-        if k != run[-1] - 1 or len(run) == 4:
-            break
-        run.append(k)
-    if len(run) < 2:
-        return None
-    run = run[::-1]
-    q = table(np.array([c[k][:2] for k in run]))
-    slope_, icpt = np.polyfit(np.array(run, float), q, 1)
-    return run[-1], slope_ * run[-1] + icpt, slope_
-
-
-def clip_accel(r: dict, src: dict, key: str, table: Table, dist) -> dict | None:
-    """Least-squares a in e = a T^2 / 2 over the target steps where the source has the ball on open table."""
-    if r["outcome"] not in ("through", "open"):
-        return None
-    e0 = entry(r, table, dist)
-    if e0 is None:
-        return None
-    k, p0, v0 = e0
-    speed = float(np.linalg.norm(v0))
-    if speed < 1e-3:
-        return None
-    vh = v0 / speed
-    num = den = 0.0
-    n = 0
-    for j, p in enumerate(src.get(key) or []):
-        if p is None or (len(p) > 2 and p[2] < MIN_PEAK) or dist(*p[:2]) < OPEN_PX / 2:
+def run_sample(pos: list, table: Table, dist, clip: int) -> dict | None:
+    """One quadratic fit over the clip's longest run (at least MIN_RUN steps) of target steps where the track has
+    the ball on open table (decoded tracks: map peak >= MIN_PEAK): velocity at its middle and acceleration, in
+    ball diameters per step (squared). The whole run, not the context: a bounce or the plank elsewhere in the
+    clip stays out, and the longest run gives the imagined (blurrier) ball the most steps."""
+    ok = [p is not None and (len(p) < 3 or p[2] >= MIN_PEAK) and open_table(p[0], p[1], dist) for p in pos]
+    best, t = (0, 0), 0
+    while t < len(ok):
+        if not ok[t]:
+            t += 1
             continue
-        T = len(r.get("true_pos_context") or []) + j - k
-        e = float((table(p) - p0 - v0 * T) @ vh)
-        num, den, n = num + e * T * T, den + 0.5 * T ** 4, n + 1
-    if not n:
+        u = t
+        while u < len(ok) and ok[u]:
+            u += 1
+        if u - t > best[1] - best[0]:
+            best = (t, u)
+        t = u
+    a, b = best
+    if b - a < MIN_RUN:
         return None
-    return {"side": r.get("side_in", "R"), "speed": speed, "a": num / den, "n": n}
+    T = np.arange(b - a) - (b - a - 1) / 2
+    c = np.polyfit(T, table(np.array([pos[k][:2] for k in range(a, b)])), 2)
+    return {"clip": clip, "v": c[1][None], "a": (2 * c[0])[None]}
 
 
-def model_slope(per: list[dict], edges: np.ndarray, rng) -> dict:
-    if not per:
-        return {"s": None, "n_down": 0, "n_up": 0}
-    a = np.array([x["a"] for x in per])
-    sp = np.array([x["speed"] for x in per])
-    down = np.array([x["side"] == "R" for x in per])        # rolled in from the right = downhill (leftwards)
-    v = np.c_[sp, np.zeros_like(sp)]
-    res = slope_binned(v, a, down, edges)
-    boots = []
+def track_slope(samples: list[dict], edges: np.ndarray | None, rng) -> dict:
+    """s from local fits (rolling mostly along the table; down = rolling left), bootstrap over clips."""
+    if not samples:
+        return {"s": None, "n_down": 0, "n_up": 0, "n_clips": 0}
+    v, a = np.concatenate([x["v"] for x in samples]), np.concatenate([x["a"] for x in samples])
+    clip = np.concatenate([np.full(len(x["v"]), x["clip"]) for x in samples])
+    sp = np.linalg.norm(v, axis=1)
+    keep = (np.abs(v[:, 0]) > 0.7 * sp) & (sp > 0.02)
+    v, a, clip, sp = v[keep], a[keep], clip[keep], sp[keep]
+    acc, down = along(v, a), v[:, 0] < 0
+    if edges is None:
+        edges = speed_edges(sp[down], sp[~down])
+    res = slope_binned(v, acc, down, edges)
+    boots, ids = [], np.unique(clip)
+    by = {i: np.flatnonzero(clip == i) for i in ids}
     for _ in range(N_BOOT):
-        i = rng.integers(0, len(a), len(a))
-        s = slope_binned(v[i], a[i], down[i], edges)["s"]
-        if s is not None:
-            boots.append(s)
-    return {**res, "ci": ci(boots), "n_down": int(down.sum()), "n_up": int((~down).sum()),
-            "a_down": round(float(a[down].mean()), 5) if down.any() else None,
-            "a_up": round(float(a[~down].mean()), 5) if (~down).any() else None}
+        idx = np.concatenate([by[i] for i in rng.choice(ids, len(ids))]) if len(ids) else np.zeros(0, int)
+        s_ = slope_binned(v[idx], acc[idx], down[idx], edges)["s"] if len(idx) else None
+        if s_ is not None:
+            boots.append(s_)
+    return {**res, "ci": ci(boots), "n_down": int(down.sum()), "n_up": int((~down).sum()), "n_clips": int(len(ids)),
+            "a_down": round(float(acc[down].mean()), 5) if down.any() else None,
+            "a_up": round(float(acc[~down].mean()), 5) if (~down).any() else None,
+            "edges": [float(e) for e in edges]}
 
 
 def auroc_side(rows: list[dict], side: str):
@@ -280,7 +270,7 @@ def figures(res: dict, out: Path) -> None:
         fig, (a1, a2) = plt.subplots(1, 2, figsize=(9, 3.4))
         e = [x["epoch"] for x in ep]
         for k, col, lab in (("open", "tab:blue", "imagined, open-table clips"),
-                            ("through", "tab:orange", "imagined, through passes")):
+                            ("plank", "tab:orange", "imagined, plank clips")):
             s = [np.nan if x[k]["s"] is None else x[k]["s"] for x in ep]
             if np.isfinite(s).any():
                 a1.plot(e, s, "o-", color=col, label=lab)
@@ -335,23 +325,21 @@ def load_runs(plan: Path, fname: str) -> dict:
 
 
 def measure(runs: dict, table: Table, dist, rng) -> dict | None:
-    """Real (tracker, decoder on real frames) and imagined s for one clip set; the real tracks come from
-    both-before where it has the clip (the tracker's are the same in every run's file)."""
+    """Real (tracker, decoder on real frames) and imagined s over the target steps of one clip set, with the same
+    speed bins for all (from the tracker); real tracks from both-before where it has the clip."""
     if not runs:
         return None
     base = {r["clip_id"]: r for rr in runs.values() for r in rr}
     base.update({r["clip_id"]: r for r in runs.get("both-before", [])})   # its decoder folds are the both-directions ones
+    ids = {c: i for i, c in enumerate(sorted(base))}
 
-    def per(rows_: list[dict], key: str) -> list[dict]:
-        return [x for r in rows_ if (x := clip_accel(base.get(r["clip_id"], r), r, key, table, dist)) is not None]
+    def samples(rows_: list[dict], key: str) -> list[dict]:
+        return [x for r in rows_ if (x := run_sample(r.get(key) or [], table, dist, ids[r["clip_id"]])) is not None]
 
-    tracker = per(list(base.values()), "true_pos")
-    edges = speed_edges(np.array([x["speed"] for x in tracker if x["side"] == "R"]),
-                        np.array([x["speed"] for x in tracker if x["side"] == "L"]))
-    return {"tracker": model_slope(tracker, edges, rng),
-            "decoder_real": model_slope(per(list(base.values()), "real_pos"), edges, rng),
-            "runs": {n: model_slope(per(rr, "imagined_pos"), edges, rng) for n, rr in runs.items()},
-            "entry_speed_edges": [float(e) for e in edges]}
+    tracker = track_slope(samples(list(base.values()), "true_pos"), None, rng)
+    edges = np.array(tracker["edges"]) if tracker.get("edges") else None
+    return {"tracker": tracker, "decoder_real": track_slope(samples(list(base.values()), "real_pos"), edges, rng),
+            "runs": {n: track_slope(samples(rr, "imagined_pos"), edges, rng) for n, rr in runs.items()}}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -382,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
     open_runs = load_runs(args.plan, "per_clip_open.json")
     if not runs and not open_runs and not rows:
         return 0
-    sets = {"open": measure(open_runs, table, dist, rng), "through": measure(runs, table, dist, rng)}
+    sets = {"open": measure(open_runs, table, dist, rng), "plank": measure(runs, table, dist, rng)}
     epochs = []
     for e, n in EPOCH_RUNS:
         if n in runs or n in open_runs:
@@ -400,9 +388,10 @@ def main(argv: list[str] | None = None) -> int:
           f"s = (downhill - uphill acceleration along the motion) / 2 at matched speed, in {unit} per step² "
           "(1 step = 1/8 s); friction cancels. " + ("Positions are mapped onto the table with the ball's size (camera "
           "calibration from real frames only). " if cal.get("ok") else "No tracker file here, so no camera calibration "
-          "and no whole-video measure. ") + "Per clip: the ball's path over the target against steady speed from "
-          "its last context steps; open = the open-table clips (scripts/cut_open_clips.py, scored only), through = "
-          "through passes of the plank clips. See models/vjepa2/slope_test.py.", ""]
+          "and no whole-video measure. ") + "Clips: one fit per clip over its longest run of 5+ target steps on open "
+          "table; open = the "
+          "open-table clips (scripts/cut_open_clips.py, scored only), plank = the plank clips' target steps. "
+          "See models/vjepa2/slope_test.py.", ""]
     if cal.get("ok"):
         md.append(f"Calibration: radius = {cal['coef'][0]:.4f} x + {cal['coef'][1]:.4f} y + {cal['coef'][2]:.2f} px "
                   f"(R² {cal['r2']}, {cal['n']} frames; radius {cal['radius_range_px']} px across the table).")
@@ -421,11 +410,11 @@ def main(argv: list[str] | None = None) -> int:
                       f"{r.get('n_down', 0)} | {r.get('n_up', 0)} |")
     if epochs:
         md += ["", "### Learning curve (C: both directions, loss-weighted sampling)", "",
-               "| epoch | s, open clips | 95% CI | s, through passes | 95% CI | AUROC ball from R | AUROC ball from L |",
+               "| epoch | s, open clips | 95% CI | s, plank clips | 95% CI | AUROC ball from R | AUROC ball from L |",
                "|---|---|---|---|---|---|---|"]
         for x in epochs:
-            md.append(f"| {x['epoch']} | {f5(x['open']['s'])} | {x['open'].get('ci')} | {f5(x['through']['s'])} | "
-                      f"{x['through'].get('ci')} | {x['auroc_R']} | {x['auroc_L']} |")
+            md.append(f"| {x['epoch']} | {f5(x['open']['s'])} | {x['open'].get('ci')} | {f5(x['plank']['s'])} | "
+                      f"{x['plank'].get('ci')} | {x['auroc_R']} | {x['auroc_L']} |")
     md += ["", "Imagined paths count only target steps where the imagined ball is clearly visible (map peak "
            f">= {MIN_PEAK}) on open table, so n shows how often the model draws the ball at all. Figures: "
            "`slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`."]

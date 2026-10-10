@@ -136,3 +136,36 @@ def test_slope_test_recovers_slope_through_the_camera_tilt(tmp_path):
     res = json.loads((tmp_path / "plan" / "slope_test" / "slope_test.json").read_text())
     assert res["calibration"]["ok"] and res["calibration"]["r2"] > 0.9
     assert abs(res["real"]["s"] - s_true) < 0.004, res["real"]
+
+
+def test_slope_test_reads_the_slope_from_clip_tracks(tmp_path):
+    """Open-table clip tracks with a known slope (no tracker file, so plain pixels / 16): the slope comes back from
+    the tracker's tracks and from imagined ones that follow them."""
+    import numpy as np
+    import slope_test
+
+    rng = np.random.default_rng(2)
+    s_true, fric = 0.01, 0.005                              # ball diameters / step^2 (1 diameter = 16 px here)
+
+    def path(left, speed):                                  # on the open table right of the plank
+        x, v, out = (480.0 if left else 330.0), speed, []
+        for _ in range(24):
+            out.append([x + rng.normal(0, 0.5), 250.0 + rng.normal(0, 0.5)])
+            v = max(v + (s_true if left else -s_true) - fric, 0.0)
+            x += (-1 if left else 1) * v * 16
+        return out
+
+    rows = []
+    for i in range(60):
+        left = i % 2 == 0
+        p = path(left, rng.uniform(0.25, 0.35))
+        rows.append({"clip_id": f"o{i}", "outcome": "open", "side_in": "R" if left else "L",
+                     "true_pos_context": p[:12], "true_pos": p[12:], "real_pos": [q + [0.9] for q in p[12:]],
+                     "imagined_pos": [q + [0.9] for q in p[12:]]})
+    d = tmp_path / "scores" / "both-before"
+    d.mkdir(parents=True)
+    (d / "per_clip_open.json").write_text(json.dumps(rows))
+    assert slope_test.main(["--plan", str(tmp_path), "--track", str(tmp_path / "none.csv")]) == 0
+    res = json.loads((tmp_path / "slope_test" / "slope_test.json").read_text())["sets"]["open"]
+    assert abs(res["tracker"]["s"] - s_true) < 0.01, res["tracker"]
+    assert abs(res["runs"]["both-before"]["s"] - s_true) < 0.01
