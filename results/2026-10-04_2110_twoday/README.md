@@ -1,8 +1,8 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-10 14:14 UTC
-- Code commit: `c7acf56`
+- Saved: 2026-10-10 19:09 UTC
+- Code commit: `a70bd48`
 - Note: two-day plan, 20 steps done
 
 ## Figures
@@ -66,4 +66,6 @@
 - [vjepa2/plan/scores/rollout-before/outcome.png](vjepa2/plan/scores/rollout-before/outcome.png)
 - [vjepa2/plan/slope/acc_vs_speed.png](vjepa2/plan/slope/acc_vs_speed.png)
 - [vjepa2/plan/slope/gradient_map.png](vjepa2/plan/slope/gradient_map.png)
+- [vjepa2/plan/slope_test/epochs.png](vjepa2/plan/slope_test/epochs.png)
+- [vjepa2/plan/slope_test/real_acc_vs_speed.png](vjepa2/plan/slope_test/real_acc_vs_speed.png)
 - [vjepa2/plan/summary.png](vjepa2/plan/summary.png)
