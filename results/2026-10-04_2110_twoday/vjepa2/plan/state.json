@@ -162,6 +162,14 @@
    "code": "f6f56ce",
    "minutes": 156.4,
    "finished": "2026-10-10 07:20"
+  },
+  "other-ball": {
+   "state": "waiting",
+   "started": "2026-10-10 07:21",
+   "code": "f6f56ce",
+   "minutes": 0.0,
+   "finished": "2026-10-10 07:21",
+   "error": "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"
   }
  },
  "choices": {
@@ -174,5 +182,5 @@
    }
   }
  },
- "last_push": "2026-10-10 04:44"
+ "last_push": "2026-10-10 07:21"
 }
