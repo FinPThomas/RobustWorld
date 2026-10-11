@@ -127,7 +127,7 @@
    }
   }
  },
- "frozen decoder, real frames": {
+ "probe on real frames (coarse)": {
   "uniform": {
    "g": [
     -0.0157,
