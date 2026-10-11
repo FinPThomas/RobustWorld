@@ -18,9 +18,10 @@ from exits import Edge  # noqa: E402
 
 def test_a_grasp_around_a_still_ball_lifts_it():
     env = E.CatchEnv(seed=0)
-    env.reset(options={"exit": {"s": env.rest[0] / E.M_PER_PX, "t": 0.0, "vs": 0.0, "vd": 1.0}, "track": None,
+    env.reset(options={"exit": {"s": env.rest[0] / E.M_PER_PX, "t": 0.0, "vs": 0.0, "vd": 1.0}, 
                        "forecast": V.prior_forecast(env.exits["prior"])})
-    env.step([0, 0, 1, -1])
+    for _ in range(3):                    # the gripper may only grasp once it has seen the ball (sight lag)
+        env.step([0, 0, 1, -1])
     g = env.grip_xy()
     E.p.resetBasePositionAndOrientation(env.ball, [g[0], g[1], E.BALL_R], [0, 0, 0, 1], physicsClientId=env.cid)
     E.p.resetBaseVelocity(env.ball, [0, 0, 0], [0, 0, 0], physicsClientId=env.cid)
