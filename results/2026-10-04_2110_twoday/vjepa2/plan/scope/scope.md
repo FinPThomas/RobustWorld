@@ -21,5 +21,7 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
 | lossmix_both-after | L | 0.94 (n 25) | 0.78 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
 | lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.925 (n 52) | 0.961 |
+| lossmix_open-after | L | 0.949 (n 25) | 0.891 (n 7) | 0.513 (n 40) | 0.429 (n 10) | 0.922 |
+| lossmix_open-after | R | 0.854 (n 82) | 0.609 (n 26) | 0.081 (n 106) | 0.891 (n 52) | 0.959 |
 
 Figure: `scope/height_profile.png`. The slope (downhill) results are in `slope/` (slope.py).

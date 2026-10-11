@@ -45,6 +45,12 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 lossmix_both_e7-after (ball from R) | after | 0.888 | [0.845, 0.926] | - | - | 0.465 | 0.555 | - | - | - | - | - |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 | 0.487 | 0.613 | 0.851 | 0.835 | 0.637 | - | - |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 | 0.551 | 0.651 | 0.872 | 0.88 | 0.701 | 0/5 | 18/20/17/17/18 |
+| V-JEPA 2 lossmix_open-after | after | 0.912 | [0.88, 0.944] | - | - | 0.534 | 0.556 | 0.879 | 0.869 | 0.673 | 0/5 | 17/19/19/16/17 |
+| V-JEPA 2 lossmix_open-after (ball from L) | after | 0.922 | [0.855, 0.969] | - | - | 0.461 | 0.396 | - | - | - | - | - |
+| V-JEPA 2 lossmix_open-after (ball from R) | after | 0.959 | [0.935, 0.979] | - | - | 0.555 | 0.64 | - | - | - | - | - |
+| V-JEPA 2 lossmix_open_e10-after | after | 0.868 | [0.829, 0.907] | - | - | 0.492 | 0.496 | 0.864 | 0.853 | 0.613 | - | - |
+| V-JEPA 2 lossmix_open_e10-after (ball from L) | after | 0.909 | [0.846, 0.962] | - | - | 0.433 | 0.361 | - | - | - | - | - |
+| V-JEPA 2 lossmix_open_e10-after (ball from R) | after | 0.93 | [0.898, 0.959] | - | - | 0.512 | 0.577 | - | - | - | - | - |
 
 ### Generalisation of commit (held out, never trained on)
 
@@ -89,19 +95,23 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | open: imagined, lossmix_both_e10-after | None | [-0.38489, 0.03746] | -0.22064 | 0.00859 | 5 | 8 |
 | open: imagined, lossmix_both_e15-after | 0.0038 | [-0.00318, 0.01014] | -0.06299 | -0.01137 | 9 | 5 |
 | open: imagined, lossmix_both-after | 0.0067 | [-0.01456, 0.02508] | -0.05647 | -0.00224 | 8 | 5 |
-| plank: real ball (tracker) | 0.0299 | [0.0209, 0.03867] | -0.01331 | -0.0589 | 26 | 38 |
-| plank: decoder on real frames | 0.0254 | [0.00637, 0.04858] | -0.04056 | -0.07571 | 31 | 42 |
+| open: imagined, lossmix_open_e10-after | 0.0273 | [-0.1349, 0.04579] | -0.06117 | -0.05383 | 7 | 6 |
+| open: imagined, lossmix_open-after | -0.2025 | [-0.53015, 0.02209] | -0.23612 | 0.00443 | 4 | 6 |
+| plank: real ball (tracker) | 0.0299 | [0.02085, 0.03866] | -0.01331 | -0.0589 | 26 | 38 |
+| plank: decoder on real frames | 0.0254 | [0.00733, 0.04846] | -0.04056 | -0.07571 | 31 | 42 |
 | plank: imagined, both-before | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e1-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e2-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e4-after | None | None | 0.01075 | None | 2 | 0 |
-| plank: imagined, lossmix_both_e7-after | -0.0009 | [-0.02184, 0.01855] | -0.037 | -0.03526 | 7 | 3 |
-| plank: imagined, lossmix_both_e10-after | 0.0019 | [-0.03685, 0.04043] | -0.00519 | 0.00281 | 9 | 12 |
-| plank: imagined, lossmix_both_e15-after | 0.0188 | [-0.02202, 0.05376] | 0.00593 | -0.03708 | 10 | 16 |
-| plank: imagined, lossmix_both-after | 0.0115 | [-0.03052, 0.06129] | 0.0156 | -0.02565 | 16 | 15 |
+| plank: imagined, lossmix_both_e7-after | -0.0009 | [-0.02263, 0.01712] | -0.037 | -0.03526 | 7 | 3 |
+| plank: imagined, lossmix_both_e10-after | 0.0019 | [-0.03577, 0.03721] | -0.00519 | 0.00281 | 9 | 12 |
+| plank: imagined, lossmix_both_e15-after | 0.0188 | [-0.01782, 0.0574] | 0.00593 | -0.03708 | 10 | 16 |
+| plank: imagined, lossmix_both-after | 0.0115 | [-0.03049, 0.06412] | 0.0156 | -0.02565 | 16 | 15 |
 | plank: imagined, commit_both-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_e10-after | None | None | 0.01223 | None | 2 | 0 |
-| plank: imagined, lossmix_e20-after | None | [-0.09625, -0.03091] | -0.02791 | 0.0797 | 13 | 1 |
+| plank: imagined, lossmix_e20-after | None | [-0.09437, -0.03439] | -0.02791 | 0.0797 | 13 | 1 |
+| plank: imagined, lossmix_open_e10-after | -0.0817 | [-0.14353, -0.01759] | -0.12672 | -0.01679 | 5 | 20 |
+| plank: imagined, lossmix_open-after | -0.0521 | [-0.14367, -0.0049] | -0.22222 | -0.04481 | 9 | 29 |
 
 ### Learning curve (C: both directions, loss-weighted sampling)
 
@@ -111,10 +121,10 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | 1 | None | None | None | None | 0.401 | 0.523 |
 | 2 | None | None | None | None | 0.603 | 0.526 |
 | 4 | None | [-0.00945, 0.0156] | None | None | 0.796 | 0.593 |
-| 7 | 0.0267 | [0.00798, 0.04491] | -0.0009 | [-0.02184, 0.01855] | 0.888 | 0.731 |
-| 10 | None | [-0.38489, 0.03746] | 0.0019 | [-0.03685, 0.04043] | 0.914 | 0.85 |
-| 15 | 0.0038 | [-0.00318, 0.01014] | 0.0188 | [-0.02202, 0.05376] | 0.962 | 0.891 |
-| 20 | 0.0067 | [-0.01456, 0.02508] | 0.0115 | [-0.03052, 0.06129] | 0.961 | 0.893 |
+| 7 | 0.0267 | [0.00798, 0.04491] | -0.0009 | [-0.02263, 0.01712] | 0.888 | 0.731 |
+| 10 | None | [-0.38489, 0.03746] | 0.0019 | [-0.03577, 0.03721] | 0.914 | 0.85 |
+| 15 | 0.0038 | [-0.00318, 0.01014] | 0.0188 | [-0.01782, 0.0574] | 0.962 | 0.891 |
+| 20 | 0.0067 | [-0.01456, 0.02508] | 0.0115 | [-0.03049, 0.06412] | 0.961 | 0.893 |
 
 Imagined paths count only target steps where the imagined ball is clearly visible (map peak >= 0.2) on open table, so n shows how often the model draws the ball at all. Figures: `slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`.
 
@@ -130,6 +140,7 @@ g = acceleration from the table after removing friction (a = g - mu * direction 
 | probe on real frames (sharp) | -0.0251 | [-0.0401, -0.0063] | -0.0138 | [-0.0217, -0.0078] | 0.0225 | 348 | 107 |
 | imagined, before post-training (sharp) | - | - | - | - | - | 0 | 0 |
 | imagined, after post-training (C, 20 ep) | 0.0069 | [-0.0152, 0.0314] | -0.0104 | [-0.0197, -0.0015] | 0.0071 | 144 | 56 |
+| imagined, after (E: + open clips) (sharp) | 0.0126 | [-0.0274, 0.067] | -0.0097 | [-0.0244, 0.002] | 0.0513 | 128 | 54 |
 
 
 ## Table slope from ball tracks
@@ -172,6 +183,8 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
 | lossmix_both-after | L | 0.94 (n 25) | 0.78 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
 | lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.925 (n 52) | 0.961 |
+| lossmix_open-after | L | 0.949 (n 25) | 0.891 (n 7) | 0.513 (n 40) | 0.429 (n 10) | 0.922 |
+| lossmix_open-after | R | 0.854 (n 82) | 0.609 (n 26) | 0.081 (n 106) | 0.891 (n 52) | 0.959 |
 
 Figure: `scope/height_profile.png`. The slope (downhill) results are in `slope/` (slope.py).
 
