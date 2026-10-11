@@ -11,7 +11,8 @@ track alone, so the map needs nothing but positions over time:
 
 Positions are put on the table with the ball-size calibration of slope_test.py (camera geometry from real frames
 only), in ball diameters; one step = 1/8 s. Each stretch is a quadratic fit over 5 consecutive steps with the ball on
-open table (decoded: map peak >= 0.2). Nothing here is fitted between a model's output and a score: g and mu are
+open table (decoded: map peak >= 0.2). Decoded tracks use the sharper nearest-real-patch positions (nn_locate.py,
+"sharp") where a run was scored with them, else the decoder's cell-level positions ("coarse"). Nothing here is fitted between a model's output and a score: g and mu are
 a physical summary of each track source on its own, and the real ball's map is only shown next to it (CLAUDE.md
 rules 1-3, 5-6). Uniform-slope g (one vector for the whole table) gets a 95% interval by bootstrap over clips.
 
@@ -185,9 +186,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     base = {r["clip_id"]: r for r in runs["both-before"]}
     ids = {c: i for i, c in enumerate(sorted(base))}
-    sources = [("real ball (tracker)", gather(list(base.values()), "true_pos", table, dist, ids, context=True)),
-               ("frozen decoder, real frames", gather(list(base.values()), "real_pos", table, dist, ids))]
-    sources += [(lab, gather(runs[n], "imagined_pos", table, dist, ids)) for n, lab in RUNS if n in runs]
+    def sharp(rows: list[dict], key: str) -> str:      # nearest-real-patch positions (nn_locate.py) when scored
+        return key + "_nn" if any(r.get(key + "_nn") for r in rows) else key
+
+    rows0 = list(base.values())
+    sources = [("real ball (tracker)", gather(rows0, "true_pos", table, dist, ids, context=True)),
+               ("probe on real frames (coarse)", gather(rows0, "real_pos", table, dist, ids))]
+    if sharp(rows0, "real_pos") != "real_pos":
+        sources.append(("probe on real frames (sharp)", gather(rows0, "real_pos_nn", table, dist, ids)))
+    for n, lab in RUNS:
+        if n in runs:
+            k = sharp(runs[n], "imagined_pos")
+            sources.append((lab + (" (sharp)" if k.endswith("_nn") else ""), gather(runs[n], k, table, dist, ids)))
     res, panels = {}, []
     for lab, s in sources:
         cm, uni = fit(s, per_cell=True), uniform(s, rng)
