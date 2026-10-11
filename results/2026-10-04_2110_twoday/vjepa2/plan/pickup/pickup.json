@@ -1,0 +1,479 @@
+{
+ "settings": {
+  "line_px": 64,
+  "catch_px": 40,
+  "conf": 0.5,
+  "speeds_px_s": [
+   150,
+   300,
+   600,
+   1200,
+   null
+  ],
+  "clips": 337
+ },
+ "by_speed": {
+  "150": {
+   "oracle": {
+    "pickup_auc": 0.754,
+    "success_05": 0.754,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 0.172,
+    "success_05": 0.172,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.354,
+    "success_05": 0.701,
+    "wasted_05": 0.99
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.134,
+    "success_05": 0.134,
+    "wasted_05": 0.015
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.333,
+    "success_05": 0.336,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.214,
+    "success_05": 0.216,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.346,
+    "success_05": 0.351,
+    "wasted_05": 0.044
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.007,
+    "success_05": 0.007,
+    "wasted_05": 0.005
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.112,
+    "success_05": 0.112,
+    "wasted_05": 0.015
+   }
+  },
+  "300": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 0.59,
+    "success_05": 0.59,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.445,
+    "success_05": 0.881,
+    "wasted_05": 0.99
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.149,
+    "success_05": 0.149,
+    "wasted_05": 0.015
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.414,
+    "success_05": 0.418,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.25,
+    "success_05": 0.254,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.435,
+    "success_05": 0.44,
+    "wasted_05": 0.044
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.007,
+    "success_05": 0.007,
+    "wasted_05": 0.005
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.111,
+    "success_05": 0.112,
+    "wasted_05": 0.015
+   }
+  },
+  "600": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 0.978,
+    "success_05": 0.978,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.437,
+    "success_05": 0.866,
+    "wasted_05": 0.99
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.149,
+    "success_05": 0.149,
+    "wasted_05": 0.015
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.407,
+    "success_05": 0.41,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.25,
+    "success_05": 0.254,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.435,
+    "success_05": 0.44,
+    "wasted_05": 0.044
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.007,
+    "success_05": 0.007,
+    "wasted_05": 0.005
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.111,
+    "success_05": 0.112,
+    "wasted_05": 0.015
+   }
+  },
+  "1200": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.437,
+    "success_05": 0.866,
+    "wasted_05": 0.99
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.149,
+    "success_05": 0.149,
+    "wasted_05": 0.015
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.407,
+    "success_05": 0.41,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.25,
+    "success_05": 0.254,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.435,
+    "success_05": 0.44,
+    "wasted_05": 0.044
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.007,
+    "success_05": 0.007,
+    "wasted_05": 0.005
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.111,
+    "success_05": 0.112,
+    "wasted_05": 0.015
+   }
+  },
+  "instant": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.437,
+    "success_05": 0.866,
+    "wasted_05": 0.99
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.149,
+    "success_05": 0.149,
+    "wasted_05": 0.015
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.407,
+    "success_05": 0.41,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.25,
+    "success_05": 0.254,
+    "wasted_05": 0.03
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.435,
+    "success_05": 0.44,
+    "wasted_05": 0.044
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.007,
+    "success_05": 0.007,
+    "wasted_05": 0.005
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.111,
+    "success_05": 0.112,
+    "wasted_05": 0.015
+   }
+  }
+ },
+ "by_side": {
+  "R": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 0.538,
+    "success_05": 0.538,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.443,
+    "success_05": 0.887,
+    "wasted_05": 1.0
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.132,
+    "success_05": 0.132,
+    "wasted_05": 0.014
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.368,
+    "success_05": 0.368,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.198,
+    "success_05": 0.198,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.377,
+    "success_05": 0.377,
+    "wasted_05": 0.014
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.009,
+    "success_05": 0.009,
+    "wasted_05": 0.007
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.075,
+    "success_05": 0.075,
+    "wasted_05": 0.0
+   }
+  },
+  "L": {
+   "oracle": {
+    "pickup_auc": 1.0,
+    "success_05": 1.0,
+    "wasted_05": 0.0
+   },
+   "reactive": {
+    "pickup_auc": 0.786,
+    "success_05": 0.786,
+    "wasted_05": 0.0
+   },
+   "straight": {
+    "pickup_auc": 0.444,
+    "success_05": 0.857,
+    "wasted_05": 0.964
+   },
+   "both-before": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "commit_both-after": {
+    "pickup_auc": 0.214,
+    "success_05": 0.214,
+    "wasted_05": 0.018
+   },
+   "lossmix_both-after": {
+    "pickup_auc": 0.576,
+    "success_05": 0.607,
+    "wasted_05": 0.109
+   },
+   "lossmix_both_e1-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e10-after": {
+    "pickup_auc": 0.439,
+    "success_05": 0.464,
+    "wasted_05": 0.109
+   },
+   "lossmix_both_e15-after": {
+    "pickup_auc": 0.645,
+    "success_05": 0.679,
+    "wasted_05": 0.127
+   },
+   "lossmix_both_e2-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e4-after": {
+    "pickup_auc": 0.0,
+    "success_05": 0.0,
+    "wasted_05": 0.0
+   },
+   "lossmix_both_e7-after": {
+    "pickup_auc": 0.244,
+    "success_05": 0.25,
+    "wasted_05": 0.055
+   }
+  }
+ },
+ "after_minus_before_auc_ci": [
+  0.334,
+  0.505
+ ],
+ "arriving_clips": {
+  "through": 134,
+  "hidden": 0,
+  "bounce": 0
+ },
+ "outcome_counts": {
+  "through": 143,
+  "hidden": 80,
+  "bounce": 114
+ },
+ "placement": {
+  "both-before": {
+   "n": 0,
+   "median_px": null,
+   "median_s": null
+  },
+  "lossmix_both-after": {
+   "n": 58,
+   "median_px": 9.0,
+   "median_s": 0.091
+  }
+ }
+}
