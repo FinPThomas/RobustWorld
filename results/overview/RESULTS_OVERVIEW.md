@@ -1,22 +1,34 @@
-# RobustWorld: results so far (2026-10-08)
+# RobustWorld: results so far (updated 2026-10-11)
 
 **Question.** A ball rolls under a plank. A hidden blocker under the plank stops some passes
 ("hidden", or "bounce" when the ball comes back). Can V-JEPA 2 learn where the invisible
 blocker is, purely by post-training its predictor on our video?
 
-**Short answer so far.** Yes on the training direction, with a caveat. Post-training lifts
-through-vs-blocked AUROC from **0.42 (pretrained, below chance) to 0.93** (best objective,
-`commit`), beating the hand-coded TAPNext + fitted-blockade reference (0.85). But the same models
-get **worse** on balls rolling in from the other side (0.64 → 0.35–0.39), so it is not yet shown
-that the model learnt "an object at a place" rather than a one-direction rule.
+**Short answer so far (updated 2026-10-11).**
+
+- **Right-entry passes (the training direction): yes.** Post-training lifts through-vs-blocked
+  AUROC from **0.42** (pretrained, below chance) to **0.96**, beating the hand-coded TAPNext +
+  fitted-blockade reference (0.85). The best runs are commit with loss-weighted sampling for 20
+  epochs: B, trained on right-entry clips only, and C, trained on both directions.
+- **Learning from one direction does not transfer.** Models trained only on right-entry clips get
+  *worse* on left-entry clips (0.64 → 0.35–0.39), and mirroring the clips does not rescue them.
+- **Training on both directions fixes the other side.** **C reaches 0.96 from the right and 0.89
+  from the left** (left clips scored only on held-out folds). C is the best model overall.
+- **The narrow gap is now learnt.** Loss-weighted sampling plus 20 epochs lifts the imagined ball
+  in the narrow gap from 0.44 to 0.79 (real frames 0.91).
+- **The table slope is not learnt yet.** The imagined slope term is 0.007, against 0.030 for the
+  real ball, with a CI that includes 0. The frozen decoder's 32 px grid is too coarse to measure
+  the slope even on real frames.
 
 Sources (all figures here are copies, so they render after `git pull`):
-post-training on PR #3 (`claude/colab-two-day-plan-3gn90a` @ `e717d1c`,
-`results/2026-10-04_2110_twoday/`), probing on PR #4 (`claude/vjepa-probing-overnight` @ `919d440`,
-`results/2026-10-05_0425_vjepa-probing/`), zero-shot on `main` (`docs/results/ball_comparison.md`).
+post-training on PR #3 (`claude/colab-two-day-plan-3gn90a` @ `18840c8`,
+`results/2026-10-04_2110_twoday/`, Kaggle sessions up to #7 on 2026-10-11), probing on PR #4
+(`claude/vjepa-probing-overnight` @ `919d440`, `results/2026-10-05_0425_vjepa-probing/`),
+zero-shot on `main` (`docs/results/ball_comparison.md`).
 
-
-> **Next steps (2026-10-09):** see [NEXT_STEPS_PLAN.md](NEXT_STEPS_PLAN.md) for training length, the narrow gap, the other side and the slope, surprise maps, and the pick-up evaluation outline.
+> **Plans:** [NEXT_STEPS_PLAN.md](NEXT_STEPS_PLAN.md) (2026-10-09) and
+> [RESEARCH_SCOPE.md](RESEARCH_SCOPE.md) (the run list for the latest Kaggle sessions: B, A, C, slope).
+> **New since 2026-10-08:** sections 4–6 and the updated 8–9.
 
 ---
 
@@ -95,7 +107,7 @@ edge in the blockade rows (raw comparison; path-matched numbers above).*
 "Before" rows (codes-before 0.44, rollout-before 0.415) match the pretrained model, as they
 should. Every successful run's gain CI excludes 0 (`p_no_gain` = 0.0).
 
-### What the best model (commit) actually imagines
+### What commit (best of the 10-epoch round) actually imagines
 
 ![commit: does the imagined ball pass the plank?](figures/pt_outcome_commit-after.png)
 *commit-after. The pretrained predictor shows no ball past the plank for any clip (next figure).
@@ -147,26 +159,183 @@ makes the imagined ball visible.*
 ![plain: change map](figures/pt_change_map.png)
 ![plain: layer patching](figures/pt_layer_patching.png)
 
-## 4. Generalisation: the other side gets worse
+## 4. Training longer, with loss-weighted sampling: the narrow gap (new)
 
-The models never saw left-entry clips during training.
+**What B changes.** B is commit with two changes:
+
+- **Loss-weighted sampling:** each epoch, clips are drawn in proportion to their previous-epoch
+  loss, with a floor. No outcome label is used.
+- **Longer training:** 20 epochs with a cosine schedule, scored at epochs 10 and 20.
+
+**Results:**
+
+| run | AUROC [95% CI] | gain vs before [95% CI] | far-cell AUROC | ball hit rate | best epochs |
+|---|---|---|---|---|---|
+| commit-after (10 ep, reference) | 0.934 [0.90, 0.96] | +0.43 to +0.59 | 0.81 | 0.58 | 10/7/10/9/10 |
+| B @ 10 epochs (`lossmix_e10`) | 0.949 [0.92, 0.97] | +0.46 to +0.60 | 0.84 | 0.64 | – |
+| **B @ 20 epochs (`lossmix_e20`)** | **0.964** [0.94, 0.985] | +0.47 to +0.62 | **0.88** | **0.70** | 18/20/17/17/18 |
+
+**Mean imagined P(ball beyond the plank), right-entry passes, by the height where the ball
+reaches the plank:**
+
+| run | wide gap (104–186 px) | narrow gap (315–367 px) | blocked middle | AUROC at y 300–380 |
+|---|---|---|---|---|
+| real frames | 0.947 | 0.911 | 0.075 | 0.997 |
+| pretrained | 0.175 | 0.189 | 0.185 | 0.451 |
+| commit-after | 0.602 | 0.437 | 0.133 | 0.869 |
+| codes-after | 0.846 | 0.486 | 0.112 | 0.868 |
+| B @ 10 | 0.642 | 0.539 | 0.121 | 0.908 |
+| **B @ 20** | **0.819** | **0.786** | 0.114 | 0.923 |
+
+![B @ 20: P(blocked) vs crossing point](figures/pt_crossing_lossmix_e20-after.png)
+*B @ 20. Unlike commit (section 3), P(blocked) now also drops in the lower, narrow window near
+360 px, so both through windows are learnt. The imagined ball is still weaker than real.*
+
+![Height profile by run](figures/pt_scope_height_profile.png)
+*Imagined P(ball beyond the plank) by height at the plank. Dashed = real frames; shaded = the
+two gaps. Left panel: both-direction runs on left-entry passes. Right panel: all runs on
+right-entry passes (numbers in the table above).*
+
+Most of B's gain over commit comes from the second 10 epochs (0.949 → 0.964; narrow gap 0.54
+→ 0.79). The sampling alone helps a little at epoch 10, although the learning rate is not at
+zero there, so that comparison is mildly confounded.
+
+## 5. Generalisation: the other side (updated)
+
+### 5a. Right-only models fail on the other side, and mirroring doesn't help
 
 ![Generalisation](figures/generalisation.svg)
 
-| model | other side: before | after | real frames |
+| model (trained on right only) | left: before | after | real frames | **mirrored: before** | **mirrored: after** | mirrored: real |
+|---|---|---|---|---|---|---|
+| plain | 0.643 | 0.390 | 0.98 | 0.726 | 0.523 | 0.996 |
+| commit | 0.643 | 0.355 | 0.98 | 0.726 | 0.530 | 0.996 |
+
+**Mirror test.** We flipped the left clips left↔right, so each ball enters from the right like
+the training clips, at the same height. Post-training still does not help: it moves the mirrored
+clips from 0.73 to chance (0.52–0.53).
+
+**Height test.** On the left clips, the blockade range fitted on the right clips (176–329 px)
+gets 85.5% of outcomes right. So the blocker is at the same height from both sides. The question
+is whether the model's "gets through" score follows that range (AUROC):
+
+| score | real frames | before | after (plain / commit) | mirrored after (plain / commit) |
+|---|---|---|---|---|
+| AUROC vs the height range | 0.84 | 0.65 | **0.33 / 0.31** (inverted) | 0.53 / 0.50 (chance) |
+
+![Height test, commit](figures/pt_mirror_height_commit.png)
+*Left-entry clips (commit). Grey = the blockade range. After training (third panel), bounces
+inside the range get a *high* "ball beyond the plank" score and through passes in the gaps a low
+one: the model's map is inverted for this direction.*
+
+**My reading (inferred, not tested directly):** the right-only model learnt an *image-space*
+outcome map, not a direction-relative one. In the training clips, at blockade heights, a
+bouncing ball ends up on the **right** of the plank, and at gap heights a passing ball ends up on
+the **left**. Applied to balls from the left, this predicts:
+
+- blockade heights → ball on the right ("came through");
+- gap heights → ball on the left ("stopped").
+
+That is exactly the inversion seen. The mirrored clips are out of distribution (a mirrored
+scene), so they land near chance. Either way, the right-only model does not hold "a solid
+object at a place" that applies to any direction.
+
+### 5b. Training on both directions fixes it
+
+These runs use `cv_folds` over all 337 clips (254 from the right + 83 from the left). Each side is
+scored on held-out folds, so the left side is no longer a held-out *direction*. It is held-out
+clips of a direction seen in training.
+
+| run | both sides | ball from R | ball from L | gain on L [95% CI] |
+|---|---|---|---|---|
+| both-before (pretrained) | 0.454 | 0.437 | 0.660 | – |
+| A: commit, both, 10 ep (`commit_both`) | 0.843 | 0.917 | 0.767 | −0.02 to +0.23 (p = 0.05) |
+| **C: commit + loss-weighted, both, 20 ep (`lossmix_both`)** | **0.912** | **0.961** | **0.893** | **+0.10 to +0.36** |
+
+**Findings:**
+
+- C is the best model across both sides.
+- Adding left clips costs nothing on the right: 0.961, the same as right-only B's 0.964.
+- In the left-entry height profile (section 4 figure, left panel), C follows the real curve in
+  both gaps. A misses the narrow gap.
+- Caveat: the left side has only 7 narrow-gap passes and 10 passes at y 300–380, so its
+  narrow-gap numbers are noisy.
+
+![C: P(blocked) vs crossing, all 337 passes](figures/pt_crossing_lossmix_both-after.png)
+*C on all 337 passes: both windows are learnt; AUROC 0.89 on this normalised score
+(real frames 0.99).*
+
+![C: blocker map](figures/pt_blockermap_lossmix_both-after.png)
+
+![C: imagined vs real over time](figures/pt_curves_lossmix_both-after.png)
+
+### 5c. Learning curve (C, scored at saved epochs)
+
+| epoch | 0 | 1 | 2 | 4 | 7 | 10 | 15 | 20 |
+|---|---|---|---|---|---|---|---|---|
+| AUROC, ball from R | 0.437 | 0.401 | 0.603 | 0.796 | 0.888 | 0.914 | **0.962** | 0.961 |
+| AUROC, ball from L | 0.660 | 0.523 | 0.526 | 0.593 | 0.731 | 0.850 | **0.891** | 0.893 |
+
+![C learning curve and slope by epoch](figures/slope_epochs.png)
+*Right panel: the blockade score rises steadily until about epoch 15, then flattens.
+The right side learns first; the left side lags by about 3–5 epochs (it has a third of the
+clips). Left panel: the slope term, section 6.*
+
+**What the curve shows:**
+
+- Learning stops at about epoch 15, under this cosine schedule.
+- Run F (30 epochs, queued) will show whether a longer schedule moves the plateau, or whether it
+  is a data limit.
+- The dip at epoch 1 is probably the predictor leaving its pretrained solution before it
+  learns the blockade.
+
+## 6. Table slope: not learnt yet (new)
+
+**Why test the slope.** The table is slightly tilted (downhill = left in the image). This is a
+second hidden physical property the model could pick up from video.
+
+**How it is measured.** At matched speed, friction cancels:
+
+**s = (downhill acceleration − uphill acceleration) / 2**
+
+s is in ball diameters per step², with 1 step = 1/8 s. Positions are mapped onto the table using
+the ball's size. Nothing is fitted to read the model.
+
+| track | s | 95% CI | stretches (down / up) |
 |---|---|---|---|
-| plain | 0.643 | **0.388** | 0.98 |
-| commit | 0.643 | **0.350** | 0.98 |
+| real ball, whole video | **0.0299** | [0.027, 0.032] | 396 / 138 |
+| real ball, plank clips | 0.0299 | [0.021, 0.039] | 26 / 38 |
+| decoder on real frames, plank clips | 0.0254 | [0.006, 0.049] | 31 / 42 |
+| decoder on real frames, open-table clips | −0.131 | [−0.42, 0.05] | 10 / 12 |
+| imagined, pretrained | – (ball never drawn clearly) | – | 0 / 0 |
+| imagined, C @ 20, open table | 0.0067 | [−0.015, 0.025] | 8 / 5 |
+| imagined, C @ 20, plank clips | 0.0115 | [−0.031, 0.061] | 16 / 15 |
 
-Commit's per-outcome detail on the other side:
+**Slope map** (uniform pull over the whole table, friction removed). g_x < 0 means pulled left
+(downhill):
 
-- **Before training:** every pass imagined about equally far, so everything reads as through.
-- **After training:** 23 of 32 through passes are now called blocked. Bounces get *more*
-  far-side ball mass than through passes (0.67 vs 0.53), i.e. the ranking is inverted.
-- **Caveat on the data:** the left set is mostly bounces (48 bounce, 3 hidden), so it is a
-  different outcome mix from training.
+| track | g_x [95% CI] | stretches |
+|---|---|---|
+| real ball (tracker) | **−0.0265** [−0.030, −0.023] | 955 |
+| frozen probe on real frames | −0.016 [−0.039, +0.029] | 355 |
+| imagined, before post-training | – (no usable stretches) | 0 |
+| imagined, after (C, 20 ep) | +0.007 [−0.012, +0.030] | 144 |
 
-## 5. Zero-shot baselines (main, older 88-clip set)
+![Slope map](figures/slope_map.png)
+*Left: the real ball is pulled left (downhill) almost everywhere. Second: the frozen probe on
+real frames can't recover this; its 32 px cells are too coarse for accelerations this small.
+Right: the post-trained model's imagined ball shows no consistent downhill pull.*
+
+**Reading:**
+
+- The slope result is inconclusive rather than negative. Imagined s is about a fifth of the real
+  value, with a CI that spans 0.
+- There are too few stretches where the imagined ball is visible on open table (n 5–16).
+- The readout is too coarse to see the slope even on real frames.
+- A sharper, untrained position readout is built but not yet scored: the nearest real
+  context patch (`nn_locate`, commit `07baaf3`). It is the next step for this test.
+
+## 7. Zero-shot baselines (main, older 88-clip set)
 
 ![Zero-shot comparison](figures/zs_ball_comparison.png)
 
@@ -174,69 +343,69 @@ On the earlier `start.mp4` set, the pretrained V-JEPA imagined outcome AUROC was
 through passes called hidden), and TAPNext + fitted blockade reached 0.98. That blocker was in a
 different place and the clips were easier. **On the current clips the bar is 0.85, not 0.98.**
 
-## 6. My reading of the results
+## 8. My reading of the results (updated)
 
-1. **Proof of concept: met for the training direction.**
-   - The gain is large and paired: commit +0.43 to +0.59, CI well clear of 0.
-   - The readout cannot have learnt it, because the decoder is frozen and outcome-blind.
-   - Commit beats the outcome-fitted tracker reference (0.93 vs 0.85).
-2. **What it learnt is partial.**
-   - It gets one of the two through windows.
-   - Its imagined ball past the plank is faint (about 30% of the real strength).
-   - It is still improving at epoch 10: 19 of the 20 folds of plain, commit, codes and gate peak
-     at epoch 9 or 10. Longer training is the cheapest likely win.
-3. **Main open question: blockade or one-direction rule?** The drop on the other side fits
-   either of these:
-   - (a) a rule tied to motion direction ("right-to-left balls at these heights stop");
-   - (b) a real blockade model hurt by distribution shift (mirror-image motion, mostly bounces).
+1. **Proof of concept: met, now on both sides.**
+   - Right-entry passes reach 0.96, left-entry passes 0.89. The real-frame ceiling is 0.98–1.0,
+     and the outcome-fitted tracker gets 0.85.
+   - The readout cannot have learnt this: the decoder is frozen and blind to outcomes.
+2. **Both through windows are now learnt.** Commit at 10 epochs got only the wide gap. The
+   narrow gap came with loss-weighted sampling and 20 epochs (imagined 0.79 vs 0.91 real).
+   The imagined ball is still fainter than the real one, mostly late in the clip.
+3. **The one-direction question is answered.**
+   - A right-only model learns an image-space outcome map that is inverted for balls from the
+     left. The mirror test doesn't rescue it.
+   - So "a blocker at a place" is not learnt from one direction alone. Seeing both directions is
+     enough to get both right.
+   - What's still open: whether C holds one shared blocker representation or two
+     direction-specific maps. A moved-blocker or new-ball test would separate them.
+4. **Training length matters more than objective tricks.**
+   - Doubling the epochs gained more than any architecture change: the copy gate, the
+     multi-hypothesis head and the objectives all made smaller differences.
+   - C plateaus at about epoch 15.
+5. **The slope is a measurement problem first.** The readout must see accelerations of about
+   0.03 ball diameters/step² before we can say whether the model learnt the slope.
 
-   The mirror test (flip left clips so they look like right-entry) and the height test (score vs
-   the fitted blockade range) separate the two:
-   - if mirrored-after recovers high AUROC, it learnt something keyed to motion direction;
-   - if score vs height tracks the blockade range on left clips, it learnt the location.
+## 9. Future work (updated)
 
-## 7. Future work
+### Runs not done yet
 
-### Runs not done yet (queued in `docs/experiment_plan.md` / `plan.py`)
-
-| priority | run | why |
+| priority | run | state / why |
 |---|---|---|
-| 1 | `mirror-plain`, `mirror-commit` (+ height test) | Settles the direction-rule question. Code is in (`975c38c`), about 2 h on Kaggle. |
-| 2 | `long-1` / `long-2`: best two × 30 epochs | Best epochs are still 9–10, so the model is likely still improving. |
-| 3 | `interpret` for commit (the best run) | So far only plain is interpreted. |
-| 4 | `rollout-after`, `codes_rollout-before/after` | Rollout was mid-training when Kaggle stopped (likely weekly quota). |
-| 5 | `gate_hyp_commit-after` | Low priority: gate and hyp both failed alone. |
-| 6 | `frac-50`, `frac-25` | Does the gain grow with data? Compute-heavy, so last. |
-| – | Stage 5 new-ball test | Needs a new-ball recording (`configs/heldout.json`). |
-| – | 3-way bounce score with `away_from_plank` | Ready on PR #4. Rescore only, waits for PR #4 to merge. |
+| 1 | Score the slope with the sharper `nn_locate` positions | Built (`07baaf3`), not scored. Without it, the slope test can't succeed even on real frames. |
+| 2 | **E**: C plus the open-table clips in training, 20 ep | Waiting: `robustworld_clips_open.zip` must be added to the Kaggle dataset. Gives the slope far more free-rolling examples. |
+| 3 | **F**: C for 30 epochs, scored at 25 and 30 | Queued. Tests whether the epoch-15 plateau moves with a longer schedule. |
+| 4 | **D**: the other ball, scored without training | Waiting: the clips and `configs/heldout.json` aren't added yet. First held-out *object* test. |
+| 5 | `interpret` (change maps, layer patching) for C | Only plain has been interpreted. Would show whether both directions share one representation. |
+| – | 3-way bounce score with `away_from_plank` | Ready on PR #4; rescore only. |
 | – | "Known blocker" panel | Needs the blocker outline in `configs/scenes/whole.json`. |
+| dropped | rollout, codes_rollout, gate_hyp_commit, frac-50/25, the old 30-epoch runs | Dropped in favour of B, A and C (RESEARCH_SCOPE.md). |
 
 ### Directions I think are most promising
 
-1. **Counterfactual sweep (cheap, high value).** Paste the ball at many heights in one context
-   and plot imagined P(blocked) along the plank. That gives the model's blockade map directly,
-   with no outcomes involved. It would show both windows (or not) and works on either side.
-2. **Surprise as a second score.** Path-matched surprise already separates outcomes before
-   training. If post-training makes the model *less* surprised by blocked passes in the
-   blockade rows and not elsewhere, that is label-free evidence of a location-specific model.
-3. **Train on both directions.** Then hold out a **moved blocker** recording. This is the clean
-   test of "object at a place":
-   - a direction rule would fail both;
-   - a location model would transfer across directions and adapt quickly to the new position.
-4. **Fix the commitment problem properly.** Plain averages the futures; hyp collapsed. Options:
-   - hyp with a balanced assignment or an entropy bonus on the picker;
-   - **discrete latent modes** (a small VQ "outcome" latent the predictor conditions on, learnt
-     self-supervised);
-   - an **adversarial** term that makes imagined features look like real ones, which should
-     sharpen the faint ball. The discriminator is part of training, not a readout, so it is
-     allowed, but it must never see outcome labels.
-5. **Object-slot sparsity.** Penalise changes away from ball tokens. The interpretation shows
-   the change is spread over the whole frame, and pushing it onto the ball should help transfer.
-6. **Imitation-from-observation pick-up policy.** Use the post-trained predictor to imagine
-   *where and when* the ball crosses the line, read through the same frozen decoder. That
-   forecast is the policy's target.
+1. **Moved-blocker recording (most informative next video).** Train C on position A, then test
+   on position B:
+   - with zero-shot scoring, it should fail;
+   - after a few clips of fine-tuning, it should adapt fast if it represents "an object at a
+     place".
+
+   This is now the cleanest test of a real blockade model, since both directions are solved.
+2. **Counterfactual sweep.** Paste the ball at many heights in one context and plot imagined
+   P(blocked) along the plank. That gives the model's own blockade map with no outcomes. If one
+   shared map appears for both entry directions, C holds one blocker representation.
+3. **Surprise as a second score.** Path-matched surprise separates outcomes even before
+   training. If C is less surprised by blocked passes only inside the blockade rows, that is
+   label-free evidence of a location model.
+4. **Sharper imagined ball.** The imagined far-side ball is still fainter than real. Options:
+   - **discrete latent modes** (a small VQ "outcome" latent, learnt self-supervised);
+   - an **adversarial** realism term (the discriminator must never see outcome labels);
+   - **object-slot sparsity** (keep changes on the ball tokens).
+5. **Slope, done properly.** Score `nn_locate` positions, add open-table clips (run E), and
+   consider a recording with a stronger tilt so the effect is well above the readout's noise.
+6. **Imitation-from-observation pick-up policy.** Use C to imagine *where and when* the ball
+   crosses the line, read through the frozen decoder, and use that as the policy's target.
    - Start with a planner that moves the gripper to the predicted crossing point.
-   - Then learn from human demonstration video, e.g. action-conditioned prediction in the style
-     of V-JEPA 2-AC.
-   - Success metric: pick-up rate on blocked vs through passes. A blockade-aware model should
-     not reach for balls that never arrive.
+   - Then learn from human demonstrations, e.g. action-conditioned prediction in the style of
+     V-JEPA 2-AC.
+   - Success metric: pick-up rate on through vs blocked passes. A blockade-aware model shouldn't
+     reach for balls that never arrive.
