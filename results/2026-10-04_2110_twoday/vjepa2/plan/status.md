@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-11 06:13 UTC from Kaggle (Tesla T4), code `5258f04`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-11 07:35 UTC from Kaggle (Tesla T4), code `5258f04`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -24,7 +24,7 @@ _Last update: 2026-10-11 06:13 UTC from Kaggle (Tesla T4), code `5258f04`. Resul
 | 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | done | 237.7 | 2026-10-10 04:44 |
 | 2 | commit_both-after: A. commit trained on both directions, each side scored | done | 156.4 | 2026-10-10 07:20 |
 | 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | done | 309.4 | 2026-10-11 06:12 |
-| 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
+| 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | done | 81.8 | 2026-10-11 07:34 |
 | 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
 | 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |
@@ -48,10 +48,28 @@ _Last update: 2026-10-11 06:13 UTC from Kaggle (Tesla T4), code `5258f04`. Resul
 | V-JEPA 2 both-before (ball from R) | before | 0.437 | [0.368, 0.511] | - | - |
 | V-JEPA 2 commit_both-after | after | 0.843 | [0.8, 0.884] | [0.338, 0.451] | 0.0 |
 | V-JEPA 2 commit_both-after (ball from L) | after | 0.767 | [0.636, 0.892] | [-0.015, 0.234] | 0.049 |
-| V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.405, 0.554] | 0.0 |
+| V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.406, 0.554] | 0.0 |
 | V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 |
 | V-JEPA 2 lossmix_both-after (ball from L) | after | 0.893 | [0.817, 0.961] | [0.103, 0.36] | 0.0 |
-| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.447, 0.597] | 0.0 |
+| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.448, 0.598] | 0.0 |
+| V-JEPA 2 lossmix_both_e1-after | after | 0.427 | [0.365, 0.492] | - | - |
+| V-JEPA 2 lossmix_both_e1-after (ball from L) | after | 0.523 | [0.386, 0.665] | - | - |
+| V-JEPA 2 lossmix_both_e1-after (ball from R) | after | 0.401 | [0.331, 0.471] | - | - |
+| V-JEPA 2 lossmix_both_e10-after | after | 0.839 | [0.794, 0.883] | - | - |
+| V-JEPA 2 lossmix_both_e10-after (ball from L) | after | 0.85 | [0.762, 0.934] | - | - |
+| V-JEPA 2 lossmix_both_e10-after (ball from R) | after | 0.914 | [0.878, 0.95] | - | - |
+| V-JEPA 2 lossmix_both_e15-after | after | 0.906 | [0.874, 0.936] | - | - |
+| V-JEPA 2 lossmix_both_e15-after (ball from L) | after | 0.891 | [0.813, 0.956] | - | - |
+| V-JEPA 2 lossmix_both_e15-after (ball from R) | after | 0.962 | [0.942, 0.98] | - | - |
+| V-JEPA 2 lossmix_both_e2-after | after | 0.549 | [0.491, 0.614] | - | - |
+| V-JEPA 2 lossmix_both_e2-after (ball from L) | after | 0.526 | [0.392, 0.656] | - | - |
+| V-JEPA 2 lossmix_both_e2-after (ball from R) | after | 0.603 | [0.534, 0.671] | - | - |
+| V-JEPA 2 lossmix_both_e4-after | after | 0.723 | [0.666, 0.776] | - | - |
+| V-JEPA 2 lossmix_both_e4-after (ball from L) | after | 0.593 | [0.456, 0.729] | - | - |
+| V-JEPA 2 lossmix_both_e4-after (ball from R) | after | 0.796 | [0.739, 0.845] | - | - |
+| V-JEPA 2 lossmix_both_e7-after | after | 0.787 | [0.736, 0.835] | - | - |
+| V-JEPA 2 lossmix_both_e7-after (ball from L) | after | 0.731 | [0.6, 0.849] | - | - |
+| V-JEPA 2 lossmix_both_e7-after (ball from R) | after | 0.888 | [0.845, 0.926] | - | - |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 |
 

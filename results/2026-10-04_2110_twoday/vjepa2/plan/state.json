@@ -179,12 +179,11 @@
    "finished": "2026-10-11 06:12"
   },
   "lossmix_both-epochs": {
-   "state": "waiting",
-   "started": "2026-10-10 19:08",
-   "code": "a70bd48",
-   "minutes": 0.0,
-   "finished": "2026-10-10 19:08",
-   "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+   "state": "done",
+   "started": "2026-10-11 06:13",
+   "code": "5258f04",
+   "minutes": 81.8,
+   "finished": "2026-10-11 07:34"
   },
   "lossmix_open-after": {
    "state": "waiting",
@@ -205,5 +204,5 @@
    }
   }
  },
- "last_push": "2026-10-10 19:09"
+ "last_push": "2026-10-11 06:13"
 }
