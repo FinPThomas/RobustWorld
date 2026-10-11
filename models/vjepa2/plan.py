@@ -649,7 +649,7 @@ def report(state: dict) -> str:
                    f"after {r['auroc_after']}.",
                    f"- Figures: `vjepa2/plan/interpret/{path.parent.name}/change_map.png`, `layer_patching.png`."]
     figure(rows)
-    for mod in ("slope", "scope_report", "slope_test"):
+    for mod in ("slope", "scope_report", "slope_test", "slope_map"):
         try:
             __import__(mod).main(["--plan", str(PLAN)])
         except Exception as e:                        # a figure never stops the plan
@@ -662,7 +662,8 @@ def report(state: dict) -> str:
           "reference, not an evaluation. Runs named -long / -frac use the variant picked as best on these same "
           "folds, so their numbers are slightly optimistic.", "", *table, *gen_md, *int_md, "",
           "![summary](summary.png)"]
-    for extra in (PLAN / "slope_test" / "slope_test.md", PLAN / "slope" / "slope.md", PLAN / "scope" / "scope.md"):
+    for extra in (PLAN / "slope_test" / "slope_test.md", PLAN / "slope_map" / "slope_map.md", PLAN / "slope" / "slope.md",
+                  PLAN / "scope" / "scope.md"):
         if extra.exists():
             md += ["", extra.read_text()]
     (PLAN / "summary.md").write_text("\n".join(md) + "\n")
