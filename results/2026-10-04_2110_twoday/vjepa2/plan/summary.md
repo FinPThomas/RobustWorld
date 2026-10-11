@@ -21,10 +21,28 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 both-before (ball from R) | before | 0.437 | [0.368, 0.511] | - | - | 0.329 | 0.333 | - | - | - | - | - |
 | V-JEPA 2 commit_both-after | after | 0.843 | [0.8, 0.884] | [0.338, 0.451] | 0.0 | 0.451 | 0.486 | 0.846 | 0.831 | 0.551 | 0/5 | 10/10/9/8/10 |
 | V-JEPA 2 commit_both-after (ball from L) | after | 0.767 | [0.636, 0.892] | [-0.015, 0.234] | 0.049 | 0.467 | 0.545 | - | - | - | - | - |
-| V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.405, 0.554] | 0.0 | 0.475 | 0.574 | - | - | - | - | - |
+| V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.406, 0.554] | 0.0 | 0.475 | 0.574 | - | - | - | - | - |
 | V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 | 0.507 | 0.509 | 0.873 | 0.86 | 0.662 | 0/5 | 18/16/20/18/17 |
 | V-JEPA 2 lossmix_both-after (ball from L) | after | 0.893 | [0.817, 0.961] | [0.103, 0.36] | 0.0 | 0.441 | 0.465 | - | - | - | - | - |
-| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.447, 0.597] | 0.0 | 0.533 | 0.602 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.448, 0.598] | 0.0 | 0.533 | 0.602 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e1-after | after | 0.427 | [0.365, 0.492] | - | - | 0.315 | 0.276 | 0.784 | 0.671 | 0.382 | - | - |
+| V-JEPA 2 lossmix_both_e1-after (ball from L) | after | 0.523 | [0.386, 0.665] | - | - | 0.38 | 0.542 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e1-after (ball from R) | after | 0.401 | [0.331, 0.471] | - | - | 0.33 | 0.326 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e10-after | after | 0.839 | [0.794, 0.883] | - | - | 0.464 | 0.494 | 0.859 | 0.841 | 0.582 | - | - |
+| V-JEPA 2 lossmix_both_e10-after (ball from L) | after | 0.85 | [0.762, 0.934] | - | - | 0.436 | 0.333 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e10-after (ball from R) | after | 0.914 | [0.878, 0.95] | - | - | 0.485 | 0.564 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e15-after | after | 0.906 | [0.874, 0.936] | - | - | 0.504 | 0.493 | 0.876 | 0.863 | 0.642 | - | - |
+| V-JEPA 2 lossmix_both_e15-after (ball from L) | after | 0.891 | [0.813, 0.956] | - | - | 0.442 | 0.458 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e15-after (ball from R) | after | 0.962 | [0.942, 0.98] | - | - | 0.531 | 0.578 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e2-after | after | 0.549 | [0.491, 0.614] | - | - | 0.33 | 0.284 | 0.794 | 0.72 | 0.378 | - | - |
+| V-JEPA 2 lossmix_both_e2-after (ball from L) | after | 0.526 | [0.392, 0.656] | - | - | 0.402 | 0.646 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e2-after (ball from R) | after | 0.603 | [0.534, 0.671] | - | - | 0.343 | 0.303 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e4-after | after | 0.723 | [0.666, 0.776] | - | - | 0.398 | 0.426 | 0.819 | 0.817 | 0.46 | - | - |
+| V-JEPA 2 lossmix_both_e4-after (ball from L) | after | 0.593 | [0.456, 0.729] | - | - | 0.4 | 0.545 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e4-after (ball from R) | after | 0.796 | [0.739, 0.845] | - | - | 0.424 | 0.471 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e7-after | after | 0.787 | [0.736, 0.835] | - | - | 0.436 | 0.476 | 0.83 | 0.817 | 0.514 | - | - |
+| V-JEPA 2 lossmix_both_e7-after (ball from L) | after | 0.731 | [0.6, 0.849] | - | - | 0.399 | 0.444 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both_e7-after (ball from R) | after | 0.888 | [0.845, 0.926] | - | - | 0.465 | 0.555 | - | - | - | - | - |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 | 0.487 | 0.613 | 0.851 | 0.835 | 0.637 | - | - |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 | 0.551 | 0.651 | 0.872 | 0.88 | 0.701 | 0/5 | 18/20/17/17/18 |
 
@@ -63,21 +81,40 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | real ball, whole video (285 stretches) | 0.0299 | [0.02748, 0.03238] | -0.0062 | -0.0669 | 396 | 138 |
 | open: real ball (tracker) | 0.0186 | [0.0081, 0.03172] | -0.00475 | -0.04432 | 24 | 9 |
 | open: decoder on real frames | -0.131 | [-0.41979, 0.04953] | 0.02623 | 0.15171 | 10 | 12 |
-| open: imagined, lossmix_both-after | 0.0067 | [-0.01524, 0.02441] | -0.05647 | -0.00224 | 8 | 5 |
-| plank: real ball (tracker) | 0.0299 | [0.02166, 0.03914] | -0.01331 | -0.0589 | 26 | 38 |
-| plank: decoder on real frames | 0.0254 | [0.00698, 0.04605] | -0.04056 | -0.07571 | 31 | 42 |
+| open: imagined, both-before | None | None | None | None | 0 | 0 |
+| open: imagined, lossmix_both_e1-after | None | None | 0.00278 | 0.00818 | 1 | 1 |
+| open: imagined, lossmix_both_e2-after | None | None | 0.01839 | 0.01757 | 4 | 1 |
+| open: imagined, lossmix_both_e4-after | None | [-0.00945, 0.0156] | -0.08829 | 0.00676 | 7 | 1 |
+| open: imagined, lossmix_both_e7-after | 0.0267 | [0.00798, 0.04491] | -0.05618 | -0.02564 | 6 | 3 |
+| open: imagined, lossmix_both_e10-after | None | [-0.38489, 0.03746] | -0.22064 | 0.00859 | 5 | 8 |
+| open: imagined, lossmix_both_e15-after | 0.0038 | [-0.00318, 0.01014] | -0.06299 | -0.01137 | 9 | 5 |
+| open: imagined, lossmix_both-after | 0.0067 | [-0.01456, 0.02508] | -0.05647 | -0.00224 | 8 | 5 |
+| plank: real ball (tracker) | 0.0299 | [0.0209, 0.03867] | -0.01331 | -0.0589 | 26 | 38 |
+| plank: decoder on real frames | 0.0254 | [0.00637, 0.04858] | -0.04056 | -0.07571 | 31 | 42 |
 | plank: imagined, both-before | None | None | None | None | 0 | 0 |
-| plank: imagined, lossmix_both-after | 0.0115 | [-0.0386, 0.06648] | 0.0156 | -0.02565 | 16 | 15 |
+| plank: imagined, lossmix_both_e1-after | None | None | None | None | 0 | 0 |
+| plank: imagined, lossmix_both_e2-after | None | None | None | None | 0 | 0 |
+| plank: imagined, lossmix_both_e4-after | None | None | 0.01075 | None | 2 | 0 |
+| plank: imagined, lossmix_both_e7-after | -0.0009 | [-0.02184, 0.01855] | -0.037 | -0.03526 | 7 | 3 |
+| plank: imagined, lossmix_both_e10-after | 0.0019 | [-0.03685, 0.04043] | -0.00519 | 0.00281 | 9 | 12 |
+| plank: imagined, lossmix_both_e15-after | 0.0188 | [-0.02202, 0.05376] | 0.00593 | -0.03708 | 10 | 16 |
+| plank: imagined, lossmix_both-after | 0.0115 | [-0.03052, 0.06129] | 0.0156 | -0.02565 | 16 | 15 |
 | plank: imagined, commit_both-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_e10-after | None | None | 0.01223 | None | 2 | 0 |
-| plank: imagined, lossmix_e20-after | None | [-0.09133, -0.03486] | -0.02791 | 0.0797 | 13 | 1 |
+| plank: imagined, lossmix_e20-after | None | [-0.09625, -0.03091] | -0.02791 | 0.0797 | 13 | 1 |
 
 ### Learning curve (C: both directions, loss-weighted sampling)
 
 | epoch | s, open clips | 95% CI | s, plank clips | 95% CI | AUROC ball from R | AUROC ball from L |
 |---|---|---|---|---|---|---|
 | 0 | None | None | None | None | 0.437 | 0.66 |
-| 20 | 0.0067 | [-0.01524, 0.02441] | 0.0115 | [-0.0386, 0.06648] | 0.961 | 0.893 |
+| 1 | None | None | None | None | 0.401 | 0.523 |
+| 2 | None | None | None | None | 0.603 | 0.526 |
+| 4 | None | [-0.00945, 0.0156] | None | None | 0.796 | 0.593 |
+| 7 | 0.0267 | [0.00798, 0.04491] | -0.0009 | [-0.02184, 0.01855] | 0.888 | 0.731 |
+| 10 | None | [-0.38489, 0.03746] | 0.0019 | [-0.03685, 0.04043] | 0.914 | 0.85 |
+| 15 | 0.0038 | [-0.00318, 0.01014] | 0.0188 | [-0.02202, 0.05376] | 0.962 | 0.891 |
+| 20 | 0.0067 | [-0.01456, 0.02508] | 0.0115 | [-0.03052, 0.06129] | 0.961 | 0.893 |
 
 Imagined paths count only target steps where the imagined ball is clearly visible (map peak >= 0.2) on open table, so n shows how often the model draws the ball at all. Figures: `slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`.
 
@@ -91,7 +128,7 @@ s: slope term along the table (px/step², downhill = left; 1 step = 1/8 s). Shar
 | S0 tracker (all steps) | 327 | 2.4193 | [1.1353, 3.4569] | 1.0 | 1.768 | [1.1513, 2.2867] | [-1.768, -0.1039] | 5.6029 | -7.1953 | None |
 | S0t tracker (target steps) | 176 | 0.1014 | [-0.4539, 0.7696] | 0.04 | 0.4005 | [-0.0629, 0.9099] | [-0.4005, -0.8382] | 2.2894 | None | None |
 | S1 decoder, real frames | 176 | 0.2466 | [-0.8097, 1.3953] | 0.1 | -0.0916 | [-0.8077, 0.7091] | [0.0916, -0.3688] | 2.1962 | None | None |
-| S2 imagined, pretrained | 176 | 0.2957 | [-4.7895, 5.3487] | 0.12 | 1.0124 | [-1.7413, 3.8264] | [-1.0124, 1.5122] | 5.2198 | None | None |
+| S2 imagined, pretrained | 176 | 0.0702 | [-5.0578, 5.0914] | 0.03 | 0.9329 | [-1.7517, 3.7662] | [-0.9329, 1.5398] | 4.9284 | None | None |
 | S3 imagined, B right only @10 | 113 | 1.1506 | [-15.2029, 18.6548] | 0.48 | -0.2173 | [-7.1715, 7.2708] | [0.2173, -5.9285] | 42.7057 | -16.8352 | None |
 | S3 imagined, B right only @20 | 114 | -13.2919 | [-26.4122, 4.3605] | -5.49 | -2.8377 | [-10.4806, 5.1896] | [2.8377, -4.0594] | 33.2964 | -67.5737 | None |
 | S4 imagined, A both directions | 176 | -1.3353 | [-11.9186, 8.5185] | -0.55 | -0.1729 | [-4.2703, 4.1145] | [0.1729, 0.0307] | 34.209 | -27.9645 | None |
