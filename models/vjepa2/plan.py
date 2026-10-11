@@ -408,6 +408,32 @@ def step_lossmix_both_epochs(args, state, log):
         shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
+def found_weights(name: str) -> Path | None:
+    """A run's fold weights on this machine, or exported by an earlier Kaggle session and added to this one's
+    inputs (that notebook version's output: /kaggle/input/<...>/weights/<name>/fold*.pt)."""
+    if len(list((CKPT / name).glob("fold?.pt"))) >= 5:
+        return CKPT / name
+    for d in sorted(Path("/kaggle/input").glob(f"**/weights/{name}")) if Path("/kaggle/input").exists() else []:
+        if len(list(d.glob("fold?.pt"))) >= 5:
+            return d
+    return None
+
+
+def step_slope_sharp(args, state, log):
+    """Slope map (Fin, 2026-10-11): score again with the sharper nearest-real-patch ball positions (nn_locate.py):
+    the pretrained predictor always, and C when its weights are here (an earlier session's output added as input)."""
+    man, extra = both_manifest(), (OPEN if OPEN.exists() else None)
+    opt = ["--extra-manifest", extra] if extra else []
+    must([PY, HERE / "ball_probe_cv.py", "--manifest", man, "--out", SCORES / "both-before", *opt], log)
+    w = found_weights("lossmix_both-after")
+    if w is None:
+        print("== C's weights aren't here (add the Kaggle output that holds weights/lossmix_both-after to score "
+              "C with sharp positions); E and F get them anyway", flush=True)
+        return
+    must([PY, HERE / "ball_probe_cv.py", "--predictor-run", w, "--manifest", man,
+          "--out", SCORES / "lossmix_both-after", *opt], log)
+
+
 def step_lossmix_open(args, state, log):
     """C + the open-table clips in training (each kept out of the fold that scores it): does seeing the ball roll
     on open table teach the slope better than plank clips alone? Same 20 epochs; epoch 10 saved and scored too."""
@@ -491,6 +517,9 @@ STEPS: list[Step] = [
     Step(2, "lossmix_both-epochs", "C. learning curve: score the pretrained predictor and the weights saved after "
          "1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips",
          step_lossmix_both_epochs),
+    # Fin, 2026-10-11: a map of the slope; the decoder's cell-level positions are too coarse to show it.
+    Step(2, "slope-sharp", "Slope map: score again with sharper ball positions (nearest real patch), pretrained "
+         "and C", step_slope_sharp),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
     Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
          "scored at 10 and 20", step_lossmix_open,
@@ -814,6 +843,7 @@ def step_hours(name: str) -> float:
                "lossmix_e20-after": 4.4,          # 20 epochs, then two scoring passes
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
                "lossmix_both-epochs": 1.9,        # seven scoring passes
+               "slope-sharp": 0.8,                # two scoring passes
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:

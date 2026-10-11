@@ -50,6 +50,7 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(REPO / "src"))
 import eval_decoder  # noqa: E402
+import nn_locate  # noqa: E402
 from ball_probe import encode  # noqa: E402
 from posttrain import cache_dir, imagine_mode, load_cached, load_predictor, target_space  # noqa: E402
 from robust_world.eval.ball import (CLIP_SIZE, OUTCOMES, ball_labels, ball_track_metrics, cv_folds,  # noqa: E402
@@ -245,6 +246,8 @@ def main(argv: list[str] | None = None) -> int:
         examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
         decoder = eval_decoder.fit(examples, seed=args.seed)
         decoder_raw = eval_decoder.fit_raw_features(examples, seed=args.seed)
+        # sharper positions (slope map): nearest real context patches of this fold's training clips, untrained
+        bank = nn_locate.Bank([(data[i]["ctx"], data[i]["centres"][:data[i]["cs"]]) for i in tr])
         if args.predictor_run:
             meta = load_predictor(model, args.predictor_run / f"fold{fold}.pt")
             test_ids = {data[i]["clip"]["clip_id"] for i in te}
@@ -287,6 +290,8 @@ def main(argv: list[str] | None = None) -> int:
                        "true_pos_context": [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)]
                                             for c in d["centres"][:cs]],
                        "real_pos": map_pos(m_real[cs:]), "imagined_pos": map_pos(m_imag),
+                       "real_pos_nn": bank.locate(d["enc"]["real"][cs:], m_real[cs:]),
+                       "imagined_pos_nn": bank.locate(imag, m_imag),
                        "real_visible": m_real[cs:].max((1, 2)).round(3).tolist(),
                        "real_far": (m_real[cs:] * far).max((1, 2)).round(3).tolist(),
                        "real_near": (m_real[cs:] * near).max((1, 2)).round(3).tolist(),
@@ -314,6 +319,8 @@ def main(argv: list[str] | None = None) -> int:
                               "side_in": e["clip"].get("side_in"), "true_pos": rnd(e["centres"][cs:]),
                               "true_pos_context": rnd(e["centres"][:cs]), "real_pos": map_pos(m_real[cs:]),
                               "imagined_pos": map_pos(m_imag),
+                              "real_pos_nn": bank.locate(enc["real"][cs:], m_real[cs:]),
+                              "imagined_pos_nn": bank.locate(imag, m_imag),
                               "imagined_visible": m_imag.max((1, 2)).round(3).tolist()})
             del enc
         print(f"\r  fold {fold + 1}/{args.folds} scored", end="", flush=True)
