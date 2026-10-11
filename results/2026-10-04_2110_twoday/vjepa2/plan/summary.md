@@ -22,6 +22,9 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 commit_both-after | after | 0.843 | [0.8, 0.884] | [0.338, 0.451] | 0.0 | 0.451 | 0.486 | 0.846 | 0.831 | 0.551 | 0/5 | 10/10/9/8/10 |
 | V-JEPA 2 commit_both-after (ball from L) | after | 0.767 | [0.636, 0.892] | [-0.015, 0.234] | 0.049 | 0.467 | 0.545 | - | - | - | - | - |
 | V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.405, 0.554] | 0.0 | 0.475 | 0.574 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 | 0.507 | 0.509 | 0.873 | 0.86 | 0.662 | 0/5 | 18/16/20/18/17 |
+| V-JEPA 2 lossmix_both-after (ball from L) | after | 0.893 | [0.817, 0.961] | [0.103, 0.36] | 0.0 | 0.441 | 0.465 | - | - | - | - | - |
+| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.447, 0.597] | 0.0 | 0.533 | 0.602 | - | - | - | - | - |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 | 0.487 | 0.613 | 0.851 | 0.835 | 0.637 | - | - |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 | 0.551 | 0.651 | 0.872 | 0.88 | 0.701 | 0/5 | 18/20/17/17/18 |
 
@@ -58,18 +61,23 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | measure | s | 95% CI | downhill a | uphill a | n down | n up |
 |---|---|---|---|---|---|---|
 | real ball, whole video (285 stretches) | 0.0299 | [0.02748, 0.03238] | -0.0062 | -0.0669 | 396 | 138 |
-| plank: real ball (tracker) | 0.0299 | [0.02147, 0.03956] | -0.01331 | -0.0589 | 26 | 38 |
-| plank: decoder on real frames | 0.0254 | [0.00857, 0.04573] | -0.04056 | -0.07571 | 31 | 42 |
+| open: real ball (tracker) | 0.0186 | [0.0081, 0.03172] | -0.00475 | -0.04432 | 24 | 9 |
+| open: decoder on real frames | -0.131 | [-0.41979, 0.04953] | 0.02623 | 0.15171 | 10 | 12 |
+| open: imagined, lossmix_both-after | 0.0067 | [-0.01524, 0.02441] | -0.05647 | -0.00224 | 8 | 5 |
+| plank: real ball (tracker) | 0.0299 | [0.02166, 0.03914] | -0.01331 | -0.0589 | 26 | 38 |
+| plank: decoder on real frames | 0.0254 | [0.00698, 0.04605] | -0.04056 | -0.07571 | 31 | 42 |
 | plank: imagined, both-before | None | None | None | None | 0 | 0 |
+| plank: imagined, lossmix_both-after | 0.0115 | [-0.0386, 0.06648] | 0.0156 | -0.02565 | 16 | 15 |
 | plank: imagined, commit_both-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_e10-after | None | None | 0.01223 | None | 2 | 0 |
-| plank: imagined, lossmix_e20-after | None | [-0.0875, -0.02897] | -0.02791 | 0.0797 | 13 | 1 |
+| plank: imagined, lossmix_e20-after | None | [-0.09133, -0.03486] | -0.02791 | 0.0797 | 13 | 1 |
 
 ### Learning curve (C: both directions, loss-weighted sampling)
 
 | epoch | s, open clips | 95% CI | s, plank clips | 95% CI | AUROC ball from R | AUROC ball from L |
 |---|---|---|---|---|---|---|
 | 0 | None | None | None | None | 0.437 | 0.66 |
+| 20 | 0.0067 | [-0.01524, 0.02441] | 0.0115 | [-0.0386, 0.06648] | 0.961 | 0.893 |
 
 Imagined paths count only target steps where the imagined ball is clearly visible (map peak >= 0.2) on open table, so n shows how often the model draws the ball at all. Figures: `slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`.
 
@@ -112,6 +120,8 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | both-before | R | 0.168 (n 82) | 0.179 (n 26) | 0.178 (n 106) | 0.501 (n 52) | 0.437 |
 | commit_both-after | L | 0.933 (n 25) | 0.438 (n 7) | 0.559 (n 40) | 0.571 (n 10) | 0.767 |
 | commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
+| lossmix_both-after | L | 0.94 (n 25) | 0.78 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
+| lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.925 (n 52) | 0.961 |
 
 Figure: `scope/height_profile.png`. The slope (downhill) results are in `slope/` (slope.py).
 

@@ -230,7 +230,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-10 19:09 UTC from Kaggle (Tesla T4), code `a70bd48`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-11 06:13 UTC from Kaggle (Tesla T4), code `5258f04`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -253,9 +253,10 @@ _Last update: 2026-10-10 19:09 UTC from Kaggle (Tesla T4), code `a70bd48`. Resul
 | 2 | both-before: slope S0-S2: pretrained, both directions, per-step ball positions | done | 13.9 | 2026-10-10 00:46 |
 | 2 | lossmix_e20-after: B. commit, right clips, loss-weighted sampling, 20 epochs (scored at 10 and 20) | done | 237.7 | 2026-10-10 04:44 |
 | 2 | commit_both-after: A. commit trained on both directions, each side scored | done | 156.4 | 2026-10-10 07:20 |
-| 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
+| 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | done | 309.4 | 2026-10-11 06:12 |
 | 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
 | 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
+| 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain |
@@ -278,6 +279,9 @@ _Last update: 2026-10-10 19:09 UTC from Kaggle (Tesla T4), code `a70bd48`. Resul
 | V-JEPA 2 commit_both-after | after | 0.843 | [0.8, 0.884] | [0.338, 0.451] | 0.0 |
 | V-JEPA 2 commit_both-after (ball from L) | after | 0.767 | [0.636, 0.892] | [-0.015, 0.234] | 0.049 |
 | V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.405, 0.554] | 0.0 |
+| V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 |
+| V-JEPA 2 lossmix_both-after (ball from L) | after | 0.893 | [0.817, 0.961] | [0.103, 0.36] | 0.0 |
+| V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.447, 0.597] | 0.0 |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 |
 
