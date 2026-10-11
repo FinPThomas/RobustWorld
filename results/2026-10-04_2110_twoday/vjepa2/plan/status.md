@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-11 15:10 UTC from Kaggle (Tesla T4), code `18840c8`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-11 22:15 UTC from Kaggle (Tesla T4), code `18840c8`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -26,7 +26,7 @@ _Last update: 2026-10-11 15:10 UTC from Kaggle (Tesla T4), code `18840c8`. Resul
 | 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | done | 309.4 | 2026-10-11 06:12 |
 | 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | done | 81.8 | 2026-10-11 07:34 |
 | 2 | slope-sharp: Slope map: score again with sharper ball positions (nearest real patch), pretrained and C | done | 8.7 | 2026-10-11 15:10 |
-| 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | waiting (the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)) | 0.0 | 2026-10-10 19:08 |
+| 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | done | 424.6 | 2026-10-11 22:15 |
 | 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |
 
@@ -73,6 +73,12 @@ _Last update: 2026-10-11 15:10 UTC from Kaggle (Tesla T4), code `18840c8`. Resul
 | V-JEPA 2 lossmix_both_e7-after (ball from R) | after | 0.888 | [0.845, 0.926] | - | - |
 | V-JEPA 2 lossmix_e10-after | after | 0.949 | [0.921, 0.973] | [0.459, 0.599] | 0.0 |
 | V-JEPA 2 lossmix_e20-after | after | 0.964 | [0.939, 0.985] | [0.472, 0.616] | 0.0 |
+| V-JEPA 2 lossmix_open-after | after | 0.912 | [0.88, 0.944] | - | - |
+| V-JEPA 2 lossmix_open-after (ball from L) | after | 0.922 | [0.855, 0.969] | - | - |
+| V-JEPA 2 lossmix_open-after (ball from R) | after | 0.959 | [0.935, 0.979] | - | - |
+| V-JEPA 2 lossmix_open_e10-after | after | 0.868 | [0.829, 0.907] | - | - |
+| V-JEPA 2 lossmix_open_e10-after (ball from L) | after | 0.909 | [0.846, 0.962] | - | - |
+| V-JEPA 2 lossmix_open_e10-after (ball from R) | after | 0.93 | [0.898, 0.959] | - | - |
 
 ### Generalisation of commit (held out, never trained on)
 
