@@ -169,3 +169,28 @@ def test_slope_test_reads_the_slope_from_clip_tracks(tmp_path):
     res = json.loads((tmp_path / "slope_test" / "slope_test.json").read_text())["sets"]["open"]
     assert abs(res["tracker"]["s"] - s_true) < 0.01, res["tracker"]
     assert abs(res["runs"]["both-before"]["s"] - s_true) < 0.01
+
+
+def test_slope_map_recovers_uniform_pull():
+    """A ball pulled left by a uniform slope, with friction against its motion: the map's g_x is negative."""
+    import sys as _s
+    _s.path.insert(0, str(Path(__file__).resolve().parents[1] / "models" / "vjepa2"))
+    import numpy as np
+    import slope_map
+    from slope_test import Table
+
+    table, dist = Table({"ok": False}, fallback_r0=10.0), (lambda x, y: 999.0)
+    rng = np.random.default_rng(0)
+    samples = []
+    for clip in range(60):
+        d = -1 if clip % 2 else 1
+        x, v = 256.0 - d * 120, d * 12.0
+        pos = []
+        for _ in range(12):
+            pos.append([x + rng.normal(0, 0.3), 250.0 + rng.normal(0, 0.3), 1.0])
+            v += -0.6 - 0.8 * np.sign(v)           # px/step²: pull left, friction against motion
+            x += v
+        samples += slope_map.stretches(pos, table, dist, clip)
+    u = slope_map.uniform(samples, rng)
+    assert u["g"][0] < 0 and u["g_ci"][0][1] < 0
+    assert abs(u["g"][0] - (-0.6 / 20)) < 0.01 and abs(u["mu"] - 0.8 / 20) < 0.01
