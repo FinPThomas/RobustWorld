@@ -192,6 +192,13 @@
    "minutes": 0.0,
    "finished": "2026-10-10 19:08",
    "error": "the open-table clips aren't on this machine (add robustworld_clips_open.zip to the dataset)"
+  },
+  "slope-sharp": {
+   "state": "done",
+   "started": "2026-10-11 15:01",
+   "code": "18840c8",
+   "minutes": 8.7,
+   "finished": "2026-10-11 15:10"
   }
  },
  "choices": {

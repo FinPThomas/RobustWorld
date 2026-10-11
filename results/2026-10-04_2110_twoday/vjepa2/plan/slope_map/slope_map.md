@@ -6,5 +6,6 @@ g = acceleration from the table after removing friction (a = g - mu * direction 
 |---|---|---|---|---|---|---|---|
 | real ball (tracker) | -0.0265 | [-0.0301, -0.0233] | -0.0089 | [-0.0113, -0.0069] | 0.0361 | 955 | 230 |
 | probe on real frames (coarse) | -0.0157 | [-0.0394, 0.0292] | -0.016 | [-0.0334, -0.006] | 0.0201 | 355 | 114 |
-| imagined, before post-training | - | - | - | - | - | 0 | 0 |
-| imagined, after post-training (C, 20 ep) | 0.0069 | [-0.0122, 0.0299] | -0.0104 | [-0.0195, -0.0013] | 0.0071 | 144 | 56 |
+| probe on real frames (sharp) | -0.0251 | [-0.0401, -0.0063] | -0.0138 | [-0.0217, -0.0078] | 0.0225 | 348 | 107 |
+| imagined, before post-training (sharp) | - | - | - | - | - | 0 | 0 |
+| imagined, after post-training (C, 20 ep) | 0.0069 | [-0.0152, 0.0314] | -0.0104 | [-0.0197, -0.0015] | 0.0071 | 144 | 56 |
