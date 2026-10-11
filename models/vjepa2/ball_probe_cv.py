@@ -73,6 +73,20 @@ def clip_side(clip: dict, passes: dict) -> str:
     return clip.get("side_in") or passes.get(clip["pass_id"], {}).get("side_in") or "R"
 
 
+def map_spread(m: np.ndarray) -> list[float]:
+    """[steps, g, g] decoder maps -> per step the spread (px, root of summed x and y variance) of the map
+    normalised to sum to 1: how sure the decoded ball is of where it is (label-free, CLAUDE.md rule 5)."""
+    g = m.shape[-1]
+    cell = CLIP_SIZE / g
+    yy, xx = (np.mgrid[0:g, 0:g] + 0.5) * cell
+    out = []
+    for s in m:
+        q = s / s.sum() if s.sum() > 0 else np.full_like(s, 1 / s.size)
+        mx, my = (q * xx).sum(), (q * yy).sum()
+        out.append(round(float(np.sqrt((q * ((xx - mx) ** 2 + (yy - my) ** 2)).sum())), 1))
+    return out
+
+
 def map_pos(m: np.ndarray) -> list[list[float]]:
     """[steps, g, g] decoder maps -> per step [x, y, peak] in clip px: centre of mass of the cells at
     least half the step's peak (finer than the argmax cell, and label-free)."""
@@ -290,6 +304,10 @@ def main(argv: list[str] | None = None) -> int:
                        "true_pos_context": [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)]
                                             for c in d["centres"][:cs]],
                        "real_pos": map_pos(m_real[cs:]), "imagined_pos": map_pos(m_imag),
+                       # far side only (beyond the plank): where the ball comes out, even when a ghost of it
+                       # lingers near the plank; and how spread out the imagined ball is (pick-up test)
+                       "real_far_pos": map_pos(m_real[cs:] * far), "imagined_far_pos": map_pos(m_imag * far),
+                       "imagined_spread": map_spread(m_imag), "imagined_far_spread": map_spread(m_imag * far),
                        "real_pos_nn": bank.locate(d["enc"]["real"][cs:], m_real[cs:]),
                        "imagined_pos_nn": bank.locate(imag, m_imag),
                        "real_visible": m_real[cs:].max((1, 2)).round(3).tolist(),

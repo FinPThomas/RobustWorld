@@ -1,0 +1,346 @@
+"""Exit-and-catch in PyBullet: a ball comes out from under the plank and a two-finger gripper has to
+grasp it and lift it before it rolls out of the catch zone.
+
+Scene (metres; 1 ball diameter = 4 cm, set from the ball's ~44 px diameter mid-table, so 1 px = 0.9 mm):
+flat table (no slope), the plank as a box along y < 0 whose edge is y = 0, and a ball that comes out
+from under it at the real exits of the tracker (exits.json: where along the edge, when after the
+decision point, how fast), resampled with a little jitter. The gripper is a floating two-finger
+gripper (x, y, z slides plus two finger slides) working in the catch zone 0 <= y <= ZONE. It sees the
+ball only after the ball comes out, two video frames late.
+
+Each episode the policy is also told a forecast of where, when and how fast the ball comes out, and how
+uncertain that forecast is (one sigma for each). In simulation the forecast is the true exit plus noise
+of exactly that size, so the stated uncertainty is honest. Nothing here sees a world model's real
+forecasts against real outcomes (CLAUDE.md rule 1); evaluate.py feeds those in only to score.
+
+Actions (every 1/16 s, all in [-1, 1]): gripper velocity in x and y, finger opening, and "grasp now"
+(> 0). A grasp closes the fingers and lifts; it is the episode's one attempt.
+
+Reward: a ball lifted and held earns 1 + EARLY x (how early in the zone it was grasped, 0..1) minus
+WIDE x (how wide the fingers were open, 0..1). A miss (ball dropped, missed, or out of the zone) costs
+MISS. Moving costs a little. A wide opening also takes longer to close, so it is a real trade-off.
+"""
+
+from __future__ import annotations
+
+import json
+import tempfile
+from pathlib import Path
+
+import gymnasium as gym
+import numpy as np
+import pybullet as p
+
+HERE = Path(__file__).resolve().parent
+M_PER_PX = 0.04 / 44             # ball diameter 4 cm ~ 44 px
+BALL_R = 0.02
+ZONE = 0.12                      # catch zone depth past the plank edge: 3 ball diameters
+DT = 1 / 16                      # one video frame per policy step
+SUBSTEPS = 8                     # physics at 128 Hz
+GRIP_SPEED = 0.25                # m/s
+GAP_MIN, GAP_MAX = 0.045, 0.13   # finger gap (inner faces); the ball is 0.04 wide
+FINGER_SPEED = 0.12              # m/s per finger when closing
+EARLY, WIDE, MISS, MOVE = 0.5, 0.3, 1.0, 0.05
+SIG_S, SIG_T, SIG_V = 0.12, 0.3, 0.5     # forecast sigma at uncertainty 1: m along the edge, s, fraction of speed
+OBS_NOISE = 0.003                # m
+OBS_DELAY = 0.125                # s: seeing the ball lags by 2 frames
+MAX_T = 2.5
+HOVER_Z = 0.0                    # gripper frame z while hunting (fingers reach the table)
+LIFT_Z = 0.08
+
+GRIPPER_URDF = """<?xml version="1.0"?>
+<robot name="gripper">
+  <link name="world"/>
+  <link name="sx"><inertial><mass value="0.1"/><inertia ixx="1e-4" iyy="1e-4" izz="1e-4" ixy="0" ixz="0" iyz="0"/></inertial></link>
+  <link name="sy"><inertial><mass value="0.1"/><inertia ixx="1e-4" iyy="1e-4" izz="1e-4" ixy="0" ixz="0" iyz="0"/></inertial></link>
+  <link name="palm">
+    <inertial><mass value="0.3"/><inertia ixx="1e-3" iyy="1e-3" izz="1e-3" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.03 0.012"/></geometry><material name="grey"><color rgba="0.4 0.4 0.45 1"/></material></visual>
+    <collision><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.03 0.012"/></geometry></collision>
+  </link>
+  <link name="left">
+    <inertial><mass value="0.05"/><inertia ixx="1e-5" iyy="1e-5" izz="1e-5" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
+    <collision><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry></collision>
+  </link>
+  <link name="right">
+    <inertial><mass value="0.05"/><inertia ixx="1e-5" iyy="1e-5" izz="1e-5" ixy="0" ixz="0" iyz="0"/></inertial>
+    <visual><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
+    <collision><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry></collision>
+  </link>
+  <joint name="x" type="prismatic"><parent link="world"/><child link="sx"/><axis xyz="1 0 0"/><limit lower="-1" upper="1" effort="200" velocity="2"/></joint>
+  <joint name="y" type="prismatic"><parent link="sx"/><child link="sy"/><axis xyz="0 1 0"/><limit lower="-1" upper="1" effort="200" velocity="2"/></joint>
+  <joint name="z" type="prismatic"><parent link="sy"/><child link="palm"/><axis xyz="0 0 1"/><limit lower="0" upper="0.3" effort="200" velocity="2"/></joint>
+  <joint name="fl" type="prismatic"><parent link="palm"/><child link="left"/><axis xyz="1 0 0"/><limit lower="-0.07" upper="-0.004" effort="20" velocity="0.5"/></joint>
+  <joint name="fr" type="prismatic"><parent link="palm"/><child link="right"/><axis xyz="1 0 0"/><limit lower="0.004" upper="0.07" effort="20" velocity="0.5"/></joint>
+</robot>
+"""
+JX, JY, JZ, JL, JR = range(5)
+
+
+def load_exits(path: Path = HERE / "exits.json") -> dict:
+    return json.loads(path.read_text())
+
+
+def exit_to_m(e: dict) -> dict:
+    """An exit from exits.json (px, px/s along / past the plank edge) in metres in this scene."""
+    return {"x": e["s"] * M_PER_PX, "t": e["t"], "vx": e["vs"] * M_PER_PX, "vy": e["vd"] * M_PER_PX}
+
+
+class CatchEnv(gym.Env):
+    metadata = {"render_modes": ["rgb_array"]}
+
+    def __init__(self, exits: dict | None = None, seed: int | None = None, gui: bool = False):
+        self.exits = exits or load_exits()
+        self.ex = [exit_to_m(e) for e in self.exits["exits"]]
+        pr = exit_to_m(dict(self.exits["prior"], s=self.exits["prior"]["s"]))
+        self.prior = pr
+        self.rest = np.array([pr["x"], ZONE / 2])
+        self.action_space = gym.spaces.Box(-1, 1, (4,), np.float32)
+        self.observation_space = gym.spaces.Box(-10, 10, (17,), np.float32)
+        self.rng = np.random.default_rng(seed)
+        self.cid = p.connect(p.GUI if gui else p.DIRECT)
+        self._build()
+
+    def _build(self):
+        c = self.cid
+        p.resetSimulation(physicsClientId=c)
+        p.setGravity(0, 0, -9.81, physicsClientId=c)
+        p.setTimeStep(DT / SUBSTEPS, physicsClientId=c)
+        table = p.createCollisionShape(p.GEOM_BOX, halfExtents=[0.4, 0.4, 0.01], physicsClientId=c)
+        tv = p.createVisualShape(p.GEOM_BOX, halfExtents=[0.4, 0.4, 0.01], rgbaColor=[0.75, 0.6, 0.45, 1], physicsClientId=c)
+        self.table = p.createMultiBody(0, table, tv, [0.2, 0.1, -0.01], physicsClientId=c)
+        pv = p.createVisualShape(p.GEOM_BOX, halfExtents=[0.25, 0.05, 0.004], rgbaColor=[0.55, 0.35, 0.2, 1], physicsClientId=c)
+        self.plank = p.createMultiBody(0, -1, pv, [0.2, -0.05, 0.06], physicsClientId=c)       # visual only, above the ball
+        zv = p.createVisualShape(p.GEOM_BOX, halfExtents=[0.3, 0.001, 0.0005], rgbaColor=[0.9, 0.2, 0.2, 1], physicsClientId=c)
+        p.createMultiBody(0, -1, zv, [0.2, ZONE, 0.0006], physicsClientId=c)                   # end of the catch zone
+        bs = p.createCollisionShape(p.GEOM_SPHERE, radius=BALL_R, physicsClientId=c)
+        bv = p.createVisualShape(p.GEOM_SPHERE, radius=BALL_R, rgbaColor=[0.1, 0.3, 0.9, 1], physicsClientId=c)
+        self.ball = p.createMultiBody(0.05, bs, bv, [0, -0.3, BALL_R], physicsClientId=c)
+        p.changeDynamics(self.ball, -1, lateralFriction=0.8, rollingFriction=1e-5, spinningFriction=1e-5,
+                         physicsClientId=c)
+        with tempfile.NamedTemporaryFile("w", suffix=".urdf", delete=False) as f:
+            f.write(GRIPPER_URDF)
+        self.grip = p.loadURDF(f.name, useFixedBase=True, physicsClientId=c)
+        for j in (JL, JR):
+            p.changeDynamics(self.grip, j, lateralFriction=1.5, physicsClientId=c)
+
+    # ---- helpers ------------------------------------------------------------------------------------
+    def _drive(self, j, target, vmax, force=200):
+        p.setJointMotorControl2(self.grip, j, p.POSITION_CONTROL, targetPosition=float(target),
+                                maxVelocity=vmax, force=force, physicsClientId=self.cid)
+
+    def _set_gap(self, gap, vmax=1.0, force=20):
+        h = gap / 2 + 0.0  # inner faces sit at the joint positions
+        self._drive(JL, -h, vmax, force), self._drive(JR, h, vmax, force)
+
+    def gap(self) -> float:
+        return p.getJointState(self.grip, JR, physicsClientId=self.cid)[0] - p.getJointState(self.grip, JL, physicsClientId=self.cid)[0]
+
+    def grip_xy(self) -> np.ndarray:
+        return np.array([p.getJointState(self.grip, JX, physicsClientId=self.cid)[0],
+                         p.getJointState(self.grip, JY, physicsClientId=self.cid)[0]])
+
+    def ball_pos(self) -> np.ndarray:
+        return np.array(p.getBasePositionAndOrientation(self.ball, physicsClientId=self.cid)[0])
+
+    def _sim(self, n=SUBSTEPS):
+        for _ in range(n):
+            if not self.out and self.t >= self.true["t"] - 1e-9:
+                self._release()
+            p.stepSimulation(physicsClientId=self.cid)
+            self.t += DT / SUBSTEPS
+            if self.out:
+                self.seen.append((self.t, self.ball_pos()[:2] + self.rng.normal(0, OBS_NOISE, 2)))
+            if self.track is not None and self.out:
+                self._follow_track()
+
+    def _release(self):
+        e = self.true
+        self.out = True
+        p.resetBasePositionAndOrientation(self.ball, [e["x"], 0.0, BALL_R], [0, 0, 0, 1], physicsClientId=self.cid)
+        p.resetBaseVelocity(self.ball, [e["vx"], e["vy"], 0], [e["vy"] / BALL_R, -e["vx"] / BALL_R, 0],
+                            physicsClientId=self.cid)
+
+    def _follow_track(self):
+        """Replay mode: until the gripper touches it, the ball follows the real tracked path."""
+        if p.getContactPoints(self.ball, self.grip, physicsClientId=self.cid):
+            self.track = None
+            return
+        tr = self.track
+        if self.t > tr[-1, 0]:
+            return                                   # past the last tracked point: free rolling
+        x = np.interp(self.t, tr[:, 0], tr[:, 1]) * M_PER_PX
+        y = np.interp(self.t, tr[:, 0], tr[:, 2]) * M_PER_PX
+        k = min(np.searchsorted(tr[:, 0], self.t), len(tr) - 1)
+        k0 = max(k - 1, 0)
+        dt = max(tr[k, 0] - tr[k0, 0], 1e-6)
+        v = (tr[k, 1:] - tr[k0, 1:]) / dt * M_PER_PX
+        p.resetBasePositionAndOrientation(self.ball, [x, y, BALL_R], [0, 0, 0, 1], physicsClientId=self.cid)
+        p.resetBaseVelocity(self.ball, [v[0], v[1], 0], [v[1] / BALL_R, -v[0] / BALL_R, 0], physicsClientId=self.cid)
+
+    # ---- episode ------------------------------------------------------------------------------------
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            self.rng = np.random.default_rng(seed)
+        o = options or {}
+        self.track = None
+        if "exit" in o:                              # replay: a real exit (px), its track and a given forecast
+            self.true = exit_to_m(o["exit"])
+            self.track = np.array(o["track"], float) if o.get("track") is not None else None
+            self.fc = dict(o["forecast"])
+        else:
+            e = dict(self.ex[self.rng.integers(len(self.ex))])
+            j = self.rng.normal(1, 0.1, 2)
+            e = {"x": e["x"] + self.rng.normal(0, 0.01), "t": max(e["t"] + self.rng.normal(0, 0.03), 0.0),
+                 "vx": e["vx"] * j[0], "vy": max(e["vy"] * j[1], 0.03)}
+            self.true = e
+            u = float(o.get("u", self.rng.uniform(0, 1)))
+            sv = SIG_V * u * np.hypot(e["vx"], e["vy"])
+            self.fc = {"x": e["x"] + self.rng.normal(0, SIG_S * u + 1e-9), "t": e["t"] + self.rng.normal(0, SIG_T * u + 1e-9),
+                       "vx": e["vx"] + self.rng.normal(0, sv + 1e-9), "vy": e["vy"] + self.rng.normal(0, sv + 1e-9),
+                       "sig_s": SIG_S * u, "sig_t": SIG_T * u, "sig_v": SIG_V * u, "u": u}
+        c = self.cid
+        p.resetBasePositionAndOrientation(self.ball, [0, -0.3, BALL_R], [0, 0, 0, 1], physicsClientId=c)
+        p.resetBaseVelocity(self.ball, [0, 0, 0], [0, 0, 0], physicsClientId=c)
+        for j, v in ((JX, self.rest[0]), (JY, self.rest[1]), (JZ, HOVER_Z), (JL, -GAP_MIN / 2), (JR, GAP_MIN / 2)):
+            p.resetJointState(self.grip, j, v, physicsClientId=c)
+        self._drive(JZ, HOVER_Z, 1.0)
+        self._set_gap(GAP_MIN)
+        self.t, self.out, self.seen, self.travel = 0.0, False, [], 0.0
+        self.grasped, self.result = False, None
+        return self._obs(), {}
+
+    def step(self, a):
+        a = np.clip(np.asarray(a, float), -1, 1)
+        g = self.grip_xy()
+        v = a[:2] * GRIP_SPEED
+        n = np.linalg.norm(v)
+        v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
+        tgt = g + v * DT
+        tgt[1] = np.clip(tgt[1], 0.0, ZONE)
+        self._drive(JX, tgt[0], GRIP_SPEED * 1.5), self._drive(JY, tgt[1], GRIP_SPEED * 1.5)
+        gap = GAP_MIN + (a[2] + 1) / 2 * (GAP_MAX - GAP_MIN)
+        self._set_gap(gap, vmax=0.5)
+        self._sim()
+        r = -MOVE * float(np.linalg.norm(self.grip_xy() - g)) / 0.1
+        self.travel += float(np.linalg.norm(self.grip_xy() - g))
+        if a[3] > 0:
+            return self._grasp(r)
+        b = self.ball_pos()
+        if self.out and (b[1] > ZONE + BALL_R or b[1] < -0.05 or abs(b[0] - 0.2) > 0.45):
+            return self._finish(r, False, "left the zone")
+        if self.t >= MAX_T:
+            return self._finish(r, False, "time out")
+        return self._obs(), r, False, False, {}
+
+    def _grasp(self, r):
+        """Close the fingers (FINGER_SPEED each), then lift; success = ball held clear of the table."""
+        b0 = self.ball_pos()
+        depth = float(np.clip(b0[1] / ZONE, 0, 1)) if self.out else 1.0
+        open_frac = float(np.clip((self.gap() - GAP_MIN) / (GAP_MAX - GAP_MIN), 0, 1))
+        self._set_gap(0.0, vmax=FINGER_SPEED, force=15)
+        g = self.grip_xy()
+        self._drive(JX, g[0], 0.5), self._drive(JY, g[1], 0.5)
+        steps = int(np.ceil(self.gap() / 2 / FINGER_SPEED / (DT / SUBSTEPS))) + 10
+        self._sim(steps)
+        self._drive(JZ, LIFT_Z, 0.4)
+        self._sim(int(0.35 / (DT / SUBSTEPS)))
+        b = self.ball_pos()
+        held = b[2] > BALL_R + 0.03 and bool(p.getContactPoints(self.ball, self.grip, physicsClientId=self.cid))
+        if held:
+            rew = 1 + EARLY * (1 - depth) - WIDE * open_frac
+            return self._finish(r + rew, True, "held", depth=depth, opening=open_frac)
+        return self._finish(r, False, "grasp missed", depth=depth, opening=open_frac)
+
+    def _finish(self, r, ok, why, depth=None, opening=None):
+        if not ok:
+            r -= MISS
+        self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel}
+        return self._obs(), float(r), True, False, dict(self.result)
+
+    def visible(self) -> list:
+        return [s for s in self.seen if s[0] <= self.t - OBS_DELAY + 1e-9]
+
+    def _obs(self):
+        f = self.fc
+        seen = self.visible()
+        if seen:
+            bp = seen[-1][1]
+            back = [s for s in seen if s[0] <= seen[-1][0] - DT + 1e-9]
+            bv = (bp - back[-1][1]) / (seen[-1][0] - back[-1][0]) if back else np.array([f["vx"], f["vy"]])
+        else:
+            bp, bv = np.zeros(2), np.zeros(2)
+        g = self.grip_xy()
+        return np.array([self.t, f["x"] / 0.4, f["t"] - self.t, f["vx"] / 0.2, f["vy"] / 0.2,
+                         f["sig_s"] / SIG_S, f["sig_t"] / SIG_T, f["sig_v"] / SIG_V,
+                         g[0] / 0.4, g[1] / ZONE, (self.gap() - GAP_MIN) / (GAP_MAX - GAP_MIN),
+                         float(bool(seen)), bp[0] / 0.4, bp[1] / ZONE, bv[0] / 0.2, bv[1] / 0.2,
+                         (bp[0] - g[0]) / 0.1 if seen else 0.0], np.float32)
+
+    def render(self, width=480, height=360):
+        c = self.cid
+        view = p.computeViewMatrix([0.2, 0.33, 0.42], [0.2, 0.03, 0.0], [0, -1, 0], physicsClientId=c)
+        proj = p.computeProjectionMatrixFOV(55, width / height, 0.05, 2.0, physicsClientId=c)
+        img = p.getCameraImage(width, height, view, proj, renderer=p.ER_TINY_RENDERER, physicsClientId=c)[2]
+        return np.asarray(img, np.uint8).reshape(height, width, 4)[..., :3]
+
+    def close(self):
+        try:
+            p.disconnect(self.cid)
+        except p.error:
+            pass
+
+
+# ---- scripted reference policies (fixed rules) -----------------------------------------------------
+def _go(env, target):
+    v = (np.asarray(target) - env.grip_xy()) / DT / GRIP_SPEED
+    n = np.linalg.norm(v)
+    return v / n if n > 1 else v
+
+
+def _predict(x, y, vx, vy, aim_y):
+    k = max((aim_y - y) / vy, 0.05) if vy > 0.01 else 0.05
+    return x + vx * k, k
+
+
+def reactive(env, obs):
+    """Waits; once it sees the ball, heads for where it crosses the middle of the zone, opens mid-wide,
+    and grasps when the ball is between the fingers."""
+    seen = env.visible()
+    if not seen:
+        return np.array([0, 0, -1, -1.0])
+    x, y = seen[-1][1]
+    vx, vy = obs[14] * 0.2, obs[15] * 0.2
+    aim = ZONE * 0.6
+    tx, _ = _predict(x, y, vx, vy, aim)
+    lag = OBS_DELAY + 0.05
+    now = np.array([x + vx * lag, y + vy * lag])
+    g = env.grip_xy()
+    between = abs(now[0] - g[0]) < 0.02 and abs(now[1] - g[1]) < 0.012
+    return np.r_[_go(env, (tx, aim)), 0.0, 1.0 if between else -1.0]
+
+
+def trust_forecast(env, obs):
+    """Goes to where the forecast says the ball crosses a shallow depth, opens narrow; reacts once seen."""
+    if env.visible():
+        return reactive(env, obs)
+    f = env.fc
+    aim = ZONE * 0.35
+    tx, _ = _predict(f["x"], 0.0, f["vx"], f["vy"], aim)
+    return np.r_[_go(env, (tx, aim)), -0.6, -1.0]
+
+
+def run_episode(env, policy, options=None, seed=None, frames=None):
+    obs, _ = env.reset(seed=seed, options=options)
+    total = 0.0
+    while True:
+        a = policy(env, obs)
+        if frames is not None:
+            frames.append(env.render())
+        obs, r, term, trunc, info = env.step(a)
+        total += r
+        if term or trunc:
+            if frames is not None:
+                frames.append(env.render())
+            return dict(info, reward=total)
