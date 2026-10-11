@@ -29,8 +29,13 @@ from pathlib import Path
 
 import numpy as np
 
-import env as E
-from exits import Edge
+import os
+
+if os.environ.get("GRIPPER_ENV") == "box":      # plain-Python kinematics instead of PyBullet (box_env.py)
+    import box_env as E
+else:
+    import env as E
+from exits import Edge  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
@@ -133,6 +138,7 @@ def main() -> None:
     ap.add_argument("--policy", type=Path, default=HERE / "runs" / "ppo")
     ap.add_argument("--scene", type=Path, default=REPO / "configs" / "scenes" / "whole.json")
     ap.add_argument("--quick", action="store_true", help="fewer simulated episodes (a smoke test)")
+    ap.add_argument("--tag", default="", help="results go to <plan>/gripper/<tag>/ (one per experiment)")
     args = ap.parse_args()
     global N_SIM
     if args.quick:
@@ -195,7 +201,9 @@ def main() -> None:
                 er["matched_u"] = round(u_star, 3)
             er["sim_predicted_caught"] = round(pred, 3)
 
-    dest = args.plan / "gripper"
+    dest = args.plan / "gripper" / args.tag if args.tag else args.plan / "gripper"
+    out["experiment"] = {"tag": args.tag, "env": os.environ.get("GRIPPER_ENV", "pybullet"),
+                         "params": os.environ.get("GRIPPER_PARAMS", "{}")}
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "gripper.json").write_text(json.dumps(out, indent=1))
     write_md(out, dest / "gripper.md")

@@ -19,13 +19,16 @@ Actions (every 1/16 s, all in [-1, 1]): gripper velocity in x and y, finger open
 episode's one attempt.
 
 Reward: a ball lifted and held earns 1 + EARLY x (how early in the zone it was grasped, 0..1) minus
-WIDE x (how wide the fingers were open, 0..1). A miss (ball dropped, missed, or out of the zone) costs
-MISS. Moving costs a little. A wide opening also takes longer to close, so it is a real trade-off.
+WIDE x (how wide the fingers were open, 0..1). A miss costs MISS: the ball dropped or slipped, left the
+zone, or was touched by the gripper before the grasp (a knocked rolling ball is lost, so the gripper
+cannot just block it and pick it up at rest). Moving costs a little. A wide opening also takes longer
+to close, so it is a real trade-off.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 from pathlib import Path
 
@@ -49,6 +52,10 @@ OBS_DELAY = 0.125                # s: seeing the ball lags by 2 frames
 MAX_T = 2.5
 HOVER_Z = 0.0                    # gripper frame z while hunting (fingers reach the table)
 LIFT_Z = 0.08
+
+# Experiment overrides (overnight.py): GRIPPER_PARAMS='{"EARLY": 1.0}' replaces these constants, in every
+# training process (subprocesses inherit the environment variable).
+globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 GRIPPER_URDF = """<?xml version="1.0"?>
 <robot name="gripper">
@@ -154,6 +161,8 @@ class CatchEnv(gym.Env):
             self.t += DT / SUBSTEPS
             if self.out:
                 self.seen.append((self.t, self.ball_pos()[:2] + self.rng.normal(0, OBS_NOISE, 2)))
+                if not self.grasping and p.getContactPoints(self.ball, self.grip, physicsClientId=self.cid):
+                    self.knocked = True
 
     def _release(self):
         e = self.true
@@ -189,7 +198,7 @@ class CatchEnv(gym.Env):
         self._drive(JZ, HOVER_Z, 1.0)
         self._set_gap(GAP_MIN)
         self.t, self.out, self.seen, self.travel = 0.0, False, [], 0.0
-        self.grasped, self.result = False, None
+        self.grasping, self.knocked, self.result = False, False, None
         return self._obs(), {}
 
     def step(self, a):
@@ -210,6 +219,8 @@ class CatchEnv(gym.Env):
         self.travel += float(np.linalg.norm(self.grip_xy() - g))
         if a[3] > 0.5 and self.visible():
             return self._grasp(r)
+        if self.knocked:
+            return self._finish(r, False, "knocked the ball")
         b = self.ball_pos()
         if self.out and (b[1] > ZONE + BALL_R or b[1] < -0.05 or abs(b[0] - 0.2) > 0.45):
             return self._finish(r, False, "left the zone")
@@ -222,6 +233,7 @@ class CatchEnv(gym.Env):
         b0 = self.ball_pos()
         depth = float(np.clip(b0[1] / ZONE, 0, 1)) if self.out else 1.0
         open_frac = float(np.clip((self.gap() - GAP_MIN) / (GAP_MAX - GAP_MIN), 0, 1))
+        self.grasping = True
         self._set_gap(0.0, vmax=FINGER_SPEED, force=15)
         g = self.grip_xy()
         self._drive(JX, g[0], 0.5), self._drive(JY, g[1], 0.5)

@@ -76,13 +76,14 @@ def main() -> None:
     ap.add_argument("--fold", type=int, default=0)
     ap.add_argument("--episodes", type=int, default=6)
     ap.add_argument("--gui", action="store_true")
+    ap.add_argument("--tag", default="", help="videos go to <plan>/gripper/<tag>/")
     ap.add_argument("--scene", type=Path, default=REPO / "configs" / "scenes" / "whole.json")
     args = ap.parse_args()
     exits = E.load_exits()
     pols = V.load_policies(args.policy)
     pol = pols.get(args.fold) or E.trust_forecast
     held = dict(exits, exits=[e for e in exits["exits"] if e["fold"] == args.fold])
-    dest = args.plan / "gripper"
+    dest = args.plan / "gripper" / args.tag if args.tag else args.plan / "gripper"
     dest.mkdir(parents=True, exist_ok=True)
 
     if args.gui:

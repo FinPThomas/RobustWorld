@@ -22,7 +22,12 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-import env as E
+import os
+
+if os.environ.get("GRIPPER_ENV") == "box":      # plain-Python kinematics instead of PyBullet (box_env.py)
+    import box_env as E
+else:
+    import env as E
 
 HERE = Path(__file__).resolve().parent
 
