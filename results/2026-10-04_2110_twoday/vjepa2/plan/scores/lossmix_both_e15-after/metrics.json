@@ -1,0 +1,299 @@
+{
+ "model_id": "facebook/vjepa2-vitl-fpc64-256",
+ "device": "cuda",
+ "n_clips": 337,
+ "predictor_run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/lossmix_both_e15-after",
+ "n_through": 143,
+ "n_hidden": 80,
+ "n_bounce": 114,
+ "folds": 5,
+ "real_cell_auroc": 0.98,
+ "future_cell_auroc_imagined": 0.876,
+ "future_cell_auroc_hold_last_context": 0.718,
+ "future_cell_auroc_imagined_encoder_space": 0.866,
+ "far_cell_auroc_real": 0.995,
+ "far_cell_auroc_imagined": 0.863,
+ "outcome_auroc_real": 0.994,
+ "outcome_auroc_imagined": 0.887,
+ "imagined_far_peak_mean": {
+  "through": 0.595,
+  "hidden": 0.055,
+  "bounce": 0.054
+ },
+ "outcomes_real": {
+  "outcome_auroc": 0.994,
+  "outcome_accuracy": 0.991,
+  "blocked_called_through": 0,
+  "through_called_blocked": 3,
+  "peak_far_mean": {
+   "through": 0.977,
+   "hidden": 0.027,
+   "bounce": 0.036
+  },
+  "bounce_auroc": 0.648,
+  "outcome3_accuracy": 0.76,
+  "p_correct": {
+   "through": 0.977,
+   "hidden": 0.47,
+   "bounce": 0.655
+  },
+  "p_correct_balanced": 0.701,
+  "recall": {
+   "through": 0.979,
+   "hidden": 0.475,
+   "bounce": 0.684
+  },
+  "balanced_accuracy": 0.713
+ },
+ "outcomes_imagined": {
+  "outcome_auroc": 0.887,
+  "outcome_accuracy": 0.828,
+  "blocked_called_through": 8,
+  "through_called_blocked": 50,
+  "peak_far_mean": {
+   "through": 0.595,
+   "hidden": 0.055,
+   "bounce": 0.054
+  },
+  "bounce_auroc": 0.36,
+  "outcome3_accuracy": 0.469,
+  "p_correct": {
+   "through": 0.595,
+   "hidden": 0.528,
+   "bounce": 0.28
+  },
+  "p_correct_balanced": 0.468,
+  "recall": {
+   "through": 0.65,
+   "hidden": 0.6,
+   "bounce": 0.149
+  },
+  "balanced_accuracy": 0.466
+ },
+ "ball_real": {
+  "hit_rate": 0.996,
+  "error_px": 17.4,
+  "phantom_rate": 0.077,
+  "steps_with_ball": 3067,
+  "steps_without_ball": 977
+ },
+ "ball_imagined": {
+  "hit_rate": 0.518,
+  "error_px": 26.2,
+  "phantom_rate": 0.221,
+  "steps_with_ball": 3067,
+  "steps_without_ball": 977
+ },
+ "outcomes_real_one_ball": {
+  "outcome_auroc": 0.994,
+  "outcome_accuracy": 0.893,
+  "blocked_called_through": 33,
+  "through_called_blocked": 3,
+  "peak_far_mean": {
+   "through": 0.955,
+   "hidden": 0.121,
+   "bounce": 0.21
+  },
+  "bounce_auroc": 0.834,
+  "outcome3_accuracy": 0.724,
+  "p_correct": {
+   "through": 0.955,
+   "hidden": 0.403,
+   "bounce": 0.607
+  },
+  "p_correct_balanced": 0.655,
+  "recall": {
+   "through": 0.986,
+   "hidden": 0.362,
+   "bounce": 0.614
+  },
+  "balanced_accuracy": 0.654
+ },
+ "outcomes_imagined_one_ball": {
+  "outcome_auroc": 0.906,
+  "outcome_accuracy": 0.819,
+  "blocked_called_through": 38,
+  "through_called_blocked": 23,
+  "peak_far_mean": {
+   "through": 0.774,
+   "hidden": 0.167,
+   "bounce": 0.283
+  },
+  "bounce_auroc": 0.441,
+  "outcome3_accuracy": 0.582,
+  "p_correct": {
+   "through": 0.774,
+   "hidden": 0.332,
+   "bounce": 0.407
+  },
+  "p_correct_balanced": 0.504,
+  "recall": {
+   "through": 0.86,
+   "hidden": 0.163,
+   "bounce": 0.456
+  },
+  "balanced_accuracy": 0.493
+ },
+ "outcomes_imagined_encoder_space_one_ball": {
+  "outcome_auroc": 0.878,
+  "outcome_accuracy": 0.766,
+  "blocked_called_through": 52,
+  "through_called_blocked": 27,
+  "peak_far_mean": {
+   "through": 0.73,
+   "hidden": 0.136,
+   "bounce": 0.33
+  },
+  "bounce_auroc": 0.434,
+  "outcome3_accuracy": 0.531,
+  "p_correct": {
+   "through": 0.73,
+   "hidden": 0.38,
+   "bounce": 0.357
+  },
+  "p_correct_balanced": 0.489,
+  "recall": {
+   "through": 0.832,
+   "hidden": 0.237,
+   "bounce": 0.342
+  },
+  "balanced_accuracy": 0.47
+ },
+ "ball_real_argmax": {
+  "hit_rate": 1.0,
+  "error_px": 17.3,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 3067,
+  "steps_without_ball": 977
+ },
+ "ball_imagined_argmax": {
+  "hit_rate": 0.642,
+  "error_px": 33.8,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 3067,
+  "steps_without_ball": 977
+ },
+ "ball_imagined_encoder_space_argmax": {
+  "hit_rate": 0.622,
+  "error_px": 35.1,
+  "phantom_rate": 1.0,
+  "steps_with_ball": 3067,
+  "steps_without_ball": 977
+ },
+ "timing_seconds_per_clip": {},
+ "model_load_seconds": 1.6,
+ "by_side": {
+  "L": {
+   "n": 83,
+   "n_through": 32,
+   "n_hidden": 3,
+   "n_bounce": 48,
+   "outcomes_real_one_ball": {
+    "outcome_auroc": 0.98,
+    "outcome_accuracy": 0.602,
+    "blocked_called_through": 33,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.972,
+     "hidden": 0.562,
+     "bounce": 0.456
+    },
+    "bounce_auroc": 0.993,
+    "outcome3_accuracy": 0.59,
+    "p_correct": {
+     "through": 0.972,
+     "hidden": 0.279,
+     "bounce": 0.477
+    },
+    "p_correct_balanced": 0.576,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.271
+    },
+    "balanced_accuracy": 0.424
+   },
+   "outcomes_imagined_one_ball": {
+    "outcome_auroc": 0.891,
+    "outcome_accuracy": 0.602,
+    "blocked_called_through": 33,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.916,
+     "hidden": 0.723,
+     "bounce": 0.586
+    },
+    "bounce_auroc": 0.785,
+    "outcome3_accuracy": 0.566,
+    "p_correct": {
+     "through": 0.916,
+     "hidden": 0.158,
+     "bounce": 0.253
+    },
+    "p_correct_balanced": 0.442,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.333,
+     "bounce": 0.042
+    },
+    "balanced_accuracy": 0.458
+   }
+  },
+  "R": {
+   "n": 254,
+   "n_through": 111,
+   "n_hidden": 77,
+   "n_bounce": 66,
+   "outcomes_real_one_ball": {
+    "outcome_auroc": 0.999,
+    "outcome_accuracy": 0.988,
+    "blocked_called_through": 0,
+    "through_called_blocked": 3,
+    "peak_far_mean": {
+     "through": 0.95,
+     "hidden": 0.104,
+     "bounce": 0.031
+    },
+    "bounce_auroc": 0.763,
+    "outcome3_accuracy": 0.768,
+    "p_correct": {
+     "through": 0.95,
+     "hidden": 0.408,
+     "bounce": 0.701
+    },
+    "p_correct_balanced": 0.686,
+    "recall": {
+     "through": 0.982,
+     "hidden": 0.377,
+     "bounce": 0.864
+    },
+    "balanced_accuracy": 0.741
+   },
+   "outcomes_imagined_one_ball": {
+    "outcome_auroc": 0.962,
+    "outcome_accuracy": 0.89,
+    "blocked_called_through": 5,
+    "through_called_blocked": 23,
+    "peak_far_mean": {
+     "through": 0.734,
+     "hidden": 0.145,
+     "bounce": 0.064
+    },
+    "bounce_auroc": 0.39,
+    "outcome3_accuracy": 0.587,
+    "p_correct": {
+     "through": 0.734,
+     "hidden": 0.339,
+     "bounce": 0.519
+    },
+    "p_correct_balanced": 0.531,
+    "recall": {
+     "through": 0.82,
+     "hidden": 0.156,
+     "bounce": 0.758
+    },
+    "balanced_accuracy": 0.578
+   }
+  }
+ }
+}

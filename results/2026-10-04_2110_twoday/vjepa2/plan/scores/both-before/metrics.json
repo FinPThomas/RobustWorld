@@ -2,7 +2,7 @@
  "model_id": "facebook/vjepa2-vitl-fpc64-256",
  "device": "cuda",
  "n_clips": 337,
- "predictor_run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/both-before",
+ "predictor_run": "pretrained",
  "n_through": 143,
  "n_hidden": 80,
  "n_bounce": 114,
@@ -168,7 +168,7 @@
  },
  "ball_imagined_argmax": {
   "hit_rate": 0.177,
-  "error_px": 182.2,
+  "error_px": 182.4,
   "phantom_rate": 1.0,
   "steps_with_ball": 3067,
   "steps_without_ball": 977

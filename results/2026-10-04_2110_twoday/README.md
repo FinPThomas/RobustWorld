@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-11 06:13 UTC
+- Saved: 2026-10-11 07:35 UTC
 - Code commit: `5258f04`
-- Note: two-day plan, 21 steps done
+- Note: two-day plan, 22 steps done
 
 ## Figures
 
@@ -56,6 +56,18 @@
 - [vjepa2/plan/scores/hyp-after/outcome.png](vjepa2/plan/scores/hyp-after/outcome.png)
 - [vjepa2/plan/scores/lossmix_both-after/curves.png](vjepa2/plan/scores/lossmix_both-after/curves.png)
 - [vjepa2/plan/scores/lossmix_both-after/outcome.png](vjepa2/plan/scores/lossmix_both-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e1-after/curves.png](vjepa2/plan/scores/lossmix_both_e1-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e1-after/outcome.png](vjepa2/plan/scores/lossmix_both_e1-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e10-after/curves.png](vjepa2/plan/scores/lossmix_both_e10-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e10-after/outcome.png](vjepa2/plan/scores/lossmix_both_e10-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e15-after/curves.png](vjepa2/plan/scores/lossmix_both_e15-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e15-after/outcome.png](vjepa2/plan/scores/lossmix_both_e15-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e2-after/curves.png](vjepa2/plan/scores/lossmix_both_e2-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e2-after/outcome.png](vjepa2/plan/scores/lossmix_both_e2-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e4-after/curves.png](vjepa2/plan/scores/lossmix_both_e4-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e4-after/outcome.png](vjepa2/plan/scores/lossmix_both_e4-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_both_e7-after/curves.png](vjepa2/plan/scores/lossmix_both_e7-after/curves.png)
+- [vjepa2/plan/scores/lossmix_both_e7-after/outcome.png](vjepa2/plan/scores/lossmix_both_e7-after/outcome.png)
 - [vjepa2/plan/scores/lossmix_e10-after/curves.png](vjepa2/plan/scores/lossmix_e10-after/curves.png)
 - [vjepa2/plan/scores/lossmix_e10-after/outcome.png](vjepa2/plan/scores/lossmix_e10-after/outcome.png)
 - [vjepa2/plan/scores/lossmix_e20-after/curves.png](vjepa2/plan/scores/lossmix_e20-after/curves.png)
