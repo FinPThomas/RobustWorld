@@ -263,6 +263,50 @@
     "auroc": 0.917,
     "n": 254
    }
+  },
+  "lossmix_both-after / L": {
+   "wide gap (104-186)": {
+    "mean": 0.94,
+    "n": 25
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.78,
+    "n": 7
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.517,
+    "n": 40
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.333,
+    "n": 10
+   },
+   "AUROC all": {
+    "auroc": 0.893,
+    "n": 83
+   }
+  },
+  "lossmix_both-after / R": {
+   "wide gap (104-186)": {
+    "mean": 0.787,
+    "n": 82
+   },
+   "narrow gap (315-367)": {
+    "mean": 0.673,
+    "n": 26
+   },
+   "blocked middle (186-315)": {
+    "mean": 0.084,
+    "n": 106
+   },
+   "AUROC at y 300-380": {
+    "auroc": 0.925,
+    "n": 52
+   },
+   "AUROC all": {
+    "auroc": 0.961,
+    "n": 254
+   }
   }
  }
 }
