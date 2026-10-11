@@ -1,4 +1,4 @@
-# RobustWorld: results so far (updated 2026-10-11)
+# RobustWorld: results so far (updated 2026-10-11, after Kaggle session #8)
 
 **Question.** A ball rolls under a plank. A hidden blocker under the plank stops some passes
 ("hidden", or "bounce" when the ball comes back). Can V-JEPA 2 learn where the invisible
@@ -16,19 +16,24 @@ blocker is, purely by post-training its predictor on our video?
   from the left** (left clips scored only on held-out folds). C is the best model overall.
 - **The narrow gap is now learnt.** Loss-weighted sampling plus 20 epochs lifts the imagined ball
   in the narrow gap from 0.44 to 0.79 (real frames 0.91).
-- **The table slope is not learnt yet.** The imagined slope term is 0.007, against 0.030 for the
-  real ball, with a CI that includes 0. The frozen decoder's 32 px grid is too coarse to measure
-  the slope even on real frames.
+- **Adding open-table clips to training (run E) changes little for the blockade.** E scores
+  0.959 from the right and 0.922 from the left, against C's 0.961 and 0.893 (CIs overlap).
+- **The table slope is still not learnt, but it can now be measured.** The sharper,
+  untrained position readout finds the real downhill pull on real frames: g_x −0.025 [−0.040,
+  −0.006] against −0.026 for the tracker. The coarse 32 px probe could not do this.
+  - The imagined ball from C and from E shows no downhill pull. E's is +0.013, the wrong sign,
+    with a CI that spans 0.
+  - This is now a model result, not a readout limit.
 
 Sources (all figures here are copies, so they render after `git pull`):
-post-training on PR #3 (`claude/colab-two-day-plan-3gn90a` @ `18840c8`,
-`results/2026-10-04_2110_twoday/`, Kaggle sessions up to #7 on 2026-10-11), probing on PR #4
+post-training on PR #3 (`claude/colab-two-day-plan-3gn90a` @ `0e83019`,
+`results/2026-10-04_2110_twoday/`, Kaggle sessions up to #8, finished 2026-10-11 22:15 UTC), probing on PR #4
 (`claude/vjepa-probing-overnight` @ `919d440`, `results/2026-10-05_0425_vjepa-probing/`),
 zero-shot on `main` (`docs/results/ball_comparison.md`).
 
 > **Plans:** [NEXT_STEPS_PLAN.md](NEXT_STEPS_PLAN.md) (2026-10-09) and
 > [RESEARCH_SCOPE.md](RESEARCH_SCOPE.md) (the run list for the latest Kaggle sessions: B, A, C, slope).
-> **New since 2026-10-08:** sections 4–6 and the updated 8–9.
+> **New in session #8:** run E (section 5d) and the sharp slope readout (section 6).
 
 ---
 
@@ -251,6 +256,7 @@ clips of a direction seen in training.
 | both-before (pretrained) | 0.454 | 0.437 | 0.660 | – |
 | A: commit, both, 10 ep (`commit_both`) | 0.843 | 0.917 | 0.767 | −0.02 to +0.23 (p = 0.05) |
 | **C: commit + loss-weighted, both, 20 ep (`lossmix_both`)** | **0.912** | **0.961** | **0.893** | **+0.10 to +0.36** |
+| E: C + open-table clips in training, 20 ep (`lossmix_open`) | 0.912 | 0.959 | 0.922 | not computed |
 
 **Findings:**
 
@@ -289,7 +295,38 @@ clips). Left panel: the slope term, section 6.*
 - The dip at epoch 1 is probably the predictor leaving its pretrained solution before it
   learns the blockade.
 
-## 6. Table slope: not learnt yet (new)
+### 5d. Run E: C plus the open-table clips in training (new, session #8)
+
+**What E changes.** E is C with the free-rolling, open-table clips added to training. Each clip
+is kept out of the fold that scores it. The aim was more examples of the ball rolling freely, so
+the model could pick up the slope. E took 7 h on a T4.
+
+| run | both sides | ball from R | ball from L | far-cell AUROC | ball hit rate | best epochs |
+|---|---|---|---|---|---|---|
+| C @ 20 | 0.912 | 0.961 | 0.893 | 0.86 | 0.66 | 18/16/20/18/17 |
+| E @ 10 | 0.868 | 0.930 | 0.909 | 0.85 | 0.61 | – |
+| **E @ 20** | 0.912 | 0.959 | **0.922** [0.86, 0.97] | **0.87** | **0.67** | 17/19/19/16/17 |
+
+**Mean imagined P(ball beyond the plank), by height at the plank:**
+
+| run | side | wide gap | narrow gap | blocked middle |
+|---|---|---|---|---|
+| C @ 20 | R | 0.787 | 0.673 | 0.084 |
+| E @ 20 | R | **0.854** | 0.609 | 0.081 |
+| C @ 20 | L | 0.940 | 0.780 (n 7) | 0.517 |
+| E @ 20 | L | 0.949 | **0.891** (n 7) | 0.513 |
+
+**Reading:** E matches C on the blockade, with a slightly better left side. The differences are
+inside the bootstrap intervals, and the left narrow gap has only 7 passes. The open-table clips
+neither help nor hurt the blockade. They also did not teach the slope (section 6).
+
+![E: P(blocked) vs crossing point](figures/pt_crossing_lossmix_open-after.png)
+*E on all 337 plank passes: both through windows are learnt, as with C (normalised-score
+AUROC 0.89, real frames 0.99).*
+
+![E: imagined vs real over time](figures/pt_curves_lossmix_open-after.png)
+
+## 6. Table slope: measurable now, still not learnt (updated in session #8)
 
 **Why test the slope.** The table is slightly tilted (downhill = left in the image). This is a
 second hidden physical property the model could pick up from video.
@@ -310,6 +347,8 @@ the ball's size. Nothing is fitted to read the model.
 | imagined, pretrained | – (ball never drawn clearly) | – | 0 / 0 |
 | imagined, C @ 20, open table | 0.0067 | [−0.015, 0.025] | 8 / 5 |
 | imagined, C @ 20, plank clips | 0.0115 | [−0.031, 0.061] | 16 / 15 |
+| imagined, E @ 20, open table | −0.20 | [−0.53, 0.02] | 4 / 6 |
+| imagined, E @ 20, plank clips | **−0.052** (wrong sign) | [−0.144, −0.005] | 9 / 29 |
 
 **Slope map** (uniform pull over the whole table, friction removed). g_x < 0 means pulled left
 (downhill):
@@ -317,23 +356,32 @@ the ball's size. Nothing is fitted to read the model.
 | track | g_x [95% CI] | stretches |
 |---|---|---|
 | real ball (tracker) | **−0.0265** [−0.030, −0.023] | 955 |
-| frozen probe on real frames | −0.016 [−0.039, +0.029] | 355 |
-| imagined, before post-training | – (no usable stretches) | 0 |
-| imagined, after (C, 20 ep) | +0.007 [−0.012, +0.030] | 144 |
+| frozen probe on real frames (coarse, 32 px cells) | −0.016 [−0.039, +0.029] | 355 |
+| **sharp positions on real frames** (nearest real context patch, untrained) | **−0.025 [−0.040, −0.006]** | 348 |
+| imagined, before post-training (sharp) | – (no usable stretches) | 0 |
+| imagined, after (C, 20 ep) | +0.007 [−0.015, +0.031] | 144 |
+| imagined, after (E: + open clips, sharp) | +0.013 [−0.027, +0.067] | 128 |
 
 ![Slope map](figures/slope_map.png)
-*Left: the real ball is pulled left (downhill) almost everywhere. Second: the frozen probe on
-real frames can't recover this; its 32 px cells are too coarse for accelerations this small.
-Right: the post-trained model's imagined ball shows no consistent downhill pull.*
+*Panel 1: the real ball is pulled left (downhill) almost everywhere. Panels 2–3: the coarse
+probe on real frames can't recover this, but the sharp positions can (−0.025 vs −0.026). Panels
+5–6: the imagined ball from C and E shows no consistent downhill pull; E's cells point either
+way.*
 
 **Reading:**
 
-- The slope result is inconclusive rather than negative. Imagined s is about a fifth of the real
-  value, with a CI that spans 0.
-- There are too few stretches where the imagined ball is visible on open table (n 5–16).
-- The readout is too coarse to see the slope even on real frames.
-- A sharper, untrained position readout is built but not yet scored: the nearest real
-  context patch (`nn_locate`, commit `07baaf3`). It is the next step for this test.
+- **The measurement problem is solved.** The sharp readout is untrained: it takes the nearest
+  real context patch. It recovers the real slope on real frames, so the slope test can now
+  succeed in principle.
+- **The models haven't learnt the slope.** Neither C nor E puts a downhill pull on the imagined
+  ball.
+  - E even shows a wrong-sign slope term on plank clips (−0.052, CI just below 0). It rests on
+    few stretches (9 downhill), and is more likely noise in a faint imagined ball than a real
+    belief.
+- **Adding free-rolling clips did not help.** The slope is about a 1–2 px per step² effect,
+  which the L1 latent loss probably barely rewards.
+- **The bottleneck is how rarely the imagined ball is clear on open table.** It is clear in
+  about 130 stretches against the tracker's 955.
 
 ## 7. Zero-shot baselines (main, older 88-clip set)
 
@@ -363,8 +411,10 @@ different place and the clips were easier. **On the current clips the bar is 0.8
    - Doubling the epochs gained more than any architecture change: the copy gate, the
      multi-hypothesis head and the objectives all made smaller differences.
    - C plateaus at about epoch 15.
-5. **The slope is a measurement problem first.** The readout must see accelerations of about
-   0.03 ball diameters/step² before we can say whether the model learnt the slope.
+5. **The slope is now a model problem, not a measurement problem.** The sharp readout sees the
+   real slope, while C and E don't imagine it, even with open-table clips in training. The blocker
+   (an all-or-nothing event) is learnt easily; a small, continuous force is not, at least with
+   this loss.
 
 ## 9. Future work (updated)
 
@@ -372,9 +422,9 @@ different place and the clips were easier. **On the current clips the bar is 0.8
 
 | priority | run | state / why |
 |---|---|---|
-| 1 | Score the slope with the sharper `nn_locate` positions | Built (`07baaf3`), not scored. Without it, the slope test can't succeed even on real frames. |
-| 2 | **E**: C plus the open-table clips in training, 20 ep | Waiting: `robustworld_clips_open.zip` must be added to the Kaggle dataset. Gives the slope far more free-rolling examples. |
-| 3 | **F**: C for 30 epochs, scored at 25 and 30 | Queued. Tests whether the epoch-15 plateau moves with a longer schedule. |
+| done | Sharp slope readout; **E** (C + open-table clips) | Session #8, sections 5d and 6. |
+| 1 | **F**: C for 30 epochs, scored at 25 and 30 | Queued (next in the plan). Tests whether the epoch-15 plateau moves with a longer schedule. |
+| 2 | Slope-targeted training | A loss that rewards the ball's *trajectory* over the latent, e.g. extra weight on ball tokens late in the clip. The current L1 latent loss barely rewards a 1–2 px/step² effect. |
 | 4 | **D**: the other ball, scored without training | Waiting: the clips and `configs/heldout.json` aren't added yet. First held-out *object* test. |
 | 5 | `interpret` (change maps, layer patching) for C | Only plain has been interpreted. Would show whether both directions share one representation. |
 | – | 3-way bounce score with `away_from_plank` | Ready on PR #4; rescore only. |
@@ -400,8 +450,11 @@ different place and the clips were easier. **On the current clips the bar is 0.8
    - **discrete latent modes** (a small VQ "outcome" latent, learnt self-supervised);
    - an **adversarial** realism term (the discriminator must never see outcome labels);
    - **object-slot sparsity** (keep changes on the ball tokens).
-5. **Slope, done properly.** Score `nn_locate` positions, add open-table clips (run E), and
-   consider a recording with a stronger tilt so the effect is well above the readout's noise.
+5. **Slope, next attempt.** The readout now works, and open-table clips alone didn't help. The
+   next things to try:
+   - weight the loss on the ball's tokens, or roll the prediction out over more steps, so small
+     accelerations compound into a visible position error;
+   - record with a stronger tilt, so the effect is well above the noise of the imagined ball.
 6. **Imitation-from-observation pick-up policy.** Use C to imagine *where and when* the ball
    crosses the line, read through the frozen decoder, and use that as the policy's target.
    - Start with a planner that moves the gripper to the predicted crossing point.
