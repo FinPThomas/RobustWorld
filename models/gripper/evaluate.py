@@ -5,7 +5,8 @@ each world model's forecast (before vs after post-training).
    speed), env.py), episodes drawn from the held-out fold's real exits: catch rate, reward, and how the
    policy behaves (opening width, how deep in the zone it catches). This is P(pick-up | the forecast's
    error distribution).
-2. Real replay. Every real pass that comes out (exits.json), its tracked ball replayed. The policy is the
+2. Real replay. Every real pass that comes out (exits.json): the ball comes out at that pass's real
+   exit (tracker: where, when, how fast) and rolls from there. The policy is the
    one whose training never saw that clip's fold. Forecast per world model, read from per_clip.json
    with the frozen decoder (ball_probe_cv.py) and fixed rules, no fitting (CLAUDE.md rules 1-6):
        where/when  the first imagined step whose decoded ball (peak >= CONF) is past the far edge;
@@ -87,7 +88,9 @@ def wm_forecast(row: dict, edge: Edge, prior: dict):
     if not pts:
         return None
     t0, sd0, peak, k0 = pts[0]
-    v = (pts[1][1] - sd0) / (pts[1][0] - t0) if len(pts) > 1 else np.array([prior["vs"], prior["vd"]])
+    # speed over the longest stretch of confident imagined steps past the edge (one step is too noisy on
+    # the decoder's 32 px cells); a single such step falls back to the median real exit speed
+    v = (pts[-1][1] - sd0) / (pts[-1][0] - t0) if len(pts) > 1 else np.array([prior["vs"], prior["vd"]])
     if "imagined_far_spread" in row:      # fixed scale: a spread of SIG_S (in px) counts as u = 1
         u = float(np.clip(row["imagined_far_spread"][k0] * E.M_PER_PX / E.SIG_S, 0, 1))
     else:
@@ -117,7 +120,7 @@ def replay(exits: dict, forecasts: dict, drivers: dict) -> dict:
         res = []
         env = E.CatchEnv(exits)
         for e in exits["exits"]:
-            res.append(E.run_episode(env, per_fold(e["fold"]), {"exit": e, "track": exits["tracks"][e["clip_id"]],
+            res.append(E.run_episode(env, per_fold(e["fold"]), {"exit": e,
                                                                 "forecast": forecasts[e["clip_id"]]}, seed=0))
         env.close()
         out[name] = summary(res)

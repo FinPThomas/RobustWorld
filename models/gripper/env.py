@@ -4,7 +4,8 @@ grasp it and lift it before it rolls out of the catch zone.
 Scene (metres; 1 ball diameter = 4 cm, set from the ball's ~44 px diameter mid-table, so 1 px = 0.9 mm):
 flat table (no slope), the plank as a box along y < 0 whose edge is y = 0, and a ball that comes out
 from under it at the real exits of the tracker (exits.json: where along the edge, when after the
-decision point, how fast), resampled with a little jitter. The gripper is a floating two-finger
+decision point, how fast), resampled with a little jitter in training; in the real replay
+(evaluate.py) each real pass's own exit, after which the ball rolls freely. The gripper is a floating two-finger
 gripper (x, y, z slides plus two finger slides) working in the catch zone 0 <= y <= ZONE. It sees the
 ball only after the ball comes out, two video frames late.
 
@@ -14,7 +15,8 @@ of exactly that size, so the stated uncertainty is honest. Nothing here sees a w
 forecasts against real outcomes (CLAUDE.md rule 1); evaluate.py feeds those in only to score.
 
 Actions (every 1/16 s, all in [-1, 1]): gripper velocity in x and y, finger opening, and "grasp now"
-(> 0). A grasp closes the fingers and lifts; it is the episode's one attempt.
+(> 0.5, honoured once the gripper has seen the ball). A grasp closes the fingers and lifts; it is the
+episode's one attempt.
 
 Reward: a ball lifted and held earns 1 + EARLY x (how early in the zone it was grasped, 0..1) minus
 WIDE x (how wide the fingers were open, 0..1). A miss (ball dropped, missed, or out of the zone) costs
@@ -39,7 +41,7 @@ DT = 1 / 16                      # one video frame per policy step
 SUBSTEPS = 8                     # physics at 128 Hz
 GRIP_SPEED = 0.25                # m/s
 GAP_MIN, GAP_MAX = 0.045, 0.13   # finger gap (inner faces); the ball is 0.04 wide
-FINGER_SPEED = 0.12              # m/s per finger when closing
+FINGER_SPEED = 0.25              # m/s per finger when closing
 EARLY, WIDE, MISS, MOVE = 0.5, 0.3, 1.0, 0.05
 SIG_S, SIG_T, SIG_V = 0.12, 0.3, 0.5     # forecast sigma at uncertainty 1: m along the edge, s, fraction of speed
 OBS_NOISE = 0.003                # m
@@ -55,18 +57,18 @@ GRIPPER_URDF = """<?xml version="1.0"?>
   <link name="sy"><inertial><mass value="0.1"/><inertia ixx="1e-4" iyy="1e-4" izz="1e-4" ixy="0" ixz="0" iyz="0"/></inertial></link>
   <link name="palm">
     <inertial><mass value="0.3"/><inertia ixx="1e-3" iyy="1e-3" izz="1e-3" ixy="0" ixz="0" iyz="0"/></inertial>
-    <visual><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.03 0.012"/></geometry><material name="grey"><color rgba="0.4 0.4 0.45 1"/></material></visual>
-    <collision><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.03 0.012"/></geometry></collision>
+    <visual><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.04 0.012"/></geometry><material name="grey"><color rgba="0.4 0.4 0.45 1"/></material></visual>
+    <collision><origin xyz="0 0 0.075"/><geometry><box size="0.16 0.04 0.012"/></geometry></collision>
   </link>
   <link name="left">
     <inertial><mass value="0.05"/><inertia ixx="1e-5" iyy="1e-5" izz="1e-5" ixy="0" ixz="0" iyz="0"/></inertial>
-    <visual><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
-    <collision><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry></collision>
+    <visual><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.04 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
+    <collision><origin xyz="-0.006 0 0.037"/><geometry><box size="0.012 0.04 0.07"/></geometry></collision>
   </link>
   <link name="right">
     <inertial><mass value="0.05"/><inertia ixx="1e-5" iyy="1e-5" izz="1e-5" ixy="0" ixz="0" iyz="0"/></inertial>
-    <visual><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
-    <collision><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.03 0.07"/></geometry></collision>
+    <visual><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.04 0.07"/></geometry><material name="dark"><color rgba="0.15 0.15 0.2 1"/></material></visual>
+    <collision><origin xyz="0.006 0 0.037"/><geometry><box size="0.012 0.04 0.07"/></geometry></collision>
   </link>
   <joint name="x" type="prismatic"><parent link="world"/><child link="sx"/><axis xyz="1 0 0"/><limit lower="-1" upper="1" effort="200" velocity="2"/></joint>
   <joint name="y" type="prismatic"><parent link="sx"/><child link="sy"/><axis xyz="0 1 0"/><limit lower="-1" upper="1" effort="200" velocity="2"/></joint>
@@ -152,42 +154,21 @@ class CatchEnv(gym.Env):
             self.t += DT / SUBSTEPS
             if self.out:
                 self.seen.append((self.t, self.ball_pos()[:2] + self.rng.normal(0, OBS_NOISE, 2)))
-            if self.track is not None and self.out:
-                self._follow_track()
 
     def _release(self):
         e = self.true
         self.out = True
         p.resetBasePositionAndOrientation(self.ball, [e["x"], 0.0, BALL_R], [0, 0, 0, 1], physicsClientId=self.cid)
-        p.resetBaseVelocity(self.ball, [e["vx"], e["vy"], 0], [e["vy"] / BALL_R, -e["vx"] / BALL_R, 0],
+        p.resetBaseVelocity(self.ball, [e["vx"], e["vy"], 0], [-e["vy"] / BALL_R, e["vx"] / BALL_R, 0],
                             physicsClientId=self.cid)
-
-    def _follow_track(self):
-        """Replay mode: until the gripper touches it, the ball follows the real tracked path."""
-        if p.getContactPoints(self.ball, self.grip, physicsClientId=self.cid):
-            self.track = None
-            return
-        tr = self.track
-        if self.t > tr[-1, 0]:
-            return                                   # past the last tracked point: free rolling
-        x = np.interp(self.t, tr[:, 0], tr[:, 1]) * M_PER_PX
-        y = np.interp(self.t, tr[:, 0], tr[:, 2]) * M_PER_PX
-        k = min(np.searchsorted(tr[:, 0], self.t), len(tr) - 1)
-        k0 = max(k - 1, 0)
-        dt = max(tr[k, 0] - tr[k0, 0], 1e-6)
-        v = (tr[k, 1:] - tr[k0, 1:]) / dt * M_PER_PX
-        p.resetBasePositionAndOrientation(self.ball, [x, y, BALL_R], [0, 0, 0, 1], physicsClientId=self.cid)
-        p.resetBaseVelocity(self.ball, [v[0], v[1], 0], [v[1] / BALL_R, -v[0] / BALL_R, 0], physicsClientId=self.cid)
 
     # ---- episode ------------------------------------------------------------------------------------
     def reset(self, seed=None, options=None):
         if seed is not None:
             self.rng = np.random.default_rng(seed)
         o = options or {}
-        self.track = None
-        if "exit" in o:                              # replay: a real exit (px), its track and a given forecast
+        if "exit" in o:                              # replay: a real exit (px) and a given forecast
             self.true = exit_to_m(o["exit"])
-            self.track = np.array(o["track"], float) if o.get("track") is not None else None
             self.fc = dict(o["forecast"])
         else:
             e = dict(self.ex[self.rng.integers(len(self.ex))])
@@ -217,15 +198,17 @@ class CatchEnv(gym.Env):
         v = a[:2] * GRIP_SPEED
         n = np.linalg.norm(v)
         v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
-        tgt = g + v * DT
-        tgt[1] = np.clip(tgt[1], 0.0, ZONE)
-        self._drive(JX, tgt[0], GRIP_SPEED * 1.5), self._drive(JY, tgt[1], GRIP_SPEED * 1.5)
+        if (g[1] <= 0.0 and v[1] < 0) or (g[1] >= ZONE and v[1] > 0):
+            v[1] = 0.0                               # stays inside the catch zone
+        for j, vj in ((JX, v[0]), (JY, v[1])):
+            p.setJointMotorControl2(self.grip, j, p.VELOCITY_CONTROL, targetVelocity=float(vj), force=200,
+                                    physicsClientId=self.cid)
         gap = GAP_MIN + (a[2] + 1) / 2 * (GAP_MAX - GAP_MIN)
         self._set_gap(gap, vmax=0.5)
         self._sim()
         r = -MOVE * float(np.linalg.norm(self.grip_xy() - g)) / 0.1
         self.travel += float(np.linalg.norm(self.grip_xy() - g))
-        if a[3] > 0:
+        if a[3] > 0.5 and self.visible():
             return self._grasp(r)
         b = self.ball_pos()
         if self.out and (b[1] > ZONE + BALL_R or b[1] < -0.05 or abs(b[0] - 0.2) > 0.45):
@@ -259,6 +242,19 @@ class CatchEnv(gym.Env):
         self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel}
         return self._obs(), float(r), True, False, dict(self.result)
 
+    @staticmethod
+    def _fit(seen, f):
+        """Ball position and velocity from a straight-line fit to the sightings of the last 0.25 s (one
+        sighting per physics step), which averages out the tracker noise."""
+        recent = [x for x in seen if x[0] >= seen[-1][0] - 0.25]
+        if len(recent) < 3:
+            return seen[-1][1], np.array([f["vx"], f["vy"]])
+        t = np.array([x[0] for x in recent]) - recent[-1][0]
+        xy = np.array([x[1] for x in recent])
+        A = np.c_[np.ones_like(t), t]
+        coef = np.linalg.lstsq(A, xy, rcond=None)[0]
+        return coef[0], coef[1]
+
     def visible(self) -> list:
         return [s for s in self.seen if s[0] <= self.t - OBS_DELAY + 1e-9]
 
@@ -266,9 +262,7 @@ class CatchEnv(gym.Env):
         f = self.fc
         seen = self.visible()
         if seen:
-            bp = seen[-1][1]
-            back = [s for s in seen if s[0] <= seen[-1][0] - DT + 1e-9]
-            bv = (bp - back[-1][1]) / (seen[-1][0] - back[-1][0]) if back else np.array([f["vx"], f["vy"]])
+            bp, bv = self._fit(seen, f)
         else:
             bp, bv = np.zeros(2), np.zeros(2)
         g = self.grip_xy()
@@ -304,31 +298,44 @@ def _predict(x, y, vx, vy, aim_y):
     return x + vx * k, k
 
 
-def reactive(env, obs):
-    """Waits; once it sees the ball, heads for where it crosses the middle of the zone, opens mid-wide,
-    and grasps when the ball is between the fingers."""
+AIM = 0.5 * ZONE                 # scripted policies wait for the ball at mid-zone
+ENTRY = AIM - 0.02               # where the ball passes the fingers' near ends: line up for that point
+
+
+def _ball_now(env, obs):
+    """Latest sighting carried forward over the sight lag."""
     seen = env.visible()
-    if not seen:
-        return np.array([0, 0, -1, -1.0])
     x, y = seen[-1][1]
     vx, vy = obs[14] * 0.2, obs[15] * 0.2
-    aim = ZONE * 0.6
-    tx, _ = _predict(x, y, vx, vy, aim)
-    lag = OBS_DELAY + 0.05
-    now = np.array([x + vx * lag, y + vy * lag])
-    g = env.grip_xy()
-    between = abs(now[0] - g[0]) < 0.02 and abs(now[1] - g[1]) < 0.012
-    return np.r_[_go(env, (tx, aim)), 0.0, 1.0 if between else -1.0]
+    lag = env.t - seen[-1][0]
+    return np.array([x + vx * lag, y + vy * lag]), vx, vy
+
+
+def _close_when_between(env, now) -> float:
+    d = now - env.grip_xy()
+    return 1.0 if abs(d[0]) < env.gap() / 2 - BALL_R * 0.7 and abs(d[1]) < 0.01 else -1.0
+
+
+def reactive(env, obs):
+    """Waits at rest; once it sees the ball, lines up with where it will cross mid-zone, half open,
+    and grasps when the ball is between the fingers."""
+    if not env.visible():
+        return np.array([0, 0, 0.0, -1.0])
+    now, vx, vy = _ball_now(env, obs)
+    tx, _ = _predict(now[0], now[1], vx, vy, ENTRY) if now[1] < ENTRY else (now[0], 0)
+    return np.r_[_go(env, (tx, AIM)), 0.0, _close_when_between(env, now)]
 
 
 def trust_forecast(env, obs):
-    """Goes to where the forecast says the ball crosses a shallow depth, opens narrow; reacts once seen."""
+    """Lines up with where the forecast says the ball crosses mid-zone, fairly narrow; corrects from
+    sightings once it sees the ball."""
     if env.visible():
-        return reactive(env, obs)
+        a = reactive(env, obs)
+        a[2] = -0.4
+        return a
     f = env.fc
-    aim = ZONE * 0.35
-    tx, _ = _predict(f["x"], 0.0, f["vx"], f["vy"], aim)
-    return np.r_[_go(env, (tx, aim)), -0.6, -1.0]
+    tx, _ = _predict(f["x"], 0.0, f["vx"], f["vy"], ENTRY)
+    return np.r_[_go(env, (tx, AIM)), -0.4, -1.0]
 
 
 def run_episode(env, policy, options=None, seed=None, frames=None):

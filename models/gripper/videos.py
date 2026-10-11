@@ -2,7 +2,7 @@
 
 1. uncertainty.mp4: the same simulated ball three times, side by side, with the forecast's uncertainty
    u = 0, 0.5 and 1. The orange disc on the plank edge is the forecast exit, its radius one sigma.
-2. before_after.mp4: real passes (the tracked ball replayed), side by side, with the forecast from the
+2. before_after.mp4: real passes (each ball comes out at its real exit), side by side, with the forecast from the
    world model before post-training and after (C), each through the same frozen policy.
 
     python models/gripper/videos.py --plan results/2026-10-04_2110_twoday/vjepa2/plan [--fold 0] [--gui]
@@ -111,7 +111,7 @@ def main() -> None:
         row = []
         for name, label in ((V.BEFORE, "before post-training"), (V.AFTER, "after (C)")):
             fc = V.wm_forecast(runs[name][e["clip_id"]], edges[e["side"]], exits["prior"]) or V.prior_forecast(exits["prior"])
-            opts = {"exit": e, "track": exits["tracks"][e["clip_id"]], "forecast": fc}
+            opts = {"exit": e, "forecast": fc}
             row.append(episode_frames(env, pol, opts, 0, f"{e['clip_id']}: {label}")[0])
         video += side_by_side(row)
     write_video(dest / "before_after.mp4", video, FPS)
