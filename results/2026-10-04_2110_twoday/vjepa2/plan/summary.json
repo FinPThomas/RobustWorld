@@ -740,5 +740,103 @@
   "argmax_hit_rate": 0.701,
   "overfit_folds": "0/5",
   "best_epochs": "18/20/17/17/18"
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open-after",
+  "variant": "lossmix_open",
+  "phase": "after",
+  "n": 337,
+  "outcome_auroc": 0.912,
+  "auroc_ci": [
+   0.88,
+   0.944
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.534,
+  "balanced_accuracy": 0.556,
+  "cell_auroc": 0.879,
+  "far_cell_auroc": 0.869,
+  "argmax_hit_rate": 0.673,
+  "overfit_folds": "0/5",
+  "best_epochs": "17/19/19/16/17"
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open-after (ball from L)",
+  "variant": "lossmix_open",
+  "phase": "after",
+  "n": 83,
+  "outcome_auroc": 0.922,
+  "auroc_ci": [
+   0.855,
+   0.969
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.461,
+  "balanced_accuracy": 0.396
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open-after (ball from R)",
+  "variant": "lossmix_open",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.959,
+  "auroc_ci": [
+   0.935,
+   0.979
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.555,
+  "balanced_accuracy": 0.64
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open_e10-after",
+  "variant": "lossmix_open_e10",
+  "phase": "after",
+  "n": 337,
+  "outcome_auroc": 0.868,
+  "auroc_ci": [
+   0.829,
+   0.907
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.492,
+  "balanced_accuracy": 0.496,
+  "cell_auroc": 0.864,
+  "far_cell_auroc": 0.853,
+  "argmax_hit_rate": 0.613
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open_e10-after (ball from L)",
+  "variant": "lossmix_open_e10",
+  "phase": "after",
+  "n": 83,
+  "outcome_auroc": 0.909,
+  "auroc_ci": [
+   0.846,
+   0.962
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.433,
+  "balanced_accuracy": 0.361
+ },
+ {
+  "method": "V-JEPA 2 lossmix_open_e10-after (ball from R)",
+  "variant": "lossmix_open_e10",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.93,
+  "auroc_ci": [
+   0.898,
+   0.959
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.512,
+  "balanced_accuracy": 0.577
  }
 ]

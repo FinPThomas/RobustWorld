@@ -9,3 +9,4 @@ g = acceleration from the table after removing friction (a = g - mu * direction 
 | probe on real frames (sharp) | -0.0251 | [-0.0401, -0.0063] | -0.0138 | [-0.0217, -0.0078] | 0.0225 | 348 | 107 |
 | imagined, before post-training (sharp) | - | - | - | - | - | 0 | 0 |
 | imagined, after post-training (C, 20 ep) | 0.0069 | [-0.0152, 0.0314] | -0.0104 | [-0.0197, -0.0015] | 0.0071 | 144 | 56 |
+| imagined, after (E: + open clips) (sharp) | 0.0126 | [-0.0274, 0.067] | -0.0097 | [-0.0244, 0.002] | 0.0513 | 128 | 54 |
