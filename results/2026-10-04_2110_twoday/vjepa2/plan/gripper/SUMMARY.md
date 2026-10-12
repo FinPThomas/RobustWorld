@@ -9,7 +9,7 @@ Pick-up rate. Simulation: PPO at forecast uncertainty u = 0 / 0.5 / 1 (and the f
 | box_early1 | bigger bonus for an early pick-up | 73% | 60% | 49% | 0.988 -> 0.992 | 45% | 37% | 76% |
 | box_wide06 | wide grip costs more | 73% | 61% | 50% | 0.853 -> 0.86 | 44% | 38% | 76% |
 | box_wide01 | wide grip nearly free | 72% | 60% | 47% | 1.0 -> 1.0 | 48% | 38% | 75% |
-| box_miss2 | a miss costs twice as much | (queued) | | | | | | |
+| box_miss2 | a miss costs twice as much | 71% | 60% | 47% | 1.0 -> 0.997 | 45% | 34% | 73% |
 | box_sight025 | slower sight (4 frames): prediction matters more | (queued) | | | | | | |
 | pb_early1_wide06 | PyBullet with early pick-ups and narrow grips rewarded more | (queued) | | | | | | |
 | pb_sight025 | PyBullet, slower sight | (queued) | | | | | | |
