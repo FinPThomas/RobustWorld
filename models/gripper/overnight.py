@@ -50,18 +50,15 @@ EXPERIMENTS = [
      "trained with separate uncertainties for where / when / speed; honest sigmas"),
     ("box_sight025_indep", "box", {"OBS_DELAY": 0.25, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
      "box_indep with slower sight (4 frames)"),
-    # The real task (BLOCK): some passes never come out (the blockade). The gripper waits parked, too far to react
-    # once it sees the ball, so it must set off on the forecast; setting off for a blocked pass costs a wasted
-    # trip. The forecast adds p_out; a world model's is its decoded ball's confidence past the far edge.
-    ("box_block", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
-     "BLOCK: blocked passes, gripper parked out of reach, a wasted trip costs 1"),
-    ("box_block_gap08", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1, "GAP_MAX": 0.08}, 1_000_000, None,
-     "box_block with fingers opening at most 8 cm (where matters more)"),
-    ("pb_block", "pybullet", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000, None, "box_block in PyBullet"),
+    # BLOCK experiments (blocked passes, parked gripper, PPO end to end) are left out: PPO learned never to set off
+    # (box_block_cloud, box_block_letgo*_cloud). The blockade is scored instead by blockade_eval.py, run on every
+    # experiment below: decide to set off from the forecast alone, then the frozen policy picks up.
     ("pb_early1_wide06_indep", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000,
      None, "pb_early1_wide06 trained with separate uncertainties; honest sigmas"),
-    ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
     ("pb_narrow", "pybullet", {"GAP_MAX": 0.09}, 1_500_000, None, "fingers open at most 9 cm"),
+    ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
+     "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
+    ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
 ]
 
 
@@ -155,6 +152,7 @@ def main() -> None:
         sh([py, HERE / "evaluate.py", "--plan", plan, "--policy", runs, "--tag", name, *(["--quick"] if args.quick else [])], env)
         if kind == "pybullet":
             sh([py, HERE / "videos.py", "--plan", plan, "--policy", runs, "--tag", name], env, check=False)
+        sh([py, HERE / "blockade_eval.py", "--plan", plan, "--tag", name], env, check=False)
         s = summary(plan)
         if not args.no_push:
             push([dest, s], f"Gripper {name}: scored on simulation and real passes")
