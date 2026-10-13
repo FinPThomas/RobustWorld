@@ -463,6 +463,23 @@ def step_rescore_aligned(args, state, log):
               "--extra-manifest", OPEN], log)
 
 
+def step_topup_open(args, state, log):
+    """G (Fin, 2026-10-13, last Kaggle hours): C's weights trained 5 more epochs with the re-cut, aligned
+    open-table clips added (each kept out of the fold that scores it): does free rolling on open table teach the
+    slope? Scored on plank and open-table clips; C (its starting point) is the comparison."""
+    w = found_weights("lossmix_both-after")
+    flags = VARIANTS["lossmix_both"][0] + ["--init-from", w, "--extra-train", OPEN]
+    train_and_score("lossmix_topup-after", flags, 5, "lossmix_both-after", args, log, both_manifest(), OPEN)
+
+
+def topup_ready() -> str | None:
+    if open_aligned():
+        return open_aligned()
+    if found_weights("lossmix_both-after") is None:
+        return "C's weights aren't here (add session #8's Kaggle output, which holds weights/lossmix_both-after)"
+    return None
+
+
 def step_lossmix_open(args, state, log):
     """C + the open-table clips in training (each kept out of the fold that scores it): does seeing the ball roll
     on open table teach the slope better than plank clips alone? Same 20 epochs; epoch 10 saved and scored too."""
@@ -552,6 +569,8 @@ STEPS: list[Step] = [
     # Fin, 2026-10-13: the first open-table cut was misaligned; score the re-cut clips and save frame figures.
     Step(2, "rescore-aligned", "Open-table clips re-cut and aligned: slope scored again (pretrained, C, E), "
          "probe maps saved for frame figures", step_rescore_aligned, open_aligned),
+    Step(2, "lossmix_topup-after", "G. C topped up 5 epochs with the aligned open-table clips (does free rolling "
+         "teach the slope?)", step_topup_open, topup_ready),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
     Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
          "scored at 10 and 20", step_lossmix_open,
@@ -877,6 +896,7 @@ def step_hours(name: str) -> float:
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
                "rescore-aligned": 1.2,            # up to three scoring passes
+               "lossmix_topup-after": 2.4,        # 5 epochs from C with the open clips, one scoring pass
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:
@@ -927,6 +947,13 @@ def _run(args) -> None:
     if cut_off and not args.only:                     # e.g. encode stopped by a Drive drop: later stages need it
         print(f"== finishing first what was cut off: {', '.join(s.name for s in cut_off)}", flush=True)
         todo = cut_off + todo
+    cap_file = REPO / "configs" / "compute_budget.json"   # quota left on the account, set from GitHub (the
+    if cap_file.exists() and args.budget_hours:          # notebook's own --budget-hours can't change remotely)
+        cap = json.loads(cap_file.read_text()).get("max_hours")
+        if cap and cap < args.budget_hours:
+            print(f"== time budget capped at {cap} h ({cap_file.name}: {json.loads(cap_file.read_text()).get('why', '')})",
+                  flush=True)
+            args.budget_hours = cap
     for s in todo:
         st = state["steps"].get(s.name, {})
         if st.get("state") == "done" and not args.redo:
