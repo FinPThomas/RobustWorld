@@ -242,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
     folds = cv_folds([d["clip"] for d in data], args.folds, args.seed)
     extra_fold = extra_folds([e["clip"] for e in extra], [d["clip"] for d in data], folds, passes)
     open_rows = []
+    maps_keep = {}                                    # decoder maps per clip (float16), for the frame figures
     for fold, (tr, te) in enumerate(folds):
         examples = [eval_decoder.examples_from({"context": data[i]["ctx"]}, data[i]["lab"]) for i in tr]
         decoder = eval_decoder.fit(examples, seed=args.seed)
@@ -301,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
                        **{f"{k}_one_ball_{side}": v for k, m in (("real", m_real[cs:]), ("imagined", m_imag),
                                                                  ("imagined_encoder_space", m_alt))
                           for side, v in one_ball_readouts(m, far, near).items()}}
+            maps_keep[d["clip"]["clip_id"]] = (m_real[cs:].astype(np.float16), m_imag.astype(np.float16))
             del d["enc"]                      # scored: free it
         for e in (e for e, f in zip(extra, extra_fold) if f == fold):
             if args.predictor_run and e["clip"]["clip_id"] in set(meta["train_clip_ids"]):
@@ -315,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
                 imag = enc["imagined"]
             m_real, m_imag = decoder(enc["real"]).numpy(), decoder(imag).numpy()
             rnd = lambda cc: [None if c is None else [round(float(c[0]), 1), round(float(c[1]), 1)] for c in cc]  # noqa: E731
+            maps_keep[e["clip"]["clip_id"]] = (m_real[cs:].astype(np.float16), m_imag.astype(np.float16))
             open_rows.append({"clip_id": e["clip"]["clip_id"], "outcome": e["clip"]["outcome"], "fold": fold,
                               "side_in": e["clip"].get("side_in"), "true_pos": rnd(e["centres"][cs:]),
                               "true_pos_context": rnd(e["centres"][:cs]), "real_pos": map_pos(m_real[cs:]),
@@ -380,6 +383,9 @@ def main(argv: list[str] | None = None) -> int:
         metrics["timing_seconds_per_clip"] = prev.get("timing_seconds_per_clip", {})
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=1))
     (args.out / "per_clip.json").write_text(json.dumps(rows, indent=1))
+    # real and imagined decoder maps of the target steps, per clip: track_viz.py draws them over the frames
+    np.savez_compressed(args.out / "maps.npz", **{f"{k}/{w}": v[j] for k, v in maps_keep.items()
+                                                  for j, w in enumerate(("real", "imagined"))})
     if extra:
         (args.out / "per_clip_open.json").write_text(json.dumps(open_rows, indent=1))
         print(f"  extra clips: {len(open_rows)} scored, {sum(f is None for f in extra_fold)} left out (their frames "
