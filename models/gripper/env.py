@@ -57,6 +57,7 @@ U_INDEP = 0                      # 1: training draws a separate uncertainty for 
 # (leaving the park by more than 3 cm) is a commitment: a blocked pass then costs COMMIT (a wasted trip),
 # a missed ball costs MISS. Staying parked costs nothing either way (a ball let go).
 BLOCK, PARK, COMMIT, BLOCK_END = 0, 0.15, 1.0, 1.6
+LETGO = 0.0                      # BLOCK: cost of letting a ball that comes out go by (never setting off)
 HOVER_Z = 0.0                   # gripper frame z while hunting (fingers reach the table)
 LIFT_Z = 0.08
 
@@ -293,7 +294,8 @@ class CatchEnv(gym.Env):
 
     def _finish(self, r, ok, why, depth=None, opening=None):
         if not ok and BLOCK and not self.committed:
-            why = "let it go"                        # never set off: no attempt, no penalty
+            why = "let it go"                        # never set off: no attempt; costs LETGO
+            r -= LETGO
         elif not ok:
             r -= MISS
         self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel,
