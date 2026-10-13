@@ -738,7 +738,7 @@ def report(state: dict) -> str:
                    f"after {r['auroc_after']}.",
                    f"- Figures: `vjepa2/plan/interpret/{path.parent.name}/change_map.png`, `layer_patching.png`."]
     figure(rows)
-    for mod in ("slope", "scope_report", "slope_test", "slope_map", "track_viz"):
+    for mod in ("slope", "scope_report", "slope_test", "slope_map", "slope_explain", "track_viz"):
         try:
             __import__(mod).main(["--plan", str(PLAN)])
         except Exception as e:                        # a figure never stops the plan
