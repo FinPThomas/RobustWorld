@@ -50,6 +50,14 @@ EXPERIMENTS = [
      "trained with separate uncertainties for where / when / speed; honest sigmas"),
     ("box_sight025_indep", "box", {"OBS_DELAY": 0.25, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
      "box_indep with slower sight (4 frames)"),
+    # The real task (BLOCK): some passes never come out (the blockade). The gripper waits parked, too far to react
+    # once it sees the ball, so it must set off on the forecast; setting off for a blocked pass costs a wasted
+    # trip. The forecast adds p_out; a world model's is its decoded ball's confidence past the far edge.
+    ("box_block", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
+     "BLOCK: blocked passes, gripper parked out of reach, a wasted trip costs 1"),
+    ("box_block_gap08", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1, "GAP_MAX": 0.08}, 1_000_000, None,
+     "box_block with fingers opening at most 8 cm (where matters more)"),
+    ("pb_block", "pybullet", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000, None, "box_block in PyBullet"),
     ("pb_early1_wide06_indep", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000,
      None, "pb_early1_wide06 trained with separate uncertainties; honest sigmas"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
@@ -94,9 +102,11 @@ def summary(plan: Path) -> Path:
         s, rp = g["sim"].get("PPO policy"), g["replay"]
         if s is None:
             continue
-        pick = lambda src: rp.get(src, {}).get("PPO policy", {}).get("caught")  # noqa: E731
-        pct = lambda v: "" if v is None else f"{v:.0%}"  # noqa: E731
-        rows.append(f"| {name} | {why} | {pct(s['0.0']['caught'])} | {pct(s['0.5']['caught'])} | {pct(s['1.0']['caught'])} "
+        pick = lambda src: rp.get(src, {}).get("PPO policy", {})  # noqa: E731
+        pct = lambda v: "" if not v or v.get("caught") is None else (  # noqa: E731
+            f"{v['caught']:.0%}" + (f" ({v['wasted']:.0%} wasted, reward {v['reward_all']:.2f})" if "wasted" in v else ""))
+        s = {u: (dict(c, caught=c["caught"]) if c["caught"] is not None else c) for u, c in s.items()}
+        rows.append(f"| {name} | {why} | {pct(s['0.0'])} | {pct(s['0.5'])} | {pct(s['1.0'])} "
                     f"| {s['0.0']['opening']} -> {s['1.0']['opening']} | {pct(pick('both-before'))} "
                     f"| {pct(pick('lossmix_both-after'))} | {pct(pick('tracker exit (perfect forecast)'))} |")
     out = plan / "gripper" / "SUMMARY.md"

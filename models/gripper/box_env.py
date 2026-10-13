@@ -36,6 +36,7 @@ OBS_NOISE = 0.003
 OBS_DELAY = 0.125
 MAX_T = 2.5
 U_INDEP = 0
+BLOCK, PARK, COMMIT, BLOCK_END = 0, 0.15, 1.0, 1.6        # as env.py
 globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 
@@ -45,6 +46,32 @@ def load_exits(path: Path = HERE / "exits.json") -> dict:
 
 def exit_to_m(e: dict) -> dict:
     return {"x": e["s"] * M_PER_PX, "t": e["t"], "vx": e["vs"] * M_PER_PX, "vy": e["vd"] * M_PER_PX}
+
+
+def draw_pass(ex: list, o: dict, rng) -> tuple[dict, dict]:
+    """As env.draw_pass."""
+    e = dict(ex[rng.integers(len(ex))])
+    j = rng.normal(1, 0.1, 2)
+    e = {"x": e["x"] + rng.normal(0, 0.01), "t": max(e["t"] + rng.normal(0, 0.03), 0.0),
+         "vx": e["vx"] * j[0], "vy": max(e["vy"] * j[1], 0.03)}
+    fc = noisy_forecast(e, o, rng)
+    if BLOCK:
+        fc["p_out"] = float(o.get("p_out", rng.beta(0.5, 0.5)))
+        if rng.uniform() >= fc["p_out"]:
+            e = dict(e, t=np.inf)
+    return e, fc
+
+
+def block_obs(env) -> list:
+    return [env.fc.get("p_out", 0.5)] if BLOCK else []
+
+
+def park_xy(prior: dict) -> np.ndarray:
+    return np.array([prior["x"], ZONE + PARK]) if BLOCK else np.array([prior["x"], ZONE / 2])
+
+
+def y_max() -> float:
+    return ZONE + PARK if BLOCK else ZONE
 
 
 def noisy_forecast(e: dict, o: dict, rng) -> dict:
@@ -62,9 +89,9 @@ class CatchEnv(gym.Env):
         self.exits = exits or load_exits()
         self.ex = [exit_to_m(e) for e in self.exits["exits"]]
         self.prior = exit_to_m(self.exits["prior"])
-        self.rest = np.array([self.prior["x"], ZONE / 2])
+        self.rest = park_xy(self.prior)
         self.action_space = gym.spaces.Box(-1, 1, (4,), np.float32)
-        self.observation_space = gym.spaces.Box(-10, 10, (17,), np.float32)
+        self.observation_space = gym.spaces.Box(-10, 10, (17 + bool(BLOCK),), np.float32)
         self.rng = np.random.default_rng(seed)
 
     # same episode set-up as env.py
@@ -73,16 +100,12 @@ class CatchEnv(gym.Env):
             self.rng = np.random.default_rng(seed)
         o = options or {}
         if "exit" in o:
-            self.true, self.fc = exit_to_m(o["exit"]), dict(o["forecast"])
+            self.true = exit_to_m(o["exit"]) if o["exit"] is not None else dict(self.prior, t=np.inf)
+            self.fc = dict(o["forecast"])
         else:
-            e = dict(self.ex[self.rng.integers(len(self.ex))])
-            j = self.rng.normal(1, 0.1, 2)
-            e = {"x": e["x"] + self.rng.normal(0, 0.01), "t": max(e["t"] + self.rng.normal(0, 0.03), 0.0),
-                 "vx": e["vx"] * j[0], "vy": max(e["vy"] * j[1], 0.03)}
-            self.true = e
-            self.fc = noisy_forecast(e, o, self.rng)
+            self.true, self.fc = draw_pass(self.ex, o, self.rng)
         self.t, self.g, self.w = 0.0, self.rest.copy(), GAP_MIN
-        self.seen, self.travel, self.result = [], 0.0, None
+        self.seen, self.travel, self.result, self.committed = [], 0.0, None, False
         return self._obs(), {}
 
     def ball_at(self, t):
@@ -119,7 +142,8 @@ class CatchEnv(gym.Env):
         for _ in range(SUBSTEPS):
             h = DT / SUBSTEPS
             self.g = self.g + v * h
-            self.g[1] = np.clip(self.g[1], 0.0, ZONE)
+            self.g[1] = np.clip(self.g[1], 0.0, y_max())
+            self.committed |= bool(BLOCK) and self.g[1] < y_max() - 0.03
             self.w += np.clip(target_w - self.w, -0.5 * h, 0.5 * h)
             self.t += h
             b = self.ball_at(self.t)
@@ -131,6 +155,8 @@ class CatchEnv(gym.Env):
         self.travel += float(np.linalg.norm(self.g - g0))
         if a[3] > 0.5 and self.visible():
             return self._grasp(r)
+        if not np.isfinite(self.true["t"]) and self.t >= BLOCK_END:
+            return self._blocked(r)
         b = self.ball_at(self.t)
         if b is not None and (b[1] > ZONE + BALL_R or abs(b[0] - 0.2) > 0.45):
             return self._finish(r, False, "left the zone")
@@ -154,9 +180,19 @@ class CatchEnv(gym.Env):
         return self._finish(r, False, "grasp missed", depth, open_frac)
 
     def _finish(self, r, ok, why, depth=None, opening=None):
-        if not ok:
+        if not ok and BLOCK and not self.committed:
+            why = "let it go"
+        elif not ok:
             r -= MISS
-        self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel}
+        self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel,
+                       "out": True, "committed": self.committed}
+        return self._obs(), float(r), True, False, dict(self.result)
+
+    def _blocked(self, r):
+        r -= COMMIT if self.committed else 0.0
+        self.result = {"caught": False, "why": "blocked: wasted trip" if self.committed else "blocked: stayed parked",
+                       "depth": None, "opening": None, "t": self.t, "travel": self.travel, "out": False,
+                       "committed": self.committed}
         return self._obs(), float(r), True, False, dict(self.result)
 
     def visible(self):
@@ -180,7 +216,7 @@ class CatchEnv(gym.Env):
                          f["sig_s"] / SIG_S, f["sig_t"] / SIG_T, f["sig_v"] / SIG_V,
                          g[0] / 0.4, g[1] / ZONE, (self.w - GAP_MIN) / (GAP_MAX - GAP_MIN),
                          float(bool(seen)), bp[0] / 0.4, bp[1] / ZONE, bv[0] / 0.2, bv[1] / 0.2,
-                         (bp[0] - g[0]) / 0.1 if seen else 0.0], np.float32)
+                         (bp[0] - g[0]) / 0.1 if seen else 0.0, *block_obs(self)], np.float32)
 
     def close(self):
         pass
@@ -234,6 +270,8 @@ def trust_forecast(env, obs):
         a[2] = -0.4
         return a
     f = env.fc
+    if f.get("p_out", 1.0) < 0.5:               # BLOCK: the forecast says it stays hidden: stay parked
+        return np.array([0.0, 0.0, -0.4, -1.0])
     tx, _ = _predict(f["x"], 0.0, f["vx"], f["vy"], ENTRY)
     return np.r_[_go(env, (tx, AIM)), -0.4, -1.0]
 

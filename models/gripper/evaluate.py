@@ -61,9 +61,18 @@ def load_policies(run: Path) -> dict:
 
 
 def summary(res: list) -> dict:
+    """caught: pick-up rate over passes that come out; with BLOCK also wasted: the share of blocked passes
+    the gripper set off for, and reward over all passes."""
+    blk = [r for r in res if not r.get("out", True)]
+    res_all, res = res, [r for r in res if r.get("out", True)]
     c = [r for r in res if r["caught"]]
     tried = [r for r in res if r["opening"] is not None]
-    return {"n": len(res), "caught": round(float(np.mean([r["caught"] for r in res])), 3),
+    extra = {"n_blocked": len(blk), "wasted": round(float(np.mean([r["committed"] for r in blk])), 3),
+             "committed_out": round(float(np.mean([r["committed"] for r in res])), 3) if res else None,
+             "reward_all": round(float(np.mean([r["reward"] for r in res_all])), 3)} if blk else {}
+    if not res:
+        return {**extra, "n": 0, "caught": None, "reward": None, "catch_depth": None, "opening": None, "travel_m": None}
+    return {**extra, "n": len(res), "caught": round(float(np.mean([r["caught"] for r in res])), 3),
             "reward": round(float(np.mean([r["reward"] for r in res])), 3),
             "catch_depth": round(float(np.mean([r["depth"] for r in c])), 3) if c else None,
             "opening": round(float(np.mean([r["opening"] for r in tried])), 3) if tried else None,
@@ -126,15 +135,23 @@ def to_m(f: dict, u: float, ut: float | None = None, uv: float | None = None) ->
 
 
 def prior_forecast(prior: dict) -> dict:
-    return to_m(prior, 1.0)
+    return dict(to_m(prior, 1.0), p_out=0.5)        # p_out is only read with BLOCK: "don't know"
 
 
 def true_forecast(e: dict) -> dict:
-    return to_m(e, 0.0)
+    return dict(to_m(e, 0.0), p_out=1.0)
 
 
-def replay(exits: dict, forecasts: dict, drivers: dict) -> dict:
-    """forecasts: clip_id -> forecast dict. Returns per driver the summary over all exiting clips."""
+def wm_p_out(row: dict, edge: Edge) -> float:
+    """BLOCK: how likely the world model says the ball comes out, by a fixed rule: the highest confidence
+    (peak) of its decoded ball past the far edge over the imagined steps (0 if never past it)."""
+    pos = row.get("imagined_far_pos") or row["imagined_pos"]
+    return float(max([p[2] for p in pos if p is not None and edge.sd(p)[1] >= 0] or [0.0]))
+
+
+def replay(exits: dict, forecasts: dict, drivers: dict, blocked: list = ()) -> dict:
+    """forecasts: clip_id -> forecast dict. Returns per driver the summary over all exiting clips, and with
+    BLOCK the blocked clips too (blocked: [{clip_id, fold}], no ball comes out)."""
     out = {}
     for name, per_fold in drivers.items():
         res = []
@@ -142,6 +159,8 @@ def replay(exits: dict, forecasts: dict, drivers: dict) -> dict:
         for e in exits["exits"]:
             res.append(E.run_episode(env, per_fold(e["fold"]), {"exit": e,
                                                                 "forecast": forecasts[e["clip_id"]]}, seed=0))
+        for b in blocked:
+            res.append(E.run_episode(env, per_fold(b["fold"]), {"exit": None, "forecast": forecasts[b["clip_id"]]}, seed=0))
         env.close()
         out[name] = summary(res)
     return out
@@ -174,8 +193,14 @@ def main() -> None:
 
     print("real replay...", flush=True)
     ids = {e["clip_id"]: e for e in exits["exits"]}
-    sources = {"tracker exit (perfect forecast)": {i: true_forecast(e) for i, e in ids.items()},
-               "no forecast": {i: prior_forecast(prior) for i in ids}}
+    blocked = []
+    if getattr(E, "BLOCK", 0):     # passes that never come out (hidden, bounce), from any scoring run's tracker fields
+        f0 = next(d / "per_clip.json" for d in sorted((args.plan / "scores").iterdir()) if (d / "per_clip.json").exists())
+        blocked = [{"clip_id": r["clip_id"], "fold": r["fold"], "side": r.get("side_in", "R")}
+                   for r in json.loads(f0.read_text()) if r["outcome"] != "through"]
+    sources = {"tracker exit (perfect forecast)": {**{i: true_forecast(e) for i, e in ids.items()},
+                                                   **{b["clip_id"]: dict(prior_forecast(prior), p_out=0.0) for b in blocked}},
+               "no forecast": {i: prior_forecast(prior) for i in [*ids, *(b["clip_id"] for b in blocked)]}}
     errors = {}
     scores = args.plan / "scores"
     for d in sorted(scores.iterdir()):
@@ -183,12 +208,17 @@ def main() -> None:
         if not f.exists():
             continue
         rows = {r["clip_id"]: r for r in json.loads(f.read_text())}
-        if not all(i in rows for i in ids) or "imagined_pos" not in next(iter(rows.values())):
+        if not all(i in rows for i in [*ids, *(b["clip_id"] for b in blocked)]) or "imagined_pos" not in next(iter(rows.values())):
             continue
         fc, errs = {}, []
+        for b in blocked:
+            fc[b["clip_id"]] = dict(wm_forecast(rows[b["clip_id"]], edges[b["side"]], prior) or prior_forecast(prior),
+                                    p_out=wm_p_out(rows[b["clip_id"]], edges[b["side"]]))
         for i, e in ids.items():
             got = wm_forecast(rows[i], edges[e["side"]], prior)
             fc[i] = got or prior_forecast(prior)
+            if blocked:
+                fc[i] = dict(fc[i], p_out=wm_p_out(rows[i], edges[e["side"]]))
             if got:
                 t = E.exit_to_m(e)
                 errs.append([abs(got["x"] - t["x"]) / E.M_PER_PX, abs(got["t"] - t["t"]),
@@ -199,7 +229,7 @@ def main() -> None:
                           "median_err_s_px": round(float(np.median(er[:, 0])), 1) if errs else None,
                           "median_err_t_s": round(float(np.median(er[:, 1])), 3) if errs else None,
                           "median_err_v_frac": round(float(np.median(er[:, 2])), 2) if errs else None}
-    out["replay"] = {src: replay(exits, fc, drivers) for src, fc in sources.items()}
+    out["replay"] = {src: replay(exits, fc, drivers, blocked) for src, fc in sources.items()}
     out["forecast_errors"] = errors
 
     # bridge: where each world model's error size sits on the simulation curve
@@ -246,7 +276,9 @@ def write_md(out: dict, path: Path) -> None:
     L += ["", "## Real replay: catch rate (reward) by forecast source", "",
           "| forecast | " + " | ".join(drivers) + " |", "|---|" + "---|" * len(drivers)]
     for src, r in out["replay"].items():
-        L.append(f"| {src} | " + " | ".join(f"{r[d]['caught']:.0%} ({r[d]['reward']:.2f})" for d in drivers) + " |")
+        L.append(f"| {src} | " + " | ".join(
+            f"{r[d]['caught']:.0%} picked up, {r[d]['wasted']:.0%} wasted trips ({r[d]['reward_all']:.2f})" if "wasted" in r[d]
+            else f"{r[d]['caught']:.0%} ({r[d]['reward']:.2f})" for d in drivers) + " |")
     L += ["", "## World-model forecast errors (scored with the tracker) and the simulation's prediction", "",
           "| model | has a forecast | median error along edge | time | speed | sim-predicted catch |", "|---|---|---|---|---|---|"]
     for n, e in out["forecast_errors"].items():

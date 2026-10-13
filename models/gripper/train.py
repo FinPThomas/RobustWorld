@@ -53,7 +53,11 @@ def train_fold(fold: int, steps: int, out: Path, save_every: int, envs: int, see
         left = steps - model.num_timesteps
         print(f"fold {fold}: resuming at {model.num_timesteps} steps", flush=True)
     else:
-        model = PPO("MlpPolicy", venv, n_steps=512, batch_size=512, gamma=0.99, ent_coef=0.003,
+        # FAST (GRIPPER_PARAMS): half the update passes over each rollout, one minibatch per rollout; about 2x
+        # faster on CPU, where PPO's updates rather than the simulator are the bottleneck
+        fast = json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).get("FAST", 0)
+        model = PPO("MlpPolicy", venv, n_steps=512, batch_size=512 * envs if fast else 512, n_epochs=5 if fast else 10,
+                    gamma=0.99, ent_coef=0.003,
                     learning_rate=3e-4, policy_kwargs={"net_arch": [128, 128]}, seed=seed + fold, device="cpu",
                     verbose=1)
         left = steps
