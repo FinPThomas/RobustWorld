@@ -11,7 +11,7 @@ finished policies (e.g. longer training).
 Every policy is trained on simulated forecasts only (the true exit plus noise of the stated size);
 real world-model forecasts are used only to score (CLAUDE.md rule 1).
 
-    python models/gripper/overnight.py --plan results/2026-10-04_2110_twoday/vjepa2/plan [--envs 5] [--no-push]
+    python models/gripper/overnight.py --plan results/2026-10-04_2110_twoday/vjepa2/plan [--envs 3] [--no-push]
 """
 
 from __future__ import annotations
@@ -64,7 +64,9 @@ EXPERIMENTS = [
 
 def sh(cmd: list, env: dict | None = None, check: bool = True) -> int:
     print(">>", " ".join(str(c) for c in cmd), flush=True)
-    r = subprocess.run([str(c) for c in cmd], cwd=REPO, env=env)
+    # below-normal priority on Windows, so the browser stays responsive while the laptop trains
+    flags = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
+    r = subprocess.run([str(c) for c in cmd], cwd=REPO, env=env, creationflags=flags)
     if check and r.returncode:
         raise SystemExit(f"failed ({r.returncode}): {cmd}")
     return r.returncode
@@ -115,7 +117,7 @@ def summary(plan: Path) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", type=Path, required=True)
-    ap.add_argument("--envs", type=int, default=5)
+    ap.add_argument("--envs", type=int, default=3, help="simulator processes per trainer (one trainer at a time)")
     ap.add_argument("--no-push", action="store_true")
     ap.add_argument("--only", nargs="*", help="run just these experiments")
     ap.add_argument("--steps-scale", type=float, default=1.0, help="multiply training steps (smoke tests)")
@@ -133,8 +135,11 @@ def main() -> None:
         print(f"== {name}: {why}", flush=True)
         # one OpenBLAS thread per process: its per-thread buffers ran a 7.5 GB laptop out of memory with
         # several queues of 4-6 processes each (torch keeps its own threads for the PPO updates)
+        # torch is capped at 2 threads too, leaving cores free for Fin's browser
         env = dict(os.environ, GRIPPER_PARAMS=json.dumps(ovr), GRIPPER_ENV=kind,
-                   OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"))
+                   OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"),
+                   OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "2"),
+                   MKL_NUM_THREADS=os.environ.get("MKL_NUM_THREADS", "2"))
         runs = HERE / "runs" / name
         if init:
             for f in sorted((HERE / "runs" / init).glob("fold*/policy.zip")):
