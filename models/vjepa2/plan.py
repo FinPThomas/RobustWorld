@@ -434,6 +434,35 @@ def step_slope_sharp(args, state, log):
           "--out", SCORES / "lossmix_both-after", *opt], log)
 
 
+def open_aligned() -> str | None:
+    """The first open-table zip was cut at 30.303 fps (the video is 30), so its frames drift from the tracker by
+    up to ~17 s: its labels are wrong. Wait for the re-cut one."""
+    if not OPEN.exists():
+        return "the open-table clips aren't on this machine (robustworld_clips_open.zip)"
+    first = json.loads(OPEN.open().readline())
+    if abs(first.get("source_fps", 30) - 30.303) < 0.01:
+        return "the open-table clips are the old misaligned cut (30.303 fps): upload the re-cut zip"
+    return None
+
+
+def step_rescore_aligned(args, state, log):
+    """Fin, 2026-10-13: score the re-cut (aligned) open-table clips, and save the probe maps for the frame
+    figures: the pretrained predictor always, C and E when their weights are here (session #8's output added as
+    input). Open-clip scores of other runs came from the misaligned cut, so they are removed."""
+    man = both_manifest()
+    for d in SCORES.glob("*/per_clip_open.json"):
+        d.unlink()
+    must([PY, HERE / "ball_probe_cv.py", "--manifest", man, "--out", SCORES / "both-before",
+          "--extra-manifest", OPEN], log)
+    for name in ("lossmix_both-after", "lossmix_open-after"):
+        w = found_weights(name)
+        if w is None:
+            print(f"== {name}: weights aren't here (add the Kaggle output holding weights/{name})", flush=True)
+            continue
+        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", w, "--manifest", man, "--out", SCORES / name,
+              "--extra-manifest", OPEN], log)
+
+
 def step_lossmix_open(args, state, log):
     """C + the open-table clips in training (each kept out of the fold that scores it): does seeing the ball roll
     on open table teach the slope better than plank clips alone? Same 20 epochs; epoch 10 saved and scored too."""
@@ -449,7 +478,7 @@ def step_lossmix_open(args, state, log):
 def step_lossmix_both_long(args, state, log):
     """C for 30 epochs (cosine over 30), epoch 25 saved and scored too: where do blockade and slope stop
     improving? (B and C were still improving at epochs 17-20.)"""
-    extra = OPEN if OPEN.exists() else None
+    extra = OPEN if open_aligned() is None else None
     flags = VARIANTS["lossmix_both"][0] + ["--save-at", "25:plan/lossmix_both_e25of30-after"]
     train_and_score("lossmix_both_e30-after", flags, 3 * EPOCHS, "both-before", args, log, both_manifest(), extra)
     name = "lossmix_both_e25of30-after"
@@ -520,6 +549,9 @@ STEPS: list[Step] = [
     # Fin, 2026-10-11: a map of the slope; the decoder's cell-level positions are too coarse to show it.
     Step(2, "slope-sharp", "Slope map: score again with sharper ball positions (nearest real patch), pretrained "
          "and C", step_slope_sharp),
+    # Fin, 2026-10-13: the first open-table cut was misaligned; score the re-cut clips and save frame figures.
+    Step(2, "rescore-aligned", "Open-table clips re-cut and aligned: slope scored again (pretrained, C, E), "
+         "probe maps saved for frame figures", step_rescore_aligned, open_aligned),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
     Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
          "scored at 10 and 20", step_lossmix_open,
@@ -844,6 +876,7 @@ def step_hours(name: str) -> float:
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
+               "rescore-aligned": 1.2,            # up to three scoring passes
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:
