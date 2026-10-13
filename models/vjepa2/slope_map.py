@@ -117,6 +117,47 @@ def gather(rows: list[dict], key: str, table: Table, dist, ids: dict, context: b
     return out
 
 
+def matched(rows: list[dict], key: str, table: Table, dist, rng) -> dict:
+    """Downhill vs uphill on the SAME stretches: every WIN-step window where both the track `key` and the real
+    ball (tracker) are usable. Acceleration along the motion (negative = slowing), median per direction (by the
+    real ball's direction), for the track and the real ball; s = (down - up) / 2 is the slope term (friction
+    cancels when both directions roll alike). Unlike the map's single fit, slope and friction can't trade off
+    when most stretches go one way. 95% intervals by bootstrap over clips."""
+    rec = []                                       # (clip, down, a_track, a_real)
+    for i, r in enumerate(rows):
+        p, q = r.get(key) or [], r.get("true_pos") or []
+        for t in range(min(len(p), len(q)) - WIN + 1):
+            a, b = stretches(p[t:t + WIN], table, dist, i), stretches(q[t:t + WIN], table, dist, i)
+            if a and b:
+                along = lambda x: float(x["a"] @ x["v"] / np.linalg.norm(x["v"]))  # noqa: E731
+                rec.append((i, b[0]["v"][0] < 0, along(a[0]), along(b[0])))
+    if not rec:
+        return {"n_down": 0, "n_up": 0}
+    clip, down, at, ar = (np.array(x) for x in zip(*rec))
+
+    def stats(idx):
+        d, u = idx[down[idx]], idx[~down[idx]]
+        if len(d) < 3 or len(u) < 3:
+            return None
+        return [float(np.median(at[d])), float(np.median(at[u])), float(np.median(ar[d])), float(np.median(ar[u]))]
+
+    base = stats(np.arange(len(rec)))
+    out = {"n_down": int(down.sum()), "n_up": int((~down).sum()), "n_clips": int(len(np.unique(clip)))}
+    if base is None:
+        return out
+    ids = np.unique(clip)
+    by = {c: np.flatnonzero(clip == c) for c in ids}
+    boots = [b for b in (stats(np.concatenate([by[c] for c in rng.choice(ids, len(ids))])) for _ in range(N_BOOT))
+             if b is not None]
+    bs = np.array(boots)
+    s_t, s_r = (bs[:, 0] - bs[:, 1]) / 2, (bs[:, 2] - bs[:, 3]) / 2
+    ci = lambda v: [round(float(np.percentile(v, 2.5)), 4), round(float(np.percentile(v, 97.5)), 4)]  # noqa: E731
+    out.update({"track_down": round(base[0], 4), "track_up": round(base[1], 4), "real_down": round(base[2], 4),
+                "real_up": round(base[3], 4), "s_track": round((base[0] - base[1]) / 2, 4), "s_track_ci": ci(s_t),
+                "s_real": round((base[2] - base[3]) / 2, 4), "s_real_ci": ci(s_r)})
+    return out
+
+
 def draw(panels: list[tuple[str, dict | None, dict | None]], poly: np.ndarray, out: Path) -> None:
     import matplotlib
     matplotlib.use("Agg")
@@ -205,10 +246,16 @@ def main(argv: list[str] | None = None) -> int:
         res[lab] = {"uniform": uni, "cells": None if cm is None else
                     {f"{c[0]},{c[1]}": {"g": [round(x, 4) for x in v["g"]], "n": v["n"]}
                      for c, v in cm["cells"].items()}}
+    same_res = {}
+    kr = sharp(rows0, "real_pos")
+    same = [(f"probe on real frames ({'sharp' if kr.endswith('_nn') else 'coarse'})", rows0, kr)]
+    same += [(lab, runs[n], sharp(runs[n], "imagined_pos")) for n, lab in RUNS if n in runs and n != "both-before"]
+    for lab, rows_, k in same:
+        same_res[lab] = {"key": k, **matched(rows_, k, table, dist, rng)}
     out = args.plan / "slope_map"
     out.mkdir(parents=True, exist_ok=True)
     draw(panels, np.array(scene["occluder_polygon"], float), out / "slope_map.png")
-    (out / "slope_map.json").write_text(json.dumps(res, indent=1))
+    (out / "slope_map.json").write_text(json.dumps({**res, "same_steps": same_res}, indent=1))
     md = ["## Slope map (uniform pull over the whole table)", "",
           "g = acceleration from the table after removing friction (a = g - mu * direction of motion), ball "
           "diameters per step²; x is left/right in the image (negative = pulled left = downhill), y is towards the "
@@ -221,6 +268,18 @@ def main(argv: list[str] | None = None) -> int:
             continue
         ci = u["g_ci"] or [None, None]
         md.append(f"| {lab} | {u['g'][0]} | {ci[0]} | {u['g'][1]} | {ci[1]} | {u['mu']} | {u['n']} | {u['n_clips']} |")
+    md += ["", "### Downhill vs uphill on the same steps as the real ball", "",
+           "Acceleration along the motion (negative = slowing), median over stretches where both the track and "
+           "the real ball are usable, split by the real ball's direction (left = downhill). s = (down - up) / 2; "
+           "the real ball's s on the same stretches says what a track that follows the slope would give.", "",
+           "| track | stretches down / up | track: down | up | s | 95% CI | real ball: down | up | s | 95% CI |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
+    for lab, m in same_res.items():
+        if "s_track" not in m:
+            md.append(f"| {lab} | {m['n_down']} / {m['n_up']} | - | - | - | - | - | - | - | - |")
+            continue
+        md.append(f"| {lab} | {m['n_down']} / {m['n_up']} | {m['track_down']} | {m['track_up']} | {m['s_track']} | "
+                  f"{m['s_track_ci']} | {m['real_down']} | {m['real_up']} | {m['s_real']} | {m['s_real_ci']} |")
     (out / "slope_map.md").write_text("\n".join(md) + "\n")
     print("\n".join(md))
     return 0
