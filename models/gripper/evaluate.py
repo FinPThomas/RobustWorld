@@ -273,11 +273,16 @@ def write_md(out: dict, path: Path) -> None:
               + "; catch depth " + ", ".join(f"{c[str(u)]['catch_depth']}" for u in U_GRID) + " (0 = at the edge, 1 = zone end); "
               "travel (m) " + ", ".join(f"{c[str(u)]['travel_m']}" for u in U_GRID) + "."]
     drivers = list(out["sim"])
-    L += ["", "## Real replay: catch rate (reward) by forecast source", "",
+    blk = any("wasted" in r[d] for r in out["replay"].values() for d in r)
+    L += ["", "## Real replay: catch rate (reward) by forecast source", ""] + (
+        ["With BLOCK: how often the gripper set off (committed) for balls that come out vs for blocked ones (a "
+         "blocked commit is a wasted trip), the pick-up rate over balls that come out, and the mean reward over "
+         "all passes.", ""] if blk else []) + [
           "| forecast | " + " | ".join(drivers) + " |", "|---|" + "---|" * len(drivers)]
     for src, r in out["replay"].items():
         L.append(f"| {src} | " + " | ".join(
-            f"{r[d]['caught']:.0%} picked up, {r[d]['wasted']:.0%} wasted trips ({r[d]['reward_all']:.2f})" if "wasted" in r[d]
+            f"set off for {r[d]['committed_out']:.0%} of balls that come out / {r[d]['wasted']:.0%} of blocked ones; "
+            f"{r[d]['caught']:.0%} picked up ({r[d]['reward_all']:.2f})" if "wasted" in r[d]
             else f"{r[d]['caught']:.0%} ({r[d]['reward']:.2f})" for d in drivers) + " |")
     L += ["", "## World-model forecast errors (scored with the tracker) and the simulation's prediction", "",
           "| model | has a forecast | median error along edge | time | speed | sim-predicted catch |", "|---|---|---|---|---|---|"]
