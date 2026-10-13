@@ -134,7 +134,10 @@ def main() -> None:
             print(f"== {name}: done already", flush=True)
             continue
         print(f"== {name}: {why}", flush=True)
-        env = dict(os.environ, GRIPPER_PARAMS=json.dumps(ovr), GRIPPER_ENV=kind)
+        # one OpenBLAS thread per process: its per-thread buffers ran a 7.5 GB laptop out of memory with
+        # several queues of 4-6 processes each (torch keeps its own threads for the PPO updates)
+        env = dict(os.environ, GRIPPER_PARAMS=json.dumps(ovr), GRIPPER_ENV=kind,
+                   OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"))
         runs = HERE / "runs" / name
         if init:
             for f in sorted((HERE / "runs" / init).glob("fold*/policy.zip")):
