@@ -691,7 +691,7 @@ def scale_check(predictor, enc: dict, device) -> dict:
 
 
 RESUME_KEYS = ("epochs", "loss", "lr", "rollout", "copy_gate", "hypotheses", "train_frac", "codes", "seed",
-               "sample_by_loss")
+               "sample_by_loss", "init_from")
 
 
 def plain_args(args) -> dict:
@@ -708,7 +708,7 @@ def resumable(path: Path, args, train: list[dict]) -> dict | None:
     except (RuntimeError, EOFError):          # half-written: train this split again
         return None
     saved = ck.get("args", {})
-    same = all(saved.get(k) == getattr(args, k, None) for k in RESUME_KEYS)
+    same = all(saved.get(k) == plain_args(args).get(k) for k in RESUME_KEYS)
     return ck.get("log") if same and ck.get("train_clip_ids") == [c["clip_id"] for c in train] else None
 
 
@@ -776,7 +776,14 @@ def train_all(args) -> None:
                                  "args": plain_args(args) | {"epochs": epoch},
                                  "log": log}, d / f"{tag}.pt")
                     print(f"  [{tag}] epoch {epoch} weights (best so far) saved as {save_at[epoch]}", flush=True)
-            log, mode = train_one(model, base_state, train, test, args, device, tag, partial, snapshot)
+            start = base_state
+            if getattr(args, "init_from", None):
+                ck = torch.load(args.init_from / f"{tag}.pt", map_location="cpu", weights_only=False)
+                if set(ck.get("train_clip_ids", [])) & {c["clip_id"] for c in test}:
+                    raise SystemExit(f"{args.init_from}/{tag}.pt was trained on clips this fold holds out")
+                start = {k: v.to(base_state[k].dtype) for k, v in ck["predictor"].items()}
+                print(f"  [{tag}] starting from {args.init_from}/{tag}.pt", flush=True)
+            log, mode = train_one(model, start, train, test, args, device, tag, partial, snapshot)
             save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,
                          "split": tag, "train_clip_ids": [c["clip_id"] for c in train],
                          "args": plain_args(args), "log": log}, out / f"{tag}.pt")
@@ -829,6 +836,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--save-at", nargs="*", default=[], metavar="EPOCH:RUN",
                    help="also save each split's weights after EPOCH (best so far) as run RUN, e.g. 10:plan/x-e10")
     p.add_argument("--resume", action="store_true", help="skip splits already trained with the same settings")
+    p.add_argument("--init-from", type=Path, default=None, metavar="RUN_DIR",
+                   help="start each fold from that run's fold{k}.pt predictor instead of the pretrained one (a "
+                        "top-up of an earlier run, same folds); its weights are this run's 'before'")
     p.add_argument("--extra-train", type=Path, default=None, metavar="MANIFEST",
                    help="more training clips outside the cross-validation (e.g. manifest_open.jsonl); each is kept "
                         "out of the fold whose held-out clips share its frames (eval.ball.extra_folds)")

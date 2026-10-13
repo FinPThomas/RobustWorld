@@ -45,7 +45,8 @@ N_BOOT = 300
 RUNS = [("both-before", "imagined, before post-training"),
         ("lossmix_both-after", "imagined, after post-training (C, 20 ep)"),
         ("lossmix_open-after", "imagined, after (E: + open clips)"),
-        ("lossmix_both_e30-after", "imagined, after (F, 30 ep)")]
+        ("lossmix_both_e30-after", "imagined, after (F, 30 ep)"),
+        ("lossmix_topup-after", "imagined, after (G: C + 5 ep aligned open clips)")]
 
 
 def stretches(pos: list, table: Table, dist, clip: int) -> list[dict]:

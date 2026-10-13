@@ -23,7 +23,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 RUNS = [("both-before", "before post-training", "tab:gray"), ("lossmix_both-after", "after: C", "tab:orange"),
         ("lossmix_open-after", "after: E (+ open clips)", "tab:red"),
-        ("lossmix_both_e30-after", "after: F (30 ep)", "tab:purple")]
+        ("lossmix_both_e30-after", "after: F (30 ep)", "tab:purple"),
+        ("lossmix_topup-after", "after: G (C + aligned open clips)", "tab:brown")]
 
 
 def load(plan: Path, f: str) -> dict:
