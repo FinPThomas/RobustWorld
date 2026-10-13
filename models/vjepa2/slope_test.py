@@ -56,7 +56,8 @@ EPOCH_RUNS = [(0, "both-before")] + [(e, f"lossmix_both_e{e}-after") for e in (1
              [(20, "lossmix_both-after")]
 OTHER_RUNS = ["commit_both-after", "lossmix_e10-after", "lossmix_e20-after", "lossmix_open_e10-after",
               "lossmix_open-after",          # E: C with the open-table clips in training
-              "lossmix_both_e25of30-after", "lossmix_both_e30-after"]   # F: C for 30 epochs
+              "lossmix_both_e25of30-after", "lossmix_both_e30-after",   # F: C for 30 epochs
+              "lossmix_topup-after"]                                     # G: C + 5 epochs on aligned open clips
 
 
 # ------------------------------------------------------------------------------------------- calibration

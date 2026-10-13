@@ -34,7 +34,7 @@ NARROW_AUROC = (300, 380)
 # Runs compared, in this order, when their scores exist.
 RUNS = ["pretrained", "plain-after", "commit-after", "codes-after", "lossmix_e10-after", "lossmix_e20-after",
         "both-before", "commit_both-after", "lossmix_both-after", "lossmix_open-after",
-        "lossmix_both_e30-after"]
+        "lossmix_both_e30-after", "lossmix_topup-after"]
 
 
 def auroc(y, s):
