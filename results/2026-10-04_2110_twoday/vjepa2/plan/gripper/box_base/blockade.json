@@ -1,0 +1,58 @@
+{
+ "tag": "box_base",
+ "rewards": {
+  "pick_up": "1 + 0.5 x earliness",
+  "try_miss": -0.5,
+  "let_go": -1.0,
+  "wasted_trip": -1.0,
+  "hold_back": 0.5
+ },
+ "base": 0.42,
+ "sim_pickup_by_u": {
+  "0.0": 0.723,
+  "0.1": 0.743,
+  "0.2": 0.717,
+  "0.3": 0.747,
+  "0.5": 0.613,
+  "0.7": 0.607,
+  "1.0": 0.463
+ },
+ "real": {
+  "no forecast": {
+   "passes": 335,
+   "through": 141,
+   "blocked": 194,
+   "set_off_through": 0.0,
+   "set_off_blocked": 0.0,
+   "picked_up": 0.0,
+   "mean_reward": -0.131
+  },
+  "before": {
+   "passes": 335,
+   "through": 141,
+   "blocked": 194,
+   "set_off_through": 0.0,
+   "set_off_blocked": 0.0,
+   "picked_up": 0.0,
+   "mean_reward": -0.131
+  },
+  "after (C)": {
+   "passes": 335,
+   "through": 141,
+   "blocked": 194,
+   "set_off_through": 0.695,
+   "set_off_blocked": 0.036,
+   "picked_up": 0.277,
+   "mean_reward": 0.207
+  },
+  "perfect": {
+   "passes": 335,
+   "through": 141,
+   "blocked": 194,
+   "set_off_through": 1.0,
+   "set_off_blocked": 0.0,
+   "picked_up": 0.752,
+   "mean_reward": 0.678
+  }
+ }
+}

@@ -26,8 +26,6 @@ import os
 
 if os.environ.get("GRIPPER_ENV") == "box":      # plain-Python kinematics instead of PyBullet (box_env.py)
     import box_env as E
-elif os.environ.get("GRIPPER_ENV") == "commit":   # box kinematics with blocked passes (commit_env.py)
-    import commit_env as E
 else:
     import env as E
 
