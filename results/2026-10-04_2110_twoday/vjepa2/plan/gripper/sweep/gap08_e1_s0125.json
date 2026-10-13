@@ -1,0 +1,65 @@
+{
+ "settings": {
+  "U_INDEP": 1,
+  "HONEST_SIG": 1,
+  "EARLY": 1.0,
+  "WIDE": 0.6,
+  "GAP_MAX": 0.08
+ },
+ "steps": 400000,
+ "sim": "box",
+ "ppo u=0.0": {
+  "caught": 0.32,
+  "reward": -0.339,
+  "opening": 1.0,
+  "catch_depth": 0.193
+ },
+ "ppo u=0.5": {
+  "caught": 0.287,
+  "reward": -0.418,
+  "opening": 1.0,
+  "catch_depth": 0.19
+ },
+ "ppo u=1.0": {
+  "caught": 0.2,
+  "reward": -0.61,
+  "opening": 0.993,
+  "catch_depth": 0.216
+ },
+ "reactive u=0.0": {
+  "caught": 0.053,
+  "reward": -0.905,
+  "opening": 0.5,
+  "catch_depth": 0.513
+ },
+ "reactive u=0.5": {
+  "caught": 0.053,
+  "reward": -0.905,
+  "opening": 0.5,
+  "catch_depth": 0.513
+ },
+ "reactive u=1.0": {
+  "caught": 0.053,
+  "reward": -0.905,
+  "opening": 0.5,
+  "catch_depth": 0.513
+ },
+ "trust u=0.0": {
+  "caught": 0.093,
+  "reward": -0.829,
+  "opening": 0.3,
+  "catch_depth": 0.499
+ },
+ "trust u=0.5": {
+  "caught": 0.007,
+  "reward": -1.036,
+  "opening": 0.3,
+  "catch_depth": 0.568
+ },
+ "trust u=1.0": {
+  "caught": 0.013,
+  "reward": -1.03,
+  "opening": 0.3,
+  "catch_depth": 0.571
+ }
+}
