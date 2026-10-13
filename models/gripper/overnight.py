@@ -41,6 +41,17 @@ EXPERIMENTS = [
     ("pb_early1_wide06", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 1_500_000, None,
      "PyBullet with early pick-ups and narrow grips rewarded more"),
     ("pb_sight025", "pybullet", {"OBS_DELAY": 0.25}, 1_500_000, None, "PyBullet, slower sight"),
+    # Real forecasts place the ball well but time it and give its speed far less precisely than their one u
+    # says, and the policies above only ever saw one u for all three. Fix: state each part's own sigma
+    # from the forecast's resolution (evaluate.py HONEST_SIG), and train with separate uncertainties.
+    ("box_base_honest", "box", {"HONEST_SIG": 1}, 1_000_000, "box_base",
+     "box_base's policies unchanged, real forecasts stated with each part's own sigma"),
+    ("box_indep", "box", {"U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
+     "trained with separate uncertainties for where / when / speed; honest sigmas"),
+    ("box_sight025_indep", "box", {"OBS_DELAY": 0.25, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
+     "box_indep with slower sight (4 frames)"),
+    ("pb_early1_wide06_indep", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000,
+     None, "pb_early1_wide06 trained with separate uncertainties; honest sigmas"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
     ("pb_narrow", "pybullet", {"GAP_MAX": 0.09}, 1_500_000, None, "fingers open at most 9 cm"),
 ]

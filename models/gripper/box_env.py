@@ -35,6 +35,7 @@ SIG_S, SIG_T, SIG_V = 0.12, 0.3, 0.5
 OBS_NOISE = 0.003
 OBS_DELAY = 0.125
 MAX_T = 2.5
+U_INDEP = 0
 globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 
@@ -44,6 +45,16 @@ def load_exits(path: Path = HERE / "exits.json") -> dict:
 
 def exit_to_m(e: dict) -> dict:
     return {"x": e["s"] * M_PER_PX, "t": e["t"], "vx": e["vs"] * M_PER_PX, "vy": e["vd"] * M_PER_PX}
+
+
+def noisy_forecast(e: dict, o: dict, rng) -> dict:
+    """As env.noisy_forecast (env.py imports PyBullet, so it is repeated here)."""
+    u = float(o.get("u", rng.uniform(0, 1)))
+    us, ut, uv = rng.uniform(0, 1, 3) if U_INDEP and "u" not in o else (u, u, u)
+    sv = SIG_V * uv * np.hypot(e["vx"], e["vy"])
+    return {"x": e["x"] + rng.normal(0, SIG_S * us + 1e-9), "t": e["t"] + rng.normal(0, SIG_T * ut + 1e-9),
+            "vx": e["vx"] + rng.normal(0, sv + 1e-9), "vy": e["vy"] + rng.normal(0, sv + 1e-9),
+            "sig_s": SIG_S * us, "sig_t": SIG_T * ut, "sig_v": SIG_V * uv, "u": u}
 
 
 class CatchEnv(gym.Env):
@@ -69,11 +80,7 @@ class CatchEnv(gym.Env):
             e = {"x": e["x"] + self.rng.normal(0, 0.01), "t": max(e["t"] + self.rng.normal(0, 0.03), 0.0),
                  "vx": e["vx"] * j[0], "vy": max(e["vy"] * j[1], 0.03)}
             self.true = e
-            u = float(o.get("u", self.rng.uniform(0, 1)))
-            sv = SIG_V * u * np.hypot(e["vx"], e["vy"])
-            self.fc = {"x": e["x"] + self.rng.normal(0, SIG_S * u + 1e-9), "t": e["t"] + self.rng.normal(0, SIG_T * u + 1e-9),
-                       "vx": e["vx"] + self.rng.normal(0, sv + 1e-9), "vy": e["vy"] + self.rng.normal(0, sv + 1e-9),
-                       "sig_s": SIG_S * u, "sig_t": SIG_T * u, "sig_v": SIG_V * u, "u": u}
+            self.fc = noisy_forecast(e, o, self.rng)
         self.t, self.g, self.w = 0.0, self.rest.copy(), GAP_MIN
         self.seen, self.travel, self.result = [], 0.0, None
         return self._obs(), {}
