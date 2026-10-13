@@ -13,5 +13,9 @@ Pick-up rate. Simulation: PPO at forecast uncertainty u = 0 / 0.5 / 1 (and the f
 | box_sight025 | slower sight (4 frames): prediction matters more | 69% | 52% | 34% | 0.996 -> 0.977 | 31% | 23% | 71% |
 | pb_early1_wide06 | PyBullet with early pick-ups and narrow grips rewarded more | 75% | 70% | 56% | 0.427 -> 0.431 | 60% | 60% | 76% |
 | pb_sight025 | PyBullet, slower sight | 70% | 62% | 43% | 0.423 -> 0.48 | 46% | 38% | 74% |
+| box_base_honest | box_base's policies unchanged, real forecasts stated with each part's own sigma | 72% | 61% | 46% | 1.0 -> 0.987 | 48% | 38% | 75% |
+| box_indep | trained with separate uncertainties for where / when / speed; honest sigmas | (queued) | | | | | | |
+| box_sight025_indep | box_indep with slower sight (4 frames) | (queued) | | | | | | |
+| pb_early1_wide06_indep | pb_early1_wide06 trained with separate uncertainties; honest sigmas | (queued) | | | | | | |
 | pb_base_4m | pb_base trained on to 4M steps per fold | (queued) | | | | | | |
 | pb_narrow | fingers open at most 9 cm | (queued) | | | | | | |
