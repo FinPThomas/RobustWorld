@@ -181,7 +181,7 @@
   "steps_without_ball": 977
  },
  "timing_seconds_per_clip": {},
- "model_load_seconds": 1.6,
+ "model_load_seconds": 1.5,
  "by_side": {
   "L": {
    "n": 83,
