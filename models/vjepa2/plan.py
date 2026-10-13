@@ -446,21 +446,31 @@ def open_aligned() -> str | None:
 
 
 def step_rescore_aligned(args, state, log):
-    """Fin, 2026-10-13: score the re-cut (aligned) open-table clips, and save the probe maps for the frame
-    figures: the pretrained predictor always, C and E when their weights are here (session #8's output added as
-    input). Open-clip scores of other runs came from the misaligned cut, so they are removed."""
-    man = both_manifest()
+    """Fin, 2026-10-13: score the re-cut (aligned) open-table clips with the pretrained predictor and save the
+    probe maps for the frame figures. Open-clip scores of other runs came from the misaligned cut, so they are
+    removed; C and E are scored again by their own steps once their weights are here."""
     for d in SCORES.glob("*/per_clip_open.json"):
         d.unlink()
-    must([PY, HERE / "ball_probe_cv.py", "--manifest", man, "--out", SCORES / "both-before",
+    must([PY, HERE / "ball_probe_cv.py", "--manifest", both_manifest(), "--out", SCORES / "both-before",
           "--extra-manifest", OPEN], log)
-    for name in ("lossmix_both-after", "lossmix_open-after"):
-        w = found_weights(name)
-        if w is None:
-            print(f"== {name}: weights aren't here (add the Kaggle output holding weights/{name})", flush=True)
-            continue
-        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", w, "--manifest", man, "--out", SCORES / name,
-              "--extra-manifest", OPEN], log)
+
+
+def rescore_run(name: str):
+    def step(args, state, log):
+        must([PY, HERE / "ball_probe_cv.py", "--predictor-run", found_weights(name), "--manifest", both_manifest(),
+              "--out", SCORES / name, "--extra-manifest", OPEN], log)
+    return step
+
+
+def weights_ready(name: str, session: str):
+    def check() -> str | None:
+        if open_aligned():
+            return open_aligned()
+        if found_weights(name) is None:
+            return (f"{name}'s weights aren't here: add the Kaggle output of {session} (it holds "
+                    f"weights/{name}) as an input")
+        return None
+    return check
 
 
 def step_topup_open(args, state, log):
@@ -472,12 +482,7 @@ def step_topup_open(args, state, log):
     train_and_score("lossmix_topup-after", flags, 5, "lossmix_both-after", args, log, both_manifest(), OPEN)
 
 
-def topup_ready() -> str | None:
-    if open_aligned():
-        return open_aligned()
-    if found_weights("lossmix_both-after") is None:
-        return "C's weights aren't here (add session #8's Kaggle output, which holds weights/lossmix_both-after)"
-    return None
+topup_ready = weights_ready("lossmix_both-after", "session #7 (2026-10-11 morning)")
 
 
 def step_lossmix_open(args, state, log):
@@ -569,6 +574,10 @@ STEPS: list[Step] = [
     # Fin, 2026-10-13: the first open-table cut was misaligned; score the re-cut clips and save frame figures.
     Step(2, "rescore-aligned", "Open-table clips re-cut and aligned: slope scored again (pretrained, C, E), "
          "probe maps saved for frame figures", step_rescore_aligned, open_aligned),
+    Step(2, "rescore-aligned-C", "C scored on the aligned open-table clips (slope), with probe maps",
+         rescore_run("lossmix_both-after"), weights_ready("lossmix_both-after", "session #7 (2026-10-11 morning)")),
+    Step(2, "rescore-aligned-E", "E scored on the aligned open-table clips (slope), with probe maps",
+         rescore_run("lossmix_open-after"), weights_ready("lossmix_open-after", "session #8 (2026-10-11 evening)")),
     Step(2, "lossmix_topup-after", "G. C topped up 5 epochs with the aligned open-table clips (does free rolling "
          "teach the slope?)", step_topup_open, topup_ready),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
@@ -895,7 +904,9 @@ def step_hours(name: str) -> float:
                "lossmix_both-after": 5.6,         # 20 epochs on both directions (commit_both: 2.6 h for 10)
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
-               "rescore-aligned": 1.2,            # up to three scoring passes
+               "rescore-aligned": 0.5,            # one scoring pass
+               "rescore-aligned-C": 0.5,
+               "rescore-aligned-E": 0.5,
                "lossmix_topup-after": 2.4,        # 5 epochs from C with the open clips, one scoring pass
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
