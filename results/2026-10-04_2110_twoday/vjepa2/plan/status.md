@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-11 22:15 UTC from Kaggle (Tesla T4), code `18840c8`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-13 16:01 UTC from Kaggle (Tesla T4), code `9dd8ebf`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -26,6 +26,8 @@ _Last update: 2026-10-11 22:15 UTC from Kaggle (Tesla T4), code `18840c8`. Resul
 | 2 | lossmix_both-after: C. both directions, loss-weighted sampling, 20 epochs (weights saved for the learning curve) | done | 309.4 | 2026-10-11 06:12 |
 | 2 | lossmix_both-epochs: C. learning curve: score the pretrained predictor and the weights saved after 1, 2, 4, 7, 10 and 15 epochs, plank and open-table clips | done | 81.8 | 2026-10-11 07:34 |
 | 2 | slope-sharp: Slope map: score again with sharper ball positions (nearest real patch), pretrained and C | done | 8.7 | 2026-10-11 15:10 |
+| 2 | rescore-aligned: Open-table clips re-cut and aligned: slope scored again (pretrained, C, E), probe maps saved for frame figures | done | 8.8 | 2026-10-13 16:01 |
+| 2 | lossmix_topup-after: G. C topped up 5 epochs with the aligned open-table clips (does free rolling teach the slope?) | to do |  |  |
 | 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | done | 424.6 | 2026-10-11 22:15 |
 | 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |

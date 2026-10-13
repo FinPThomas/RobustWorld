@@ -198,6 +198,13 @@
    "code": "18840c8",
    "minutes": 8.7,
    "finished": "2026-10-11 15:10"
+  },
+  "rescore-aligned": {
+   "state": "done",
+   "started": "2026-10-13 15:52",
+   "code": "9dd8ebf",
+   "minutes": 8.8,
+   "finished": "2026-10-13 16:01"
   }
  },
  "choices": {
