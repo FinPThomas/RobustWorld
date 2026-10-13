@@ -40,6 +40,12 @@ from exits import Edge  # noqa: E402
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 CONF = 0.5
+STEP_S = 2 * E.DT                 # one imagined step (8 fps)
+CELL_PX = 32                      # the frozen decoder's map cell
+# HONEST_SIG (GRIPPER_PARAMS): state each part of a world model's forecast with its own sigma, from the
+# forecast's own resolution (fixed geometry, never fitted): its time is only known to one imagined step, and
+# its speed is a difference of two cell-quantised positions. Off: one u (the far-side spread) for all parts.
+HONEST_SIG = bool(json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).get("HONEST_SIG", 0))
 U_GRID = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
 N_SIM = 60                        # episodes per fold per u (300 per u in all)
 BEFORE, AFTER = "both-before", "lossmix_both-after"
@@ -100,14 +106,23 @@ def wm_forecast(row: dict, edge: Edge, prior: dict):
         u = float(np.clip(row["imagined_far_spread"][k0] * E.M_PER_PX / E.SIG_S, 0, 1))
     else:
         u = float(np.clip(1 - peak, 0, 1))
-    return to_m({"s": float(sd0[0]), "t": float(t0), "vs": float(v[0]), "vd": float(v[1])}, u)
+    ut = uv = None
+    if HONEST_SIG:
+        ut = max(u, STEP_S / E.SIG_T)
+        uv = 1.0
+        if len(pts) > 1:
+            sd_v = CELL_PX * E.M_PER_PX / np.sqrt(6) / (pts[-1][0] - t0)      # m/s; uniform cell error, two ends
+            uv = float(min(sd_v / (E.SIG_V * max(np.hypot(*v) * E.M_PER_PX, 1e-6)), 1.0))
+    return to_m({"s": float(sd0[0]), "t": float(t0), "vs": float(v[0]), "vd": float(v[1])}, u, ut, uv)
 
 
-def to_m(f: dict, u: float) -> dict:
-    """A forecast in px (along / past the plank edge) as the env's forecast in metres, with its sigmas."""
+def to_m(f: dict, u: float, ut: float | None = None, uv: float | None = None) -> dict:
+    """A forecast in px (along / past the plank edge) as the env's forecast in metres, with its sigmas
+    (u for where; ut and uv for when and speed, u if not given)."""
     m = E.exit_to_m(f)
+    ut, uv = u if ut is None else ut, u if uv is None else uv
     return {"x": m["x"], "t": m["t"], "vx": m["vx"], "vy": m["vy"],
-            "sig_s": E.SIG_S * u, "sig_t": E.SIG_T * u, "sig_v": E.SIG_V * u, "u": u}
+            "sig_s": E.SIG_S * u, "sig_t": E.SIG_T * ut, "sig_v": E.SIG_V * uv, "u": u}
 
 
 def prior_forecast(prior: dict) -> dict:
@@ -203,7 +218,7 @@ def main() -> None:
 
     dest = args.plan / "gripper" / args.tag if args.tag else args.plan / "gripper"
     out["experiment"] = {"tag": args.tag, "env": os.environ.get("GRIPPER_ENV", "pybullet"),
-                         "params": os.environ.get("GRIPPER_PARAMS", "{}")}
+                         "params": os.environ.get("GRIPPER_PARAMS", "{}"), "honest_sigmas": HONEST_SIG}
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "gripper.json").write_text(json.dumps(out, indent=1))
     write_md(out, dest / "gripper.md")

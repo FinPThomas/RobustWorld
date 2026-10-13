@@ -50,7 +50,8 @@ SIG_S, SIG_T, SIG_V = 0.12, 0.3, 0.5     # forecast sigma at uncertainty 1: m al
 OBS_NOISE = 0.003                # m
 OBS_DELAY = 0.125                # s: seeing the ball lags by 2 frames
 MAX_T = 2.5
-HOVER_Z = 0.0                    # gripper frame z while hunting (fingers reach the table)
+U_INDEP = 0                      # 1: training draws a separate uncertainty for where, when and speed
+HOVER_Z = 0.0                   # gripper frame z while hunting (fingers reach the table)
 LIFT_Z = 0.08
 
 # Experiment overrides (overnight.py): GRIPPER_PARAMS='{"EARLY": 1.0}' replaces these constants, in every
@@ -94,6 +95,18 @@ def load_exits(path: Path = HERE / "exits.json") -> dict:
 def exit_to_m(e: dict) -> dict:
     """An exit from exits.json (px, px/s along / past the plank edge) in metres in this scene."""
     return {"x": e["s"] * M_PER_PX, "t": e["t"], "vx": e["vs"] * M_PER_PX, "vy": e["vd"] * M_PER_PX}
+
+
+def noisy_forecast(e: dict, o: dict, rng) -> dict:
+    """The true exit plus Gaussian noise of exactly the stated sigmas. One uncertainty u for all three
+    parts, or (U_INDEP, training only) a separate one for where, when and speed, so the policy learns to
+    weigh each part by its own stated sigma (a real forecast can place the ball well but time it badly)."""
+    u = float(o.get("u", rng.uniform(0, 1)))
+    us, ut, uv = rng.uniform(0, 1, 3) if U_INDEP and "u" not in o else (u, u, u)
+    sv = SIG_V * uv * np.hypot(e["vx"], e["vy"])
+    return {"x": e["x"] + rng.normal(0, SIG_S * us + 1e-9), "t": e["t"] + rng.normal(0, SIG_T * ut + 1e-9),
+            "vx": e["vx"] + rng.normal(0, sv + 1e-9), "vy": e["vy"] + rng.normal(0, sv + 1e-9),
+            "sig_s": SIG_S * us, "sig_t": SIG_T * ut, "sig_v": SIG_V * uv, "u": u}
 
 
 class CatchEnv(gym.Env):
@@ -185,11 +198,7 @@ class CatchEnv(gym.Env):
             e = {"x": e["x"] + self.rng.normal(0, 0.01), "t": max(e["t"] + self.rng.normal(0, 0.03), 0.0),
                  "vx": e["vx"] * j[0], "vy": max(e["vy"] * j[1], 0.03)}
             self.true = e
-            u = float(o.get("u", self.rng.uniform(0, 1)))
-            sv = SIG_V * u * np.hypot(e["vx"], e["vy"])
-            self.fc = {"x": e["x"] + self.rng.normal(0, SIG_S * u + 1e-9), "t": e["t"] + self.rng.normal(0, SIG_T * u + 1e-9),
-                       "vx": e["vx"] + self.rng.normal(0, sv + 1e-9), "vy": e["vy"] + self.rng.normal(0, sv + 1e-9),
-                       "sig_s": SIG_S * u, "sig_t": SIG_T * u, "sig_v": SIG_V * u, "u": u}
+            self.fc = noisy_forecast(e, o, self.rng)
         c = self.cid
         p.resetBasePositionAndOrientation(self.ball, [0, -0.3, BALL_R], [0, 0, 0, 1], physicsClientId=c)
         p.resetBaseVelocity(self.ball, [0, 0, 0], [0, 0, 0], physicsClientId=c)
