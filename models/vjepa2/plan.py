@@ -420,7 +420,10 @@ def found_weights(name: str) -> Path | None:
             if Path(d).relative_to(root).parts.__len__() > 6:
                 subs[:] = []
                 continue
-            if Path(d).name == name and Path(d).parent.name == "weights" and len(list(Path(d).glob("fold?.pt"))) >= 5:
+            slug = name.replace("_", "-").lower()     # a Kaggle dataset of the fold files, named after the run
+            named = (Path(d).name == name and Path(d).parent.name == "weights") or \
+                slug in str(Path(d).relative_to(root)).replace("_", "-").lower()
+            if named and len(list(Path(d).glob("fold?.pt"))) >= 5:
                 return Path(d)
     return None
 
