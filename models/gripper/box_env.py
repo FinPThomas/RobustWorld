@@ -38,6 +38,7 @@ MAX_T = 2.5
 U_INDEP = 0
 BLOCK, PARK, COMMIT, BLOCK_END = 0, 0.15, 1.0, 1.6        # as env.py
 LETGO = 0.0
+DEPTH_SPEED = 0.0                                          # as env.py
 globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 
@@ -138,6 +139,8 @@ class CatchEnv(gym.Env):
         v = a[:2] * GRIP_SPEED
         n = np.linalg.norm(v)
         v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
+        if DEPTH_SPEED > 0:
+            v[1] = np.clip(v[1], -DEPTH_SPEED, DEPTH_SPEED)
         target_w = GAP_MIN + (a[2] + 1) / 2 * (GAP_MAX - GAP_MIN)
         g0 = self.g.copy()
         for _ in range(SUBSTEPS):
