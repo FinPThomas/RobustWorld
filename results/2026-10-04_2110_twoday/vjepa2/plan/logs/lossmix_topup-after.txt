@@ -1,0 +1,35 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  40%|████      | 235/587 [00:00<00:00, 2349.19it/s]
+Loading weights:  80%|████████  | 470/587 [00:00<00:00, 2277.49it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2335.13it/s]
+code version 026ba2d
+scale check: predicted token spread 0.6176, real target 3.2694 raw / 1.0005 layer-normalised (training and scoring use the layer-normalised space)
+post-training the V-JEPA 2 predictor on cuda: 337 clips, run 'plan/lossmix_topup-after', 5 split(s)
+  + 96 extra training clips (manifest_open.jsonl); each is left out of the fold that scores it (0 left out of every fold)
+  [fold0] starting from /kaggle/input/datasets/finpthomas/lossmix-both-after/weights/lossmix_both-after/fold0.pt
+  [fold0] epoch 1/5: loss 0.5765 l1 0.5132 wl1 0.5148 nce 0.6171 (228s)
+Traceback (most recent call last):
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 857, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 852, in main
+    encode_all(args) if args.stage == "encode" else train_all(args)
+                                                    ~~~~~~~~~^^^^^^
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 786, in train_all
+    log, mode = train_one(model, start, train, test, args, device, tag, partial, snapshot)
+                ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 610, in train_one
+    rec = epoch_record(epoch + 1, log, grads, opt, pred, base_state, device, time.perf_counter() - t_epoch)
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 676, in epoch_record
+    "lr": opt.param_groups[0]["lr"], "weight_change": weight_change(pred, base_state),
+                                                      ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 663, in weight_change
+    num = sum(float((v.float() - base_state[k].float()).norm()) ** 2 for k, v in pred.state_dict().items())
+  File "/tmp/RobustWorld/models/vjepa2/posttrain.py", line 663, in <genexpr>
+    num = sum(float((v.float() - base_state[k].float()).norm()) ** 2 for k, v in pred.state_dict().items())
+                     ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
