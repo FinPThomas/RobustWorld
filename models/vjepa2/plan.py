@@ -410,13 +410,34 @@ def step_lossmix_both_epochs(args, state, log):
 
 def found_weights(name: str) -> Path | None:
     """A run's fold weights on this machine, or exported by an earlier Kaggle session and added to this one's
-    inputs (that notebook version's output: /kaggle/input/<...>/weights/<name>/fold*.pt)."""
+    inputs (that notebook version's output: /kaggle/input/<...>/weights/<name>/fold*.pt). Kaggle may mount inputs
+    through symlinks, which Path.glob("**") doesn't follow, so walk with followlinks."""
     if len(list((CKPT / name).glob("fold?.pt"))) >= 5:
         return CKPT / name
-    for d in sorted(Path("/kaggle/input").glob(f"**/weights/{name}")) if Path("/kaggle/input").exists() else []:
-        if len(list(d.glob("fold?.pt"))) >= 5:
-            return d
+    root = Path("/kaggle/input")
+    if root.exists():
+        for d, subs, _ in os.walk(root, followlinks=True):
+            if Path(d).relative_to(root).parts.__len__() > 6:
+                subs[:] = []
+                continue
+            if Path(d).name == name and Path(d).parent.name == "weights" and len(list(Path(d).glob("fold?.pt"))) >= 5:
+                return Path(d)
     return None
+
+
+def show_inputs() -> None:
+    """What Kaggle attached (so a missing input is easy to see in the log): folders 3 deep, and any weights."""
+    root = Path("/kaggle/input")
+    if not root.exists():
+        return
+    print("== Kaggle inputs:", flush=True)
+    for d, subs, files in os.walk(root, followlinks=True):
+        depth = len(Path(d).relative_to(root).parts)
+        if depth <= 3 or Path(d).parent.name == "weights":
+            pts = [f for f in files if f.endswith(".pt")]
+            print(f"   {d}" + (f"  ({len(pts)} .pt files)" if pts else ""), flush=True)
+        if depth > 5:
+            subs[:] = []
 
 
 def step_slope_sharp(args, state, log):
@@ -587,7 +608,8 @@ STEPS: list[Step] = [
     # Long-run queue (Fin, 2026-10-10: keep going for a long time on the existing footage): C for 30 epochs.
     Step(2, "lossmix_both_e30-after", "F. C trained for 30 epochs (scored at 25 and 30): where does learning stop?",
          step_lossmix_both_long),
-    Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball),
+    Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball,
+         lambda: "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"),
 ]
 
 
@@ -949,11 +971,26 @@ def _run(args) -> None:
     if state["steps"].get("split", {}).get("state") == "done" and not SEEN.exists():
         print("== the seen-clips manifest is missing: recreating it", flush=True)
         step_split(args, state, None)
+    show_inputs()
+    stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
+    todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
+    cap_file = REPO / "configs" / "compute_budget.json"
+    cap = json.loads(cap_file.read_text()).get("max_hours") if cap_file.exists() else None
+    budget = min(x for x in (args.budget_hours, cap) if x) if (args.budget_hours or cap) else None
+    runnable = [s.name for s in todo if (state["steps"].get(s.name, {}).get("state") != "done" or args.redo)
+                and not (s.waits_for and s.waits_for()) and not (budget and step_hours(s.name) > budget)]
+    if not runnable:                                  # e.g. every step waits for weights not attached: don't
+        print("!! nothing can run this session (see the waiting reasons below), so the clips aren't encoded "
+              "again: stopping before using GPU time", flush=True)
+        for s in todo:
+            reason = s.waits_for() if s.waits_for else None
+            if reason and state["steps"].get(s.name, {}).get("state") != "done":
+                print(f"   {s.name}: {reason}", flush=True)
+        return
+    print(f"== can run this session: {', '.join(runnable)}", flush=True)
     if state["steps"].get("encode", {}).get("state") == "done" and not cache_complete():
         print("== the encoded features aren't on this disk (a new runtime): encoding again", flush=True)
         step_encode(args, state, PLAN / "logs" / "encode.txt")
-    stages = list(range(1, 7)) if args.stage == "all" else [int(args.stage)]
-    todo = [s for s in STEPS if s.stage in stages and (not args.only or s.name in args.only)]
     cut_off = [s for s in STEPS if s.stage < min(stages) and state["steps"].get(s.name, {}).get("state") == "running"]
     if cut_off and not args.only:                     # e.g. encode stopped by a Drive drop: later stages need it
         print(f"== finishing first what was cut off: {', '.join(s.name for s in cut_off)}", flush=True)
