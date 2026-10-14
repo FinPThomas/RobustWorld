@@ -37,6 +37,7 @@ OBS_DELAY = 0.125
 MAX_T = 2.5
 U_INDEP = 0
 BLOCK, PARK, COMMIT, BLOCK_END = 0, 0.15, 1.0, 1.6        # as env.py
+LETGO = 0.0
 globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 
@@ -182,6 +183,7 @@ class CatchEnv(gym.Env):
     def _finish(self, r, ok, why, depth=None, opening=None):
         if not ok and BLOCK and not self.committed:
             why = "let it go"
+            r -= LETGO
         elif not ok:
             r -= MISS
         self.result = {"caught": ok, "why": why, "depth": depth, "opening": opening, "t": self.t, "travel": self.travel,

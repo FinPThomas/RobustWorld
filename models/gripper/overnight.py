@@ -11,7 +11,7 @@ finished policies (e.g. longer training).
 Every policy is trained on simulated forecasts only (the true exit plus noise of the stated size);
 real world-model forecasts are used only to score (CLAUDE.md rule 1).
 
-    python models/gripper/overnight.py --plan results/2026-10-04_2110_twoday/vjepa2/plan [--envs 5] [--no-push]
+    python models/gripper/overnight.py --plan results/2026-10-04_2110_twoday/vjepa2/plan [--envs 3] [--no-push]
 """
 
 from __future__ import annotations
@@ -50,24 +50,23 @@ EXPERIMENTS = [
      "trained with separate uncertainties for where / when / speed; honest sigmas"),
     ("box_sight025_indep", "box", {"OBS_DELAY": 0.25, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
      "box_indep with slower sight (4 frames)"),
-    # The real task (BLOCK): some passes never come out (the blockade). The gripper waits parked, too far to react
-    # once it sees the ball, so it must set off on the forecast; setting off for a blocked pass costs a wasted
-    # trip. The forecast adds p_out; a world model's is its decoded ball's confidence past the far edge.
-    ("box_block", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_000_000, None,
-     "BLOCK: blocked passes, gripper parked out of reach, a wasted trip costs 1"),
-    ("box_block_gap08", "box", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1, "GAP_MAX": 0.08}, 1_000_000, None,
-     "box_block with fingers opening at most 8 cm (where matters more)"),
-    ("pb_block", "pybullet", {"BLOCK": 1, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000, None, "box_block in PyBullet"),
+    # BLOCK experiments (blocked passes, parked gripper, PPO end to end) are left out: PPO learned never to set off
+    # (box_block_cloud, box_block_letgo*_cloud). The blockade is scored instead by blockade_eval.py, run on every
+    # experiment below: decide to set off from the forecast alone, then the frozen policy picks up.
     ("pb_early1_wide06_indep", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000,
      None, "pb_early1_wide06 trained with separate uncertainties; honest sigmas"),
-    ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
     ("pb_narrow", "pybullet", {"GAP_MAX": 0.09}, 1_500_000, None, "fingers open at most 9 cm"),
+    ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
+     "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
+    ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
 ]
 
 
 def sh(cmd: list, env: dict | None = None, check: bool = True) -> int:
     print(">>", " ".join(str(c) for c in cmd), flush=True)
-    r = subprocess.run([str(c) for c in cmd], cwd=REPO, env=env)
+    # below-normal priority on Windows, so the browser stays responsive while the laptop trains
+    flags = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
+    r = subprocess.run([str(c) for c in cmd], cwd=REPO, env=env, creationflags=flags)
     if check and r.returncode:
         raise SystemExit(f"failed ({r.returncode}): {cmd}")
     return r.returncode
@@ -118,7 +117,7 @@ def summary(plan: Path) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", type=Path, required=True)
-    ap.add_argument("--envs", type=int, default=5)
+    ap.add_argument("--envs", type=int, default=3, help="simulator processes per trainer (one trainer at a time)")
     ap.add_argument("--no-push", action="store_true")
     ap.add_argument("--only", nargs="*", help="run just these experiments")
     ap.add_argument("--steps-scale", type=float, default=1.0, help="multiply training steps (smoke tests)")
@@ -136,8 +135,11 @@ def main() -> None:
         print(f"== {name}: {why}", flush=True)
         # one OpenBLAS thread per process: its per-thread buffers ran a 7.5 GB laptop out of memory with
         # several queues of 4-6 processes each (torch keeps its own threads for the PPO updates)
+        # torch is capped at 2 threads too, leaving cores free for Fin's browser
         env = dict(os.environ, GRIPPER_PARAMS=json.dumps(ovr), GRIPPER_ENV=kind,
-                   OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"))
+                   OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"),
+                   OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "2"),
+                   MKL_NUM_THREADS=os.environ.get("MKL_NUM_THREADS", "2"))
         runs = HERE / "runs" / name
         if init:
             for f in sorted((HERE / "runs" / init).glob("fold*/policy.zip")):
@@ -155,6 +157,7 @@ def main() -> None:
         sh([py, HERE / "evaluate.py", "--plan", plan, "--policy", runs, "--tag", name, *(["--quick"] if args.quick else [])], env)
         if kind == "pybullet":
             sh([py, HERE / "videos.py", "--plan", plan, "--policy", runs, "--tag", name], env, check=False)
+        sh([py, HERE / "blockade_eval.py", "--plan", plan, "--tag", name], env, check=False)
         s = summary(plan)
         if not args.no_push:
             push([dest, s], f"Gripper {name}: scored on simulation and real passes")
