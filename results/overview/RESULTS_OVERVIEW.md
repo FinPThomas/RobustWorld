@@ -18,7 +18,8 @@ blocker is, purely by post-training its predictor on our video?
   in the narrow gap from 0.44 to 0.79 (real frames 0.91).
 - **Adding open-table clips to training (run E) changes little for the blockade.** E scores
   0.959 from the right and 0.922 from the left, against C's 0.961 and 0.893 (CIs overlap).
-- **The table slope is still not learnt, but it can now be measured.** The sharper,
+- **The table slope is still not learnt, but it can now be measured.** *(Provisional: the
+  open-table numbers here came from misaligned clips, see section 6.)* The sharper,
   untrained position readout finds the real downhill pull on real frames: g_x −0.025 [−0.040,
   −0.006] against −0.026 for the tracker. The coarse 32 px probe could not do this.
   - The imagined ball from C and from E shows no downhill pull. E's is +0.013, the wrong sign,
@@ -327,6 +328,18 @@ AUROC 0.89, real frames 0.99).*
 ![E: imagined vs real over time](figures/pt_curves_lossmix_open-after.png)
 
 ## 6. Table slope: measurable now, still not learnt (updated in session #8)
+
+> ⚠️ **Superseded in part (2026-10-13).** The first open-table clips were cut at 30.303 fps, but
+> the video is 30 fps. Their frames drift from the tracker by up to about 17 s, so **every
+> open-table slope number below is invalid**:
+> - the "open:" rows of the slope test;
+> - the slope map and its figure;
+> - `slope_epochs.png` (open-clip curve).
+>
+> The plank-clip slope rows are unaffected, because those clips were cut correctly. E's blockade
+> scores (section 5d) also stand: training only uses the video frames, and scoring uses the plank
+> clips. Re-cut, aligned open clips and a rescoring step for C and E are queued on PR #3
+> (`8261352`, `cb48aac`). Read the rest of this section as provisional until those land.
 
 **Why test the slope.** The table is slightly tilted (downhill = left in the image). This is a
 second hidden physical property the model could pick up from video.
