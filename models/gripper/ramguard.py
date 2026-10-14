@@ -1,7 +1,7 @@
 """Keep the gripper training from starving the rest of the laptop (e.g. a browser holding a Colab tab).
 
 free_gb() reads free physical RAM (psutil if installed, else Windows' GlobalMemoryStatusEx, else
-/proc/meminfo). wait_for_ram() blocks while it is below GRIPPER_MIN_FREE_GB (default 2.5 GB), checking
+/proc/meminfo). wait_for_ram() blocks while it is below GRIPPER_MIN_FREE_GB (default 1 GB), checking
 every minute; RamGuard does the same between PPO rollouts, so training pauses instead of pushing the
 machine into swap, and carries on by itself once memory is free again.
 """
@@ -15,7 +15,7 @@ import time
 
 from stable_baselines3.common.callbacks import BaseCallback
 
-MIN_FREE_GB = float(os.environ.get("GRIPPER_MIN_FREE_GB", "2.5"))
+MIN_FREE_GB = float(os.environ.get("GRIPPER_MIN_FREE_GB", "1.0"))
 
 
 def free_gb() -> float | None:
