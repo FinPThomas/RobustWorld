@@ -19,6 +19,6 @@ Pick-up rate. Simulation: PPO at forecast uncertainty u = 0 / 0.5 / 1 (and the f
 | pb_early1_wide06_indep | pb_early1_wide06 trained with separate uncertainties; honest sigmas | 71% | 66% | 55% | 0.413 -> 0.434 | 64% | 54% | 74% |
 | pb_narrow | fingers open at most 9 cm | 68% | 55% | 48% | 0.893 -> 0.908 | 53% | 57% | 74% |
 | box_slowy | fast sideways (0.35 m/s), slow towards the plank (0.05 m/s): commit to a depth early | 68% | 58% | 40% | 0.712 -> 0.772 | 52% | 41% | 70% |
-| pb_slowy | box_slowy in PyBullet | (queued) | | | | | | |
+| pb_slowy | box_slowy in PyBullet | 69% | 63% | 55% | 0.424 -> 0.456 | 57% | 56% | 72% |
 | pb_early1_wide06_3m | pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold | 73% | 68% | 55% | 0.411 -> 0.455 | 62% | 57% | 76% |
 | pb_base_4m | pb_base trained on to 4M steps per fold | 73% | 68% | 58% | 0.433 -> 0.464 | 60% | 56% | 74% |
