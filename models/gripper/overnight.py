@@ -68,10 +68,13 @@ EXPERIMENTS = [
 ]
 
 
+FULL = False                     # --full: normal priority, torch threads uncapped
+
+
 def sh(cmd: list, env: dict | None = None, check: bool = True) -> int:
     print(">>", " ".join(str(c) for c in cmd), flush=True)
-    # below-normal priority on Windows, so the browser stays responsive while the laptop trains
-    flags = getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
+    # below-normal priority on Windows (unless --full), so the browser stays responsive while the laptop trains
+    flags = 0 if FULL else getattr(subprocess, "BELOW_NORMAL_PRIORITY_CLASS", 0)
     r = subprocess.run([str(c) for c in cmd], cwd=REPO, env=env, creationflags=flags)
     if check and r.returncode:
         raise SystemExit(f"failed ({r.returncode}): {cmd}")
@@ -128,7 +131,10 @@ def main() -> None:
     ap.add_argument("--only", nargs="*", help="run just these experiments")
     ap.add_argument("--steps-scale", type=float, default=1.0, help="multiply training steps (smoke tests)")
     ap.add_argument("--quick", action="store_true", help="quick scoring (smoke tests)")
+    ap.add_argument("--full", action="store_true", help="full force: normal priority, torch threads uncapped")
     args = ap.parse_args()
+    global FULL
+    FULL = args.full
     plan = args.plan if args.plan.is_absolute() else REPO / args.plan
     py = sys.executable
     for name, kind, ovr, steps, init, why in EXPERIMENTS:
@@ -144,8 +150,8 @@ def main() -> None:
         # torch is capped at 2 threads too, leaving cores free for Fin's browser
         env = dict(os.environ, GRIPPER_PARAMS=json.dumps(ovr), GRIPPER_ENV=kind,
                    OPENBLAS_NUM_THREADS=os.environ.get("OPENBLAS_NUM_THREADS", "1"),
-                   OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "2"),
-                   MKL_NUM_THREADS=os.environ.get("MKL_NUM_THREADS", "2"))
+                   **({} if args.full else {"OMP_NUM_THREADS": os.environ.get("OMP_NUM_THREADS", "2"),
+                                            "MKL_NUM_THREADS": os.environ.get("MKL_NUM_THREADS", "2")}))
         runs = HERE / "runs" / name
         if init:
             for f in sorted((HERE / "runs" / init).glob("fold*/policy.zip")):
