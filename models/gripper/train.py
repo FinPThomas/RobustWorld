@@ -22,6 +22,8 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
+from ramguard import RamGuard, wait_for_ram
+
 import os
 
 if os.environ.get("GRIPPER_ENV") == "box":      # plain-Python kinematics instead of PyBullet (box_env.py)
@@ -44,6 +46,7 @@ def train_fold(fold: int, steps: int, out: Path, save_every: int, envs: int, see
         print(f"fold {fold}: done already ({done})", flush=True)
         return
     d.mkdir(parents=True, exist_ok=True)
+    wait_for_ram()
     exits = exits_without(fold)
     venv = make_vec_env(lambda: E.CatchEnv(exits), n_envs=envs, seed=seed + fold,
                         vec_env_cls=SubprocVecEnv if envs > 1 else None)
@@ -64,7 +67,7 @@ def train_fold(fold: int, steps: int, out: Path, save_every: int, envs: int, see
     t0 = time.time()
     if left > 0:
         model.learn(left, reset_num_timesteps=not ckpts,
-                    callback=CheckpointCallback(max(save_every // envs, 1), str(d), name_prefix="ckpt"))
+                    callback=[CheckpointCallback(max(save_every // envs, 1), str(d), name_prefix="ckpt"), RamGuard()])
     model.save(done)
     for c in d.glob("ckpt_*_steps.zip"):
         c.unlink()
