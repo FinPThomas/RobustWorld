@@ -19,8 +19,8 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | both-before | R | 0.168 (n 82) | 0.179 (n 26) | 0.178 (n 106) | 0.501 (n 52) | 0.437 |
 | commit_both-after | L | 0.933 (n 25) | 0.438 (n 7) | 0.559 (n 40) | 0.571 (n 10) | 0.767 |
 | commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
-| lossmix_both-after | L | 0.94 (n 25) | 0.78 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
-| lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.925 (n 52) | 0.961 |
+| lossmix_both-after | L | 0.94 (n 25) | 0.779 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
+| lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.924 (n 52) | 0.961 |
 | lossmix_open-after | L | 0.949 (n 25) | 0.891 (n 7) | 0.513 (n 40) | 0.429 (n 10) | 0.922 |
 | lossmix_open-after | R | 0.854 (n 82) | 0.609 (n 26) | 0.081 (n 106) | 0.891 (n 52) | 0.959 |
 

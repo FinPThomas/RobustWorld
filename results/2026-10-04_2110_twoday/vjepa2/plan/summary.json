@@ -369,7 +369,7 @@
   "balanced_accuracy": 0.509,
   "cell_auroc": 0.873,
   "far_cell_auroc": 0.86,
-  "argmax_hit_rate": 0.662,
+  "argmax_hit_rate": 0.661,
   "overfit_folds": "0/5",
   "best_epochs": "18/16/20/18/17"
  },
