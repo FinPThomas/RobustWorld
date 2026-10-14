@@ -27,6 +27,8 @@ ZONE = 0.12
 DT = 1 / 16
 SUBSTEPS = 8
 GRIP_SPEED = 0.25
+GRIP_SPEED_Y = 0                 # > 0: speed towards / away from the plank (m/s) when it differs from
+                                 # the lateral GRIP_SPEED: a slow y means committing to a depth early
 GAP_MIN, GAP_MAX = 0.045, 0.13
 FINGER_SPEED = 0.25
 FINGER_W, FINGER_L = 0.012, 0.04
@@ -38,7 +40,6 @@ MAX_T = 2.5
 U_INDEP = 0
 BLOCK, PARK, COMMIT, BLOCK_END = 0, 0.15, 1.0, 1.6        # as env.py
 LETGO = 0.0
-DEPTH_SPEED = 0.0                                          # as env.py
 globals().update({k: v for k, v in json.loads(os.environ.get("GRIPPER_PARAMS", "{}")).items() if k in globals()})
 
 
@@ -139,8 +140,8 @@ class CatchEnv(gym.Env):
         v = a[:2] * GRIP_SPEED
         n = np.linalg.norm(v)
         v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
-        if DEPTH_SPEED > 0:
-            v[1] = np.clip(v[1], -DEPTH_SPEED, DEPTH_SPEED)
+        if GRIP_SPEED_Y:                             # fast along the edge, slow towards / away from the plank
+            v = np.array([a[0] * GRIP_SPEED, a[1] * GRIP_SPEED_Y])
         target_w = GAP_MIN + (a[2] + 1) / 2 * (GAP_MAX - GAP_MIN)
         g0 = self.g.copy()
         for _ in range(SUBSTEPS):
