@@ -2,7 +2,7 @@
  "model_id": "facebook/vjepa2-vitl-fpc64-256",
  "device": "cuda",
  "n_clips": 337,
- "predictor_run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/lossmix_both-after",
+ "predictor_run": "/kaggle/input/datasets/finpthomas/lossmix-both-after/weights/lossmix_both-after",
  "n_through": 143,
  "n_hidden": 80,
  "n_bounce": 114,
@@ -14,9 +14,9 @@
  "far_cell_auroc_real": 0.995,
  "far_cell_auroc_imagined": 0.86,
  "outcome_auroc_real": 0.994,
- "outcome_auroc_imagined": 0.892,
+ "outcome_auroc_imagined": 0.891,
  "imagined_far_peak_mean": {
-  "through": 0.605,
+  "through": 0.606,
   "hidden": 0.06,
   "bounce": 0.048
  },
@@ -46,29 +46,29 @@
   "balanced_accuracy": 0.713
  },
  "outcomes_imagined": {
-  "outcome_auroc": 0.892,
+  "outcome_auroc": 0.891,
   "outcome_accuracy": 0.846,
   "blocked_called_through": 7,
   "through_called_blocked": 45,
   "peak_far_mean": {
-   "through": 0.605,
+   "through": 0.606,
    "hidden": 0.06,
    "bounce": 0.048
   },
   "bounce_auroc": 0.41,
   "outcome3_accuracy": 0.475,
   "p_correct": {
-   "through": 0.605,
+   "through": 0.606,
    "hidden": 0.535,
    "bounce": 0.295
   },
-  "p_correct_balanced": 0.478,
+  "p_correct_balanced": 0.479,
   "recall": {
-   "through": 0.692,
+   "through": 0.685,
    "hidden": 0.55,
    "bounce": 0.149
   },
-  "balanced_accuracy": 0.464
+  "balanced_accuracy": 0.461
  },
  "ball_real": {
   "hit_rate": 0.996,
@@ -119,7 +119,7 @@
    "hidden": 0.186,
    "bounce": 0.289
   },
-  "bounce_auroc": 0.49,
+  "bounce_auroc": 0.491,
   "outcome3_accuracy": 0.599,
   "p_correct": {
    "through": 0.781,
@@ -144,7 +144,7 @@
    "hidden": 0.146,
    "bounce": 0.331
   },
-  "bounce_auroc": 0.461,
+  "bounce_auroc": 0.46,
   "outcome3_accuracy": 0.543,
   "p_correct": {
    "through": 0.731,
@@ -167,21 +167,21 @@
   "steps_without_ball": 977
  },
  "ball_imagined_argmax": {
-  "hit_rate": 0.662,
+  "hit_rate": 0.661,
   "error_px": 32.5,
   "phantom_rate": 1.0,
   "steps_with_ball": 3067,
   "steps_without_ball": 977
  },
  "ball_imagined_encoder_space_argmax": {
-  "hit_rate": 0.646,
-  "error_px": 33.1,
+  "hit_rate": 0.647,
+  "error_px": 33.0,
   "phantom_rate": 1.0,
   "steps_with_ball": 3067,
   "steps_without_ball": 977
  },
  "timing_seconds_per_clip": {},
- "model_load_seconds": 1.6,
+ "model_load_seconds": 1.7,
  "by_side": {
   "L": {
    "n": 83,
@@ -279,7 +279,7 @@
      "hidden": 0.165,
      "bounce": 0.086
     },
-    "bounce_auroc": 0.438,
+    "bounce_auroc": 0.439,
     "outcome3_accuracy": 0.606,
     "p_correct": {
      "through": 0.745,

@@ -8,8 +8,8 @@ g = acceleration from the table after removing friction (a = g - mu * direction 
 | probe on real frames (coarse) | -0.0309 | [-0.0388, -0.0225] | -0.0063 | [-0.0098, -0.0029] | 0.0269 | 632 | 176 |
 | probe on real frames (sharp) | -0.0384 | [-0.0461, -0.0307] | -0.0068 | [-0.01, -0.0036] | 0.0285 | 621 | 169 |
 | imagined, before post-training (sharp) | - | - | - | - | - | 0 | 0 |
-| imagined, after post-training (C, 20 ep) | -0.0023 | [-0.0366, 0.0455] | -0.0075 | [-0.023, 0.0068] | -0.0111 | 62 | 31 |
-| imagined, after (E: + open clips) (sharp) | 0.0069 | [-0.0464, 0.057] | -0.0078 | [-0.0182, 0.0029] | 0.0505 | 77 | 36 |
+| imagined, after post-training (C, 20 ep) (sharp) | -0.0214 | [-0.0439, 0.0002] | -0.0115 | [-0.0198, -0.0038] | 0.0257 | 292 | 95 |
+| imagined, after (E: + open clips) (sharp) | 0.0069 | [-0.0336, 0.0583] | -0.0078 | [-0.0181, 0.0023] | 0.0505 | 77 | 36 |
 
 ### Downhill vs uphill on the same steps as the real ball
 
@@ -17,6 +17,6 @@ Acceleration along the motion (negative = slowing), median over stretches where 
 
 | track | stretches down / up | track: down | up | s | 95% CI | real ball: down | up | s | 95% CI |
 |---|---|---|---|---|---|---|---|---|---|
-| probe on real frames (sharp) | 202 / 216 | -0.0118 | -0.0395 | 0.0138 | [0.0059, 0.0248] | 0.0009 | -0.0486 | 0.0248 | [0.0204, 0.031] |
-| imagined, after post-training (C, 20 ep) | 0 / 18 | - | - | - | - | - | - | - | - |
+| probe on real frames (sharp) | 202 / 216 | -0.0118 | -0.0395 | 0.0138 | [0.0048, 0.0232] | 0.0009 | -0.0486 | 0.0248 | [0.0202, 0.0312] |
+| imagined, after post-training (C, 20 ep) | 70 / 65 | -0.0126 | -0.0504 | 0.0189 | [-0.0183, 0.0511] | 0.0033 | -0.0606 | 0.032 | [0.0203, 0.0422] |
 | imagined, after (E: + open clips) | 2 / 28 | - | - | - | - | - | - | - | - |

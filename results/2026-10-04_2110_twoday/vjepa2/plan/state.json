@@ -205,6 +205,13 @@
    "code": "9dd8ebf",
    "minutes": 8.8,
    "finished": "2026-10-13 16:01"
+  },
+  "rescore-aligned-C": {
+   "state": "done",
+   "started": "2026-10-14 23:37",
+   "code": "026ba2d",
+   "minutes": 14.2,
+   "finished": "2026-10-14 23:52"
   }
  },
  "choices": {
