@@ -212,6 +212,20 @@
    "code": "026ba2d",
    "minutes": 14.2,
    "finished": "2026-10-14 23:52"
+  },
+  "rescore-aligned-E": {
+   "state": "waiting",
+   "error": "lossmix_open-after's weights aren't here: add the Kaggle output of session #8 (2026-10-11 evening) (it holds weights/lossmix_open-after) as an input",
+   "minutes": 0.0,
+   "finished": "2026-10-14 23:52"
+  },
+  "lossmix_topup-after": {
+   "state": "failed",
+   "started": "2026-10-14 23:52",
+   "code": "026ba2d",
+   "minutes": 4.7,
+   "finished": "2026-10-14 23:57",
+   "error": "exit code 1: /usr/bin/python3 /tmp/RobustWorld/models/vjepa2/posttrain.py train"
   }
  },
  "choices": {
@@ -224,5 +238,5 @@
    }
   }
  },
- "last_push": "2026-10-11 15:10"
+ "last_push": "2026-10-14 23:52"
 }
