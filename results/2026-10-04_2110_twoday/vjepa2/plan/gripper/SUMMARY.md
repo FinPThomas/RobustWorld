@@ -14,4 +14,4 @@ Pick-up rate. Simulation: PPO at forecast uncertainty u = 0 / 0.5 / 1 (and the f
 | pb_early1_wide06 | PyBullet with early pick-ups and narrow grips rewarded more | 75% | 70% | 56% | 0.427 -> 0.431 | 60% | 60% | 76% |
 | pb_sight025 | PyBullet, slower sight | 70% | 62% | 43% | 0.423 -> 0.48 | 46% | 38% | 74% |
 | pb_base_4m | pb_base trained on to 4M steps per fold | 73% | 68% | 58% | 0.433 -> 0.464 | 60% | 56% | 74% |
-| pb_narrow | fingers open at most 9 cm | (queued) | | | | | | |
+| pb_narrow | fingers open at most 9 cm | 68% | 55% | 48% | 0.893 -> 0.908 | 53% | 57% | 74% |
