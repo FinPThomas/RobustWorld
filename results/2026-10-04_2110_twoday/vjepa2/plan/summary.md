@@ -22,7 +22,7 @@ Through vs blocked AUROC from the imagined future (one ball, frozen decoder), cr
 | V-JEPA 2 commit_both-after | after | 0.843 | [0.8, 0.884] | [0.338, 0.451] | 0.0 | 0.451 | 0.486 | 0.846 | 0.831 | 0.551 | 0/5 | 10/10/9/8/10 |
 | V-JEPA 2 commit_both-after (ball from L) | after | 0.767 | [0.636, 0.892] | [-0.015, 0.234] | 0.049 | 0.467 | 0.545 | - | - | - | - | - |
 | V-JEPA 2 commit_both-after (ball from R) | after | 0.917 | [0.881, 0.95] | [0.406, 0.554] | 0.0 | 0.475 | 0.574 | - | - | - | - | - |
-| V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 | 0.507 | 0.509 | 0.873 | 0.86 | 0.662 | 0/5 | 18/16/20/18/17 |
+| V-JEPA 2 lossmix_both-after | after | 0.912 | [0.881, 0.941] | [0.399, 0.52] | 0.0 | 0.507 | 0.509 | 0.873 | 0.86 | 0.661 | 0/5 | 18/16/20/18/17 |
 | V-JEPA 2 lossmix_both-after (ball from L) | after | 0.893 | [0.817, 0.961] | [0.103, 0.36] | 0.0 | 0.441 | 0.465 | - | - | - | - | - |
 | V-JEPA 2 lossmix_both-after (ball from R) | after | 0.961 | [0.941, 0.98] | [0.448, 0.598] | 0.0 | 0.533 | 0.602 | - | - | - | - | - |
 | V-JEPA 2 lossmix_both_e1-after | after | 0.427 | [0.365, 0.492] | - | - | 0.315 | 0.276 | 0.784 | 0.671 | 0.382 | - | - |
@@ -88,21 +88,22 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | open: real ball (tracker) | 0.0334 | [0.0185, 0.0442] | 0.00767 | -0.05048 | 25 | 14 |
 | open: decoder on real frames | 0.0289 | [0.01081, 0.04464] | 0.01929 | -0.0333 | 30 | 16 |
 | open: imagined, both-before | None | None | None | None | 0 | 0 |
-| plank: real ball (tracker) | 0.0299 | [0.02127, 0.03776] | -0.01331 | -0.0589 | 26 | 38 |
-| plank: decoder on real frames | 0.0254 | [0.00801, 0.04808] | -0.04056 | -0.07571 | 31 | 42 |
+| open: imagined, lossmix_both-after | -0.0213 | [-0.051, 0.02165] | -0.07963 | -0.02239 | 17 | 27 |
+| plank: real ball (tracker) | 0.0299 | [0.02033, 0.03969] | -0.01331 | -0.0589 | 26 | 38 |
+| plank: decoder on real frames | 0.0254 | [0.00703, 0.05124] | -0.04056 | -0.07571 | 31 | 42 |
 | plank: imagined, both-before | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e1-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e2-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_both_e4-after | None | None | 0.01075 | None | 2 | 0 |
-| plank: imagined, lossmix_both_e7-after | -0.0009 | [-0.02314, 0.01678] | -0.037 | -0.03526 | 7 | 3 |
-| plank: imagined, lossmix_both_e10-after | 0.0019 | [-0.03688, 0.03724] | -0.00519 | 0.00281 | 9 | 12 |
-| plank: imagined, lossmix_both_e15-after | 0.0188 | [-0.01848, 0.05428] | 0.00593 | -0.03708 | 10 | 16 |
-| plank: imagined, lossmix_both-after | 0.0115 | [-0.03646, 0.06387] | 0.0156 | -0.02565 | 16 | 15 |
+| plank: imagined, lossmix_both_e7-after | -0.0009 | [-0.02185, 0.01887] | -0.037 | -0.03526 | 7 | 3 |
+| plank: imagined, lossmix_both_e10-after | 0.0019 | [-0.03632, 0.04067] | -0.00519 | 0.00281 | 9 | 12 |
+| plank: imagined, lossmix_both_e15-after | 0.0188 | [-0.02007, 0.0582] | 0.00593 | -0.03708 | 10 | 16 |
+| plank: imagined, lossmix_both-after | 0.0113 | [-0.03428, 0.0616] | 0.01538 | -0.02577 | 16 | 15 |
 | plank: imagined, commit_both-after | None | None | None | None | 0 | 0 |
 | plank: imagined, lossmix_e10-after | None | None | 0.01223 | None | 2 | 0 |
-| plank: imagined, lossmix_e20-after | None | [-0.09213, -0.03887] | -0.02791 | 0.0797 | 13 | 1 |
-| plank: imagined, lossmix_open_e10-after | -0.0817 | [-0.14049, -0.00401] | -0.12672 | -0.01679 | 5 | 20 |
-| plank: imagined, lossmix_open-after | -0.0521 | [-0.14628, 0.00359] | -0.22222 | -0.04481 | 9 | 29 |
+| plank: imagined, lossmix_e20-after | None | [-0.09343, -0.02459] | -0.02791 | 0.0797 | 13 | 1 |
+| plank: imagined, lossmix_open_e10-after | -0.0817 | [-0.14308, -0.01028] | -0.12672 | -0.01679 | 5 | 20 |
+| plank: imagined, lossmix_open-after | -0.0521 | [-0.13854, 0.00163] | -0.22222 | -0.04481 | 9 | 29 |
 
 ### Learning curve (C: both directions, loss-weighted sampling)
 
@@ -112,10 +113,10 @@ Calibration: radius = -0.0015 x + 0.0392 y + 13.49 px (R² 0.925, 13776 frames; 
 | 1 | None | None | None | None | 0.401 | 0.523 |
 | 2 | None | None | None | None | 0.603 | 0.526 |
 | 4 | None | None | None | None | 0.796 | 0.593 |
-| 7 | None | None | -0.0009 | [-0.02314, 0.01678] | 0.888 | 0.731 |
-| 10 | None | None | 0.0019 | [-0.03688, 0.03724] | 0.914 | 0.85 |
-| 15 | None | None | 0.0188 | [-0.01848, 0.05428] | 0.962 | 0.891 |
-| 20 | None | None | 0.0115 | [-0.03646, 0.06387] | 0.961 | 0.893 |
+| 7 | None | None | -0.0009 | [-0.02185, 0.01887] | 0.888 | 0.731 |
+| 10 | None | None | 0.0019 | [-0.03632, 0.04067] | 0.914 | 0.85 |
+| 15 | None | None | 0.0188 | [-0.02007, 0.0582] | 0.962 | 0.891 |
+| 20 | -0.0213 | [-0.051, 0.02165] | 0.0113 | [-0.03428, 0.0616] | 0.961 | 0.893 |
 
 Imagined paths count only target steps where the imagined ball is clearly visible (map peak >= 0.2) on open table, so n shows how often the model draws the ball at all. Figures: `slope_test/epochs.png`, `slope_test/real_acc_vs_speed.png`.
 
@@ -130,8 +131,8 @@ g = acceleration from the table after removing friction (a = g - mu * direction 
 | probe on real frames (coarse) | -0.0309 | [-0.0388, -0.0225] | -0.0063 | [-0.0098, -0.0029] | 0.0269 | 632 | 176 |
 | probe on real frames (sharp) | -0.0384 | [-0.0461, -0.0307] | -0.0068 | [-0.01, -0.0036] | 0.0285 | 621 | 169 |
 | imagined, before post-training (sharp) | - | - | - | - | - | 0 | 0 |
-| imagined, after post-training (C, 20 ep) | -0.0023 | [-0.0366, 0.0455] | -0.0075 | [-0.023, 0.0068] | -0.0111 | 62 | 31 |
-| imagined, after (E: + open clips) (sharp) | 0.0069 | [-0.0464, 0.057] | -0.0078 | [-0.0182, 0.0029] | 0.0505 | 77 | 36 |
+| imagined, after post-training (C, 20 ep) (sharp) | -0.0214 | [-0.0439, 0.0002] | -0.0115 | [-0.0198, -0.0038] | 0.0257 | 292 | 95 |
+| imagined, after (E: + open clips) (sharp) | 0.0069 | [-0.0336, 0.0583] | -0.0078 | [-0.0181, 0.0023] | 0.0505 | 77 | 36 |
 
 ### Downhill vs uphill on the same steps as the real ball
 
@@ -139,8 +140,8 @@ Acceleration along the motion (negative = slowing), median over stretches where 
 
 | track | stretches down / up | track: down | up | s | 95% CI | real ball: down | up | s | 95% CI |
 |---|---|---|---|---|---|---|---|---|---|
-| probe on real frames (sharp) | 202 / 216 | -0.0118 | -0.0395 | 0.0138 | [0.0059, 0.0248] | 0.0009 | -0.0486 | 0.0248 | [0.0204, 0.031] |
-| imagined, after post-training (C, 20 ep) | 0 / 18 | - | - | - | - | - | - | - | - |
+| probe on real frames (sharp) | 202 / 216 | -0.0118 | -0.0395 | 0.0138 | [0.0048, 0.0232] | 0.0009 | -0.0486 | 0.0248 | [0.0202, 0.0312] |
+| imagined, after post-training (C, 20 ep) | 70 / 65 | -0.0126 | -0.0504 | 0.0189 | [-0.0183, 0.0511] | 0.0033 | -0.0606 | 0.032 | [0.0203, 0.0422] |
 | imagined, after (E: + open clips) | 2 / 28 | - | - | - | - | - | - | - | - |
 
 
@@ -182,8 +183,8 @@ From per_clip.json (frozen decoder) and blocker/*/crossing.json; nothing is fitt
 | both-before | R | 0.168 (n 82) | 0.179 (n 26) | 0.178 (n 106) | 0.501 (n 52) | 0.437 |
 | commit_both-after | L | 0.933 (n 25) | 0.438 (n 7) | 0.559 (n 40) | 0.571 (n 10) | 0.767 |
 | commit_both-after | R | 0.67 (n 82) | 0.445 (n 26) | 0.13 (n 106) | 0.92 (n 52) | 0.917 |
-| lossmix_both-after | L | 0.94 (n 25) | 0.78 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
-| lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.925 (n 52) | 0.961 |
+| lossmix_both-after | L | 0.94 (n 25) | 0.779 (n 7) | 0.517 (n 40) | 0.333 (n 10) | 0.893 |
+| lossmix_both-after | R | 0.787 (n 82) | 0.673 (n 26) | 0.084 (n 106) | 0.924 (n 52) | 0.961 |
 | lossmix_open-after | L | 0.949 (n 25) | 0.891 (n 7) | 0.513 (n 40) | 0.429 (n 10) | 0.922 |
 | lossmix_open-after | R | 0.854 (n 82) | 0.609 (n 26) | 0.081 (n 106) | 0.891 (n 52) | 0.959 |
 
