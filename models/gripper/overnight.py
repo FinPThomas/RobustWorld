@@ -126,7 +126,7 @@ def summary(plan: Path) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", type=Path, required=True)
-    ap.add_argument("--envs", type=int, default=3, help="simulator processes per trainer (one trainer at a time)")
+    ap.add_argument("--envs", type=int, default=2, help="simulator processes per trainer (one trainer at a time)")
     ap.add_argument("--no-push", action="store_true")
     ap.add_argument("--only", nargs="*", help="run just these experiments")
     ap.add_argument("--steps-scale", type=float, default=1.0, help="multiply training steps (smoke tests)")
