@@ -56,6 +56,12 @@ EXPERIMENTS = [
     ("pb_early1_wide06_indep", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "U_INDEP": 1, "HONEST_SIG": 1}, 1_500_000,
      None, "pb_early1_wide06 trained with separate uncertainties; honest sigmas"),
     ("pb_narrow", "pybullet", {"GAP_MAX": 0.09}, 1_500_000, None, "fingers open at most 9 cm"),
+    # Fast along the edge, slow towards / away from the plank: the gripper must commit to a depth on the forecast
+    # (when the ball comes out) and can only correct sideways once it sees the ball; an early catch earns EARLY.
+    ("box_slowy", "box", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.35, "GRIP_SPEED_Y": 0.05}, 1_000_000, None,
+     "fast sideways (0.35 m/s), slow towards the plank (0.05 m/s): commit to a depth early"),
+    ("pb_slowy", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.35, "GRIP_SPEED_Y": 0.05}, 1_500_000, None,
+     "box_slowy in PyBullet"),
     ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
      "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),

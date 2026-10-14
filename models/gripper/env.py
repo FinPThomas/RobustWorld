@@ -43,6 +43,8 @@ ZONE = 0.12                      # catch zone depth past the plank edge: 3 ball 
 DT = 1 / 16                      # one video frame per policy step
 SUBSTEPS = 8                     # physics at 128 Hz
 GRIP_SPEED = 0.25                # m/s
+GRIP_SPEED_Y = 0                 # > 0: speed towards / away from the plank (m/s) when it differs from
+                                 # the lateral GRIP_SPEED: a slow y means committing to a depth early
 GAP_MIN, GAP_MAX = 0.045, 0.13   # finger gap (inner faces); the ball is 0.04 wide
 FINGER_SPEED = 0.25              # m/s per finger when closing
 EARLY, WIDE, MISS, MOVE = 0.5, 0.3, 1.0, 0.05
@@ -248,6 +250,8 @@ class CatchEnv(gym.Env):
         v = a[:2] * GRIP_SPEED
         n = np.linalg.norm(v)
         v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
+        if GRIP_SPEED_Y:                             # fast along the edge, slow towards / away from the plank
+            v = np.array([a[0] * GRIP_SPEED, a[1] * GRIP_SPEED_Y])
         if (g[1] <= 0.0 and v[1] < 0) or (g[1] >= y_max() and v[1] > 0):
             v[1] = 0.0                               # stays inside the catch zone (and its park)
         for j, vj in ((JX, v[0]), (JY, v[1])):
