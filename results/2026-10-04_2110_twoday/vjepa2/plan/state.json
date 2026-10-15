@@ -220,12 +220,11 @@
    "finished": "2026-10-14 23:52"
   },
   "lossmix_topup-after": {
-   "state": "failed",
-   "started": "2026-10-14 23:52",
-   "code": "026ba2d",
-   "minutes": 4.7,
-   "finished": "2026-10-14 23:57",
-   "error": "exit code 1: /usr/bin/python3 /tmp/RobustWorld/models/vjepa2/posttrain.py train"
+   "state": "done",
+   "started": "2026-10-15 12:33",
+   "code": "cd5d046",
+   "minutes": 123.2,
+   "finished": "2026-10-15 14:36"
   }
  },
  "choices": {

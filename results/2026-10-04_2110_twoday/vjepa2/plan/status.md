@@ -1,6 +1,6 @@
 # Two-day plan: status
 
-_Last update: 2026-10-14 23:57 UTC from Kaggle (Tesla T4), code `026ba2d`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-15 14:37 UTC from Kaggle (Tesla T4), code `cd5d046`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -28,8 +28,8 @@ _Last update: 2026-10-14 23:57 UTC from Kaggle (Tesla T4), code `026ba2d`. Resul
 | 2 | slope-sharp: Slope map: score again with sharper ball positions (nearest real patch), pretrained and C | done | 8.7 | 2026-10-11 15:10 |
 | 2 | rescore-aligned: Open-table clips re-cut and aligned: slope scored again (pretrained, C, E), probe maps saved for frame figures | done | 8.8 | 2026-10-13 16:01 |
 | 2 | rescore-aligned-C: C scored on the aligned open-table clips (slope), with probe maps | done | 14.2 | 2026-10-14 23:52 |
+| 2 | lossmix_topup-after: G. C topped up 5 epochs with the aligned open-table clips (does free rolling teach the slope?) | done | 123.2 | 2026-10-15 14:36 |
 | 2 | rescore-aligned-E: E scored on the aligned open-table clips (slope), with probe maps | waiting (lossmix_open-after's weights aren't here: add the Kaggle output of session #8 (2026-10-11 evening) (it holds weights/lossmix_open-after) as an input) | 0.0 | 2026-10-14 23:52 |
-| 2 | lossmix_topup-after: G. C topped up 5 epochs with the aligned open-table clips (does free rolling teach the slope?) | failed (exit code 1: /usr/bin/python3 /tmp/RobustWorld/models/vjepa2/posttrain.py train) | 4.7 | 2026-10-14 23:57 |
 | 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | done | 424.6 | 2026-10-11 22:15 |
 | 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
 | 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |
@@ -83,6 +83,9 @@ _Last update: 2026-10-14 23:57 UTC from Kaggle (Tesla T4), code `026ba2d`. Resul
 | V-JEPA 2 lossmix_open_e10-after | after | 0.868 | [0.829, 0.907] | - | - |
 | V-JEPA 2 lossmix_open_e10-after (ball from L) | after | 0.909 | [0.846, 0.962] | - | - |
 | V-JEPA 2 lossmix_open_e10-after (ball from R) | after | 0.93 | [0.898, 0.959] | - | - |
+| V-JEPA 2 lossmix_topup-after | after | 0.925 | [0.895, 0.954] | - | - |
+| V-JEPA 2 lossmix_topup-after (ball from L) | after | 0.873 | [0.784, 0.949] | - | - |
+| V-JEPA 2 lossmix_topup-after (ball from R) | after | 0.971 | [0.952, 0.987] | - | - |
 
 ### Generalisation of commit (held out, never trained on)
 

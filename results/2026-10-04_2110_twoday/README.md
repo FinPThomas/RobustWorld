@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-14 23:57 UTC
-- Code commit: `026ba2d`
-- Note: two-day plan, 26 steps done
+- Saved: 2026-10-15 14:37 UTC
+- Code commit: `cd5d046`
+- Note: two-day plan, 27 steps done
 
 ## Figures
 
@@ -29,6 +29,8 @@
 - [vjepa2/plan/blocker/lossmix_e20-after/blocker_map.png](vjepa2/plan/blocker/lossmix_e20-after/blocker_map.png)
 - [vjepa2/plan/blocker/lossmix_open-after/blocked_vs_crossing.png](vjepa2/plan/blocker/lossmix_open-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/lossmix_open-after/blocker_map.png](vjepa2/plan/blocker/lossmix_open-after/blocker_map.png)
+- [vjepa2/plan/blocker/lossmix_topup-after/blocked_vs_crossing.png](vjepa2/plan/blocker/lossmix_topup-after/blocked_vs_crossing.png)
+- [vjepa2/plan/blocker/lossmix_topup-after/blocker_map.png](vjepa2/plan/blocker/lossmix_topup-after/blocker_map.png)
 - [vjepa2/plan/blocker/plain-after/blocked_vs_crossing.png](vjepa2/plan/blocker/plain-after/blocked_vs_crossing.png)
 - [vjepa2/plan/blocker/plain-after/blocker_map.png](vjepa2/plan/blocker/plain-after/blocker_map.png)
 - [vjepa2/plan/blocker/plain-before/blocked_vs_crossing.png](vjepa2/plan/blocker/plain-before/blocked_vs_crossing.png)
@@ -78,6 +80,8 @@
 - [vjepa2/plan/scores/lossmix_open-after/outcome.png](vjepa2/plan/scores/lossmix_open-after/outcome.png)
 - [vjepa2/plan/scores/lossmix_open_e10-after/curves.png](vjepa2/plan/scores/lossmix_open_e10-after/curves.png)
 - [vjepa2/plan/scores/lossmix_open_e10-after/outcome.png](vjepa2/plan/scores/lossmix_open_e10-after/outcome.png)
+- [vjepa2/plan/scores/lossmix_topup-after/curves.png](vjepa2/plan/scores/lossmix_topup-after/curves.png)
+- [vjepa2/plan/scores/lossmix_topup-after/outcome.png](vjepa2/plan/scores/lossmix_topup-after/outcome.png)
 - [vjepa2/plan/scores/plain-after/curves.png](vjepa2/plan/scores/plain-after/curves.png)
 - [vjepa2/plan/scores/plain-after/outcome.png](vjepa2/plan/scores/plain-after/outcome.png)
 - [vjepa2/plan/scores/plain-before/curves.png](vjepa2/plan/scores/plain-before/curves.png)
@@ -93,5 +97,15 @@
 - [vjepa2/plan/slope_test/epochs.png](vjepa2/plan/slope_test/epochs.png)
 - [vjepa2/plan/slope_test/real_acc_vs_speed.png](vjepa2/plan/slope_test/real_acc_vs_speed.png)
 - [vjepa2/plan/summary.png](vjepa2/plan/summary.png)
+- [vjepa2/plan/track_viz/frames_open_whole_open_0000.png](vjepa2/plan/track_viz/frames_open_whole_open_0000.png)
+- [vjepa2/plan/track_viz/frames_open_whole_open_0010.png](vjepa2/plan/track_viz/frames_open_whole_open_0010.png)
+- [vjepa2/plan/track_viz/frames_open_whole_open_0030.png](vjepa2/plan/track_viz/frames_open_whole_open_0030.png)
+- [vjepa2/plan/track_viz/frames_open_whole_open_0031.png](vjepa2/plan/track_viz/frames_open_whole_open_0031.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0000.png](vjepa2/plan/track_viz/frames_plank_whole_0000.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0007.png](vjepa2/plan/track_viz/frames_plank_whole_0007.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0206.png](vjepa2/plan/track_viz/frames_plank_whole_0206.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0268.png](vjepa2/plan/track_viz/frames_plank_whole_0268.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0290.png](vjepa2/plan/track_viz/frames_plank_whole_0290.png)
+- [vjepa2/plan/track_viz/frames_plank_whole_0368.png](vjepa2/plan/track_viz/frames_plank_whole_0368.png)
 - [vjepa2/plan/track_viz/tracks.png](vjepa2/plan/track_viz/tracks.png)
 - [vjepa2/plan/track_viz/visibility.png](vjepa2/plan/track_viz/visibility.png)
