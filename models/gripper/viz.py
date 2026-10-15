@@ -59,11 +59,30 @@ def record(E, env, policy, options: dict, seed: int = 0) -> dict:
         steps.append({"t": env.t, "g": env.grip_xy().tolist(), "gap": float(env.gap()),
                       "b": env.ball_pos()[:2].tolist() if out else None, "seen": bool(env.visible())})
     keep()
+    sim = getattr(env, "_sim", None)
+    if sim is not None:            # PyBullet: also keep the grasp (fingers closing, lift) one frame at a time
+        def sim_kept(n=E.SUBSTEPS):
+            for k in range(0, n, E.SUBSTEPS):
+                sim(min(E.SUBSTEPS, n - k))
+                if env.grasping:
+                    keep()
+        env._sim = sim_kept
     while True:
         obs, r, term, trunc, info = env.step(policy(env, obs))
         keep()
         if term or trunc:
             break
+    if sim is not None:
+        env._sim = sim
+    elif info.get("opening") is not None:     # box: the grasp is solved at once; draw the fingers closing in time
+        g, w0, t = np.array(steps[-1]["g"]), steps[-1]["gap"], steps[-1]["t"]
+        w1 = 2 * E.BALL_R if info["caught"] else E.GAP_MIN
+        for k in range(1, int(np.ceil((w0 - w1) / 2 / E.FINGER_SPEED / E.DT)) + 3):
+            tk = t + k * E.DT
+            b = env.ball_at(tk)
+            steps.append({"t": tk, "g": g.tolist(), "gap": max(w1, w0 - 2 * E.FINGER_SPEED * k * E.DT),
+                          "b": (g.tolist() if info["caught"] and k * E.DT * 2 * E.FINGER_SPEED >= w0 - w1
+                                else (b.tolist() if b is not None else None)), "seen": True})
     return {"fc": dict(env.fc), "true": dict(env.true), "steps": steps, "result": info}
 
 

@@ -59,6 +59,8 @@ def main() -> None:
     ap.add_argument("--through", type=int, default=3, help="passes that come out to show (the fold's first ones)")
     ap.add_argument("--blocked", type=int, default=3, help="blocked passes to show (the fold's first ones)")
     ap.add_argument("--scene", type=Path, default=REPO / "configs" / "scenes" / "whole.json")
+    ap.add_argument("--v2", action="store_true", help="blockade_eval's variant 2 (pick-up +3; a forecast that never "
+                                                      "says the ball comes out counts as no forecast)")
     args = ap.parse_args()
     args.env = args.params = args.policy = None
     sys.path.insert(0, str(HERE))
@@ -80,6 +82,9 @@ def main() -> None:
     edges = {s: Edge(json.loads(args.scene.read_text())["occluder_polygon"], s) for s in "RL"}
     rows = {k: {r["clip_id"]: r for r in json.loads((args.plan / "scores" / v / "per_clip.json").read_text())}
             for k, v in (("before", V.BEFORE), ("after (C)", V.AFTER))}
+    if args.v2:
+        BE.PICK = 3.0
+    flat = {k for k, rs in rows.items() if args.v2 and max(BE.peak_far(x) for x in rs.values()) < 0.5}
     held = sorted((r for r in rows["before"].values() if r["fold"] == args.fold), key=lambda r: r["clip_id"])
     shown = ([r for r in held if r["outcome"] == "through" and r["clip_id"] in by_id][: args.through]
              + [r for r in held if r["outcome"] != "through"][: args.blocked])
@@ -92,7 +97,9 @@ def main() -> None:
         true = dict(E.exit_to_m(prior), t=np.inf) if blocked else E.exit_to_m(e)
         recs, labels = [], []
         for src in COLS:
-            if src == "perfect":
+            if src in flat:
+                p, fc = BE.BASE, V.prior_forecast(prior)
+            elif src == "perfect":
                 p, fc = (0.0, V.prior_forecast(prior)) if blocked else (1.0, V.true_forecast(e))
             else:
                 row = rows[src][cid]
@@ -106,8 +113,14 @@ def main() -> None:
                 rec = still(E, fc, true, park, go, res)
             elif go:
                 rec = viz.record(E, env, pol, {"exit": e, "forecast": fc})
+                # it set off from the park before the pass: drive there at the gripper's own speed first
+                g0, g1 = park.copy(), np.array(rec["steps"][0]["g"])
+                vmax = np.array([E.GRIP_SPEED, getattr(E, "GRIP_SPEED_Y", 0) or E.GRIP_SPEED]) * E.DT
+                n = int(np.ceil(np.max(np.abs(g1 - g0) / vmax)))
+                rec["steps"] = [{"t": (k - n) * E.DT, "g": (g0 + (g1 - g0) * k / max(n, 1)).tolist(),
+                                 "gap": rec["steps"][0]["gap"], "b": None, "seen": False} for k in range(n)] + rec["steps"]
                 ep = rec["result"]
-                rec["result"] = dict(ep, label=(f"PICKED UP ({1 + E.EARLY * (1 - ep['depth']):+.1f})" if ep["caught"]
+                rec["result"] = dict(ep, label=(f"PICKED UP ({BE.PICK + E.EARLY * (1 - ep['depth']):+.1f})" if ep["caught"]
                                                 else f"tried, missed ({-BE.TRY_MISS:+.1f})"))
             else:
                 rec = still(E, fc, true, park, False, {"caught": False, "good": False, "label": f"LET GO ({-BE.LET_GO:+.1f})"})
@@ -125,11 +138,12 @@ def main() -> None:
         for i in range(n):
             f = np.concatenate([viz.panel(E, x, i, f"{name}  {lab}") for x, lab in zip(recs, labels)], axis=1)
             frames.append(cv2.cvtColor(f, cv2.COLOR_BGR2RGB))
-    write_video(res_dir / "blockade.mp4", frames, viz.FPS)
+    suf = "_v2" if args.v2 else ""
+    write_video(res_dir / f"blockade{suf}.mp4", frames, viz.FPS)
     viz.COLS = COLS
-    viz.sheet(E, [(n, recs) for n, recs, _ in out], res_dir / "blockade.png",
+    viz.sheet(E, [(n, recs) for n, recs, _ in out], res_dir / f"blockade{suf}.png",
               f"Blockade test, {args.tag}, fold {args.fold}: GO or STAY from the forecast, then the frozen policy")
-    print("wrote", res_dir / "blockade.mp4", "and blockade.png", flush=True)
+    print("wrote", res_dir / f"blockade{suf}.mp4", f"and blockade{suf}.png", flush=True)
 
 
 if __name__ == "__main__":

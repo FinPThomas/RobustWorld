@@ -62,6 +62,12 @@ EXPERIMENTS = [
      "fast sideways (0.35 m/s), slow towards the plank (0.05 m/s): commit to a depth early"),
     ("pb_slowy", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.35, "GRIP_SPEED_Y": 0.05}, 1_500_000, None,
      "box_slowy in PyBullet"),
+    # A speed-limited gripper: it moves at 0.15 m/s and its fingers close at 0.1 m/s each (a wide grip takes about
+    # 0.4 s to close), so it cannot snap onto the ball and must be in place, and closing, early.
+    ("box_slowgrip", "box", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.15, "FINGER_SPEED": 0.1}, 1_000_000, None,
+     "speed-limited gripper: 0.15 m/s, fingers close at 0.1 m/s"),
+    ("pb_slowgrip", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.15, "FINGER_SPEED": 0.1}, 1_500_000, None,
+     "box_slowgrip in PyBullet"),
     ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
      "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
@@ -170,6 +176,7 @@ def main() -> None:
         if kind == "pybullet":
             sh([py, HERE / "videos.py", "--plan", plan, "--policy", runs, "--tag", name], env, check=False)
         sh([py, HERE / "blockade_eval.py", "--plan", plan, "--tag", name], env, check=False)
+        sh([py, HERE / "blockade_eval.py", "--plan", plan, "--tag", name, "--v2"], env, check=False)
         s = summary(plan)
         if not args.no_push:
             push([dest, s], f"Gripper {name}: scored on simulation and real passes")
