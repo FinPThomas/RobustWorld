@@ -504,6 +504,9 @@ def step_topup_open(args, state, log):
     w = found_weights("lossmix_both-after")
     flags = VARIANTS["lossmix_both"][0] + ["--init-from", w, "--extra-train", OPEN]
     train_and_score("lossmix_topup-after", flags, 5, "lossmix_both-after", args, log, both_manifest(), OPEN)
+    if not (SCORES / "both-before" / "maps.npz").exists():   # the "before" row of the frame figures (~10 min)
+        must([PY, HERE / "ball_probe_cv.py", "--manifest", both_manifest(), "--out", SCORES / "both-before",
+              "--extra-manifest", OPEN], log)
 
 
 topup_ready = weights_ready("lossmix_both-after", "session #7 (2026-10-11 morning)")
@@ -600,11 +603,11 @@ STEPS: list[Step] = [
          "probe maps saved for frame figures", step_rescore_aligned, open_aligned),
     Step(2, "rescore-aligned-C", "C scored on the aligned open-table clips (slope), with probe maps",
          rescore_run("lossmix_both-after"), weights_ready("lossmix_both-after", "session #7 (2026-10-11 morning)")),
-    Step(2, "rescore-aligned-E", "E scored on the aligned open-table clips (slope), with probe maps",
-         rescore_run("lossmix_open-after"), weights_ready("lossmix_open-after", "session #8 (2026-10-11 evening)")),
     Step(2, "lossmix_topup-after", "G. C topped up 5 epochs with the aligned open-table clips (does free rolling "
          "teach the slope?)", step_topup_open, topup_ready),
     # Next (queued 2026-10-10 for Fin): the same run with the open-table clips added to training.
+    Step(2, "rescore-aligned-E", "E scored on the aligned open-table clips (slope), with probe maps",
+         rescore_run("lossmix_open-after"), weights_ready("lossmix_open-after", "session #8 (2026-10-11 evening)")),
     Step(2, "lossmix_open-after", "E. C plus the open-table clips in training (slope from free rolling), 20 epochs, "
          "scored at 10 and 20", step_lossmix_open,
          lambda: None if OPEN.exists() else "the open-table clips aren't on this machine (robustworld_clips_open.zip)"),
@@ -932,7 +935,7 @@ def step_hours(name: str) -> float:
                "rescore-aligned": 0.5,            # one scoring pass
                "rescore-aligned-C": 0.5,
                "rescore-aligned-E": 0.5,
-               "lossmix_topup-after": 2.4,        # 5 epochs from C with the open clips, one scoring pass
+               "lossmix_topup-after": 2.6,        # 5 epochs from C with the open clips, two scoring passes
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:
