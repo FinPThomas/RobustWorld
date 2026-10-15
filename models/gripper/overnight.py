@@ -92,9 +92,10 @@ def push(paths: list, message: str) -> None:
     if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO).returncode == 0:
         return
     sh(["git", "commit", "-q", "-m", message])
+    branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=REPO, capture_output=True, text=True).stdout.strip()
     for wait in (0, 2, 4, 8, 16):
         time.sleep(wait)
-        sh(["git", "pull", "-q", "--no-rebase", "origin", "HEAD"], check=False)
+        sh(["git", "pull", "-q", "--no-rebase", "origin", branch], check=False)   # "HEAD" would pull the default branch
         if sh(["git", "push", "-q", "origin", "HEAD"], check=False) == 0:
             return
     print("!! push failed; will retry with the next experiment", flush=True)
