@@ -34,7 +34,7 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 FPS = 8                                         # half real speed (one policy step = 1/16 s)
-X0, X1, Y0, Y1 = 0.0, 0.42, -0.035, 0.165     # metres shown: along the edge; past it (plank above y = 0)
+X0, X1, Y0, Y1 = 0.0, 0.42, -0.035, 0.205     # metres shown: along the edge; past it (plank above y = 0)
 PX = 1250                                       # pixels per metre
 BAR = 30                                        # timeline bar height
 COLS = ("before post-training", "after (C)", "perfect forecast")
@@ -91,7 +91,8 @@ def panel(E, rec: dict, i: int, label: str):
     tx = lambda t: int(np.clip(t / E.MAX_T, 0, 1) * (w - 1))  # noqa: E731
     cv2.rectangle(im, (tx(fc["t"] - fc["sig_t"]), 6), (tx(fc["t"] + fc["sig_t"]), BAR - 6), (0, 90, 160), -1)
     cv2.line(im, (tx(fc["t"]), 4), (tx(fc["t"]), BAR - 4), orange, 2)
-    cv2.line(im, (tx(tr["t"]), 2), (tx(tr["t"]), BAR - 2), (255, 255, 255), 2)
+    if np.isfinite(tr["t"]):                                                          # a blocked ball never comes out
+        cv2.line(im, (tx(tr["t"]), 2), (tx(tr["t"]), BAR - 2), (255, 255, 255), 2)
     cv2.line(im, (tx(s["t"]), 0), (tx(s["t"]), BAR), (120, 220, 120), 1)
     # paths so far
     gp = np.array([_p(*x["g"]) for x in st[: i + 1]], np.int32)
@@ -108,9 +109,9 @@ def panel(E, rec: dict, i: int, label: str):
         cv2.rectangle(im, _p(x - 0.006, gy - 0.02), _p(x + 0.006, gy + 0.02), (210, 210, 210), -1)
     cv2.putText(im, label, (8, h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
     if i >= len(st) - 1:
-        ok = rec["result"].get("caught")
+        ok = rec["result"].get("caught") or rec["result"].get("good")
         cv2.drawMarker(im, _p(gx, gy), (80, 220, 80) if ok else (80, 80, 230), cv2.MARKER_TILTED_CROSS, 18, 2)
-        txt = "PICKED UP" if ok else f"missed: {rec['result'].get('why')}"
+        txt = rec["result"].get("label") or ("PICKED UP" if ok else f"missed: {rec['result'].get('why')}")
         cv2.putText(im, txt, (w - 10 - 12 * len(txt), BAR + 24), cv2.FONT_HERSHEY_SIMPLEX, 0.65,
                     (80, 220, 80) if ok else (80, 80, 230), 2, cv2.LINE_AA)
     return im
@@ -148,12 +149,12 @@ def sheet(E, rows: list, path: Path, title: str) -> None:
                 ax.plot(b[:, 0], b[:, 1], "-", color="tab:blue", lw=1.5, label="ball")
             g = np.array([x["g"] for x in st])
             ax.plot(g[:, 0], g[:, 1], "-", color="0.35", lw=1, label="gripper")
-            ok = res.get("caught")
+            ok = res.get("caught") or res.get("good")
             ax.plot(*g[-1], "X", ms=10, color="tab:green" if ok else "tab:red")
             ax.plot([g[-1][0] - st[-1]["gap"] / 2, g[-1][0] + st[-1]["gap"] / 2], [g[-1][1]] * 2, "-",
                     color="tab:green" if ok else "tab:red", lw=3, alpha=0.6)
             ax.set(xlim=(X0, X1), ylim=(Y1, Y0), aspect="equal", xticks=[], yticks=[])
-            ax.set_title(f"{clip_id} {col}: {'picked up' if ok else res.get('why')}\n"
+            ax.set_title(f"{clip_id} {col}: {res.get('label') or ('picked up' if ok else res.get('why'))}\n"
                          f"forecast t = {fc['t']:.2f} +- {fc['sig_t']:.2f} s, real {rec['true']['t']:.2f} s",
                          fontsize=8, color="tab:green" if ok else "tab:red")
     fig.suptitle(title, fontsize=10)
