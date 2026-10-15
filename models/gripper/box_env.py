@@ -29,6 +29,8 @@ SUBSTEPS = 8
 GRIP_SPEED = 0.25
 GRIP_SPEED_Y = 0                 # > 0: speed towards / away from the plank (m/s) when it differs from
                                  # the lateral GRIP_SPEED: a slow y means committing to a depth early
+SEEN_SPEED_X = 0                 # > 0: once the ball is in sight, sideways speed is capped at this (m/s): the
+                                 # gripper must already be lined up on its forecast, it can only fine-tune
 GAP_MIN, GAP_MAX = 0.045, 0.13
 FINGER_SPEED = 0.25
 FINGER_W, FINGER_L = 0.012, 0.04
@@ -142,6 +144,8 @@ class CatchEnv(gym.Env):
         v = v * GRIP_SPEED / n if n > GRIP_SPEED else v
         if GRIP_SPEED_Y:                             # fast along the edge, slow towards / away from the plank
             v = np.array([a[0] * GRIP_SPEED, a[1] * GRIP_SPEED_Y])
+        if SEEN_SPEED_X and self.visible():
+            v[0] = np.clip(v[0], -SEEN_SPEED_X, SEEN_SPEED_X)
         target_w = GAP_MIN + (a[2] + 1) / 2 * (GAP_MAX - GAP_MIN)
         g0 = self.g.copy()
         for _ in range(SUBSTEPS):

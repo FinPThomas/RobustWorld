@@ -72,6 +72,17 @@ EXPERIMENTS = [
     # finger limit that stops the snap shut, with pb_early1_wide06's travel speed, trained on from its policies.
     ("pb_fingerslow", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "FINGER_SPEED": 0.1}, 2_250_000, "pb_early1_wide06",
      "pb_early1_wide06 trained on with fingers closing at most 0.1 m/s (no snapping shut)"),
+    # Fin (15 Oct): the gripper must guess. It lines up along the plank edge on the forecast before the ball
+    # appears; once the ball is in sight it can still lunge and close (fingers at most 0.1 m/s) but only shift
+    # sideways at 3 cm/s, and its fingers open at most 8 cm for the 4 cm ball, so a wrong guess is a miss.
+    ("box_lineup", "box", {"EARLY": 1.0, "WIDE": 0.6, "FINGER_SPEED": 0.1, "GAP_MAX": 0.08, "SEEN_SPEED_X": 0.03},
+     1_000_000, None, "line up on the forecast: sideways 3 cm/s once the ball is seen, fingers open at most 8 cm"),
+    # box_lineup: C's exit place is ~3x closer than the average guess, but its imagined speed is about half the
+    # real one, and catching here hinges on speed: C 23%, no forecast 28%, perfect 60% when set off. Not pursued.
+    # pb_narrow is the set-up where C's forecast helps the catch itself (53% -> 67%, perfect 74%). Keep it, with
+    # the fingers speed-limited so they cannot snap shut (0.1 m/s cost C its catches in pb_fingerslow).
+    ("pb_narrow_fs", "pybullet", {"GAP_MAX": 0.09, "FINGER_SPEED": 0.15}, 2_500_000, "pb_narrow",
+     "pb_narrow trained on with fingers closing at most 0.15 m/s"),
     ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
      "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
