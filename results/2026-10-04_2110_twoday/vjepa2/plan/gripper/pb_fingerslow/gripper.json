@@ -1,0 +1,566 @@
+{
+ "settings": {
+  "ZONE": 0.12,
+  "GRIP_SPEED": 0.25,
+  "GAP_MIN": 0.045,
+  "GAP_MAX": 0.13,
+  "FINGER_SPEED": 0.1,
+  "EARLY": 1.0,
+  "WIDE": 0.6,
+  "MISS": 1.0,
+  "MOVE": 0.05,
+  "SIG_S": 0.12,
+  "SIG_T": 0.3,
+  "SIG_V": 0.5,
+  "OBS_DELAY": 0.125
+ },
+ "policy_folds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "exits": 141,
+ "sim": {
+  "PPO policy": {
+   "0.0": {
+    "n": 300,
+    "caught": 0.68,
+    "reward": 0.63,
+    "catch_depth": 0.3,
+    "opening": 0.367,
+    "travel_m": 0.074
+   },
+   "0.1": {
+    "n": 300,
+    "caught": 0.697,
+    "reward": 0.666,
+    "catch_depth": 0.305,
+    "opening": 0.375,
+    "travel_m": 0.071
+   },
+   "0.2": {
+    "n": 300,
+    "caught": 0.68,
+    "reward": 0.622,
+    "catch_depth": 0.308,
+    "opening": 0.387,
+    "travel_m": 0.072
+   },
+   "0.3": {
+    "n": 300,
+    "caught": 0.71,
+    "reward": 0.706,
+    "catch_depth": 0.289,
+    "opening": 0.392,
+    "travel_m": 0.072
+   },
+   "0.5": {
+    "n": 300,
+    "caught": 0.623,
+    "reward": 0.494,
+    "catch_depth": 0.289,
+    "opening": 0.389,
+    "travel_m": 0.072
+   },
+   "0.7": {
+    "n": 300,
+    "caught": 0.593,
+    "reward": 0.43,
+    "catch_depth": 0.271,
+    "opening": 0.394,
+    "travel_m": 0.073
+   },
+   "1.0": {
+    "n": 300,
+    "caught": 0.5,
+    "reward": 0.196,
+    "catch_depth": 0.276,
+    "opening": 0.409,
+    "travel_m": 0.074
+   }
+  },
+  "reactive": {
+   "0.0": {
+    "n": 300,
+    "caught": 0.217,
+    "reward": -0.543,
+    "catch_depth": 0.472,
+    "opening": 0.5,
+    "travel_m": 0.051
+   },
+   "0.1": {
+    "n": 300,
+    "caught": 0.19,
+    "reward": -0.599,
+    "catch_depth": 0.458,
+    "opening": 0.5,
+    "travel_m": 0.051
+   },
+   "0.2": {
+    "n": 300,
+    "caught": 0.237,
+    "reward": -0.497,
+    "catch_depth": 0.468,
+    "opening": 0.5,
+    "travel_m": 0.05
+   },
+   "0.3": {
+    "n": 300,
+    "caught": 0.22,
+    "reward": -0.533,
+    "catch_depth": 0.467,
+    "opening": 0.5,
+    "travel_m": 0.048
+   },
+   "0.5": {
+    "n": 300,
+    "caught": 0.23,
+    "reward": -0.51,
+    "catch_depth": 0.461,
+    "opening": 0.5,
+    "travel_m": 0.049
+   },
+   "0.7": {
+    "n": 300,
+    "caught": 0.243,
+    "reward": -0.484,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.053
+   },
+   "1.0": {
+    "n": 300,
+    "caught": 0.173,
+    "reward": -0.637,
+    "catch_depth": 0.462,
+    "opening": 0.5,
+    "travel_m": 0.051
+   }
+  },
+  "trust forecast": {
+   "0.0": {
+    "n": 300,
+    "caught": 0.407,
+    "reward": -0.092,
+    "catch_depth": 0.48,
+    "opening": 0.3,
+    "travel_m": 0.087
+   },
+   "0.1": {
+    "n": 300,
+    "caught": 0.33,
+    "reward": -0.271,
+    "catch_depth": 0.484,
+    "opening": 0.3,
+    "travel_m": 0.083
+   },
+   "0.2": {
+    "n": 300,
+    "caught": 0.303,
+    "reward": -0.332,
+    "catch_depth": 0.482,
+    "opening": 0.3,
+    "travel_m": 0.083
+   },
+   "0.3": {
+    "n": 300,
+    "caught": 0.25,
+    "reward": -0.459,
+    "catch_depth": 0.481,
+    "opening": 0.3,
+    "travel_m": 0.087
+   },
+   "0.5": {
+    "n": 300,
+    "caught": 0.163,
+    "reward": -0.666,
+    "catch_depth": 0.475,
+    "opening": 0.3,
+    "travel_m": 0.098
+   },
+   "0.7": {
+    "n": 300,
+    "caught": 0.137,
+    "reward": -0.737,
+    "catch_depth": 0.465,
+    "opening": 0.3,
+    "travel_m": 0.118
+   },
+   "1.0": {
+    "n": 300,
+    "caught": 0.083,
+    "reward": -0.872,
+    "catch_depth": 0.468,
+    "opening": 0.3,
+    "travel_m": 0.135
+   }
+  }
+ },
+ "replay": {
+  "tracker exit (perfect forecast)": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.709,
+    "reward": 0.708,
+    "catch_depth": 0.29,
+    "opening": 0.358,
+    "travel_m": 0.073
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.504,
+    "reward": 0.135,
+    "catch_depth": 0.477,
+    "opening": 0.3,
+    "travel_m": 0.09
+   }
+  },
+  "no forecast": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.504,
+    "reward": 0.21,
+    "catch_depth": 0.272,
+    "opening": 0.41,
+    "travel_m": 0.066
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.284,
+    "reward": -0.364,
+    "catch_depth": 0.479,
+    "opening": 0.3,
+    "travel_m": 0.056
+   }
+  },
+  "both-before": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.504,
+    "reward": 0.21,
+    "catch_depth": 0.272,
+    "opening": 0.41,
+    "travel_m": 0.066
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.284,
+    "reward": -0.364,
+    "catch_depth": 0.479,
+    "opening": 0.3,
+    "travel_m": 0.056
+   }
+  },
+  "commit_both-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.397,
+    "reward": -0.041,
+    "catch_depth": 0.242,
+    "opening": 0.408,
+    "travel_m": 0.067
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.333,
+    "reward": -0.253,
+    "catch_depth": 0.481,
+    "opening": 0.3,
+    "travel_m": 0.066
+   }
+  },
+  "lossmix_both-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.418,
+    "reward": 0.011,
+    "catch_depth": 0.243,
+    "opening": 0.408,
+    "travel_m": 0.067
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.39,
+    "reward": -0.125,
+    "catch_depth": 0.479,
+    "opening": 0.3,
+    "travel_m": 0.077
+   }
+  },
+  "lossmix_both_e1-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.504,
+    "reward": 0.21,
+    "catch_depth": 0.272,
+    "opening": 0.41,
+    "travel_m": 0.066
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.284,
+    "reward": -0.364,
+    "catch_depth": 0.479,
+    "opening": 0.3,
+    "travel_m": 0.056
+   }
+  },
+  "lossmix_both_e10-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.426,
+    "reward": 0.026,
+    "catch_depth": 0.252,
+    "opening": 0.411,
+    "travel_m": 0.067
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.376,
+    "reward": -0.154,
+    "catch_depth": 0.478,
+    "opening": 0.3,
+    "travel_m": 0.069
+   }
+  },
+  "lossmix_both_e15-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.44,
+    "reward": 0.064,
+    "catch_depth": 0.244,
+    "opening": 0.403,
+    "travel_m": 0.068
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.39,
+    "reward": -0.123,
+    "catch_depth": 0.475,
+    "opening": 0.3,
+    "travel_m": 0.076
+   }
+  },
+  "lossmix_both_e2-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.504,
+    "reward": 0.21,
+    "catch_depth": 0.272,
+    "opening": 0.41,
+    "travel_m": 0.066
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.284,
+    "reward": -0.364,
+    "catch_depth": 0.479,
+    "opening": 0.3,
+    "travel_m": 0.056
+   }
+  },
+  "lossmix_both_e4-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.433,
+    "reward": 0.04,
+    "catch_depth": 0.258,
+    "opening": 0.409,
+    "travel_m": 0.067
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.298,
+    "reward": -0.333,
+    "catch_depth": 0.48,
+    "opening": 0.3,
+    "travel_m": 0.059
+   }
+  },
+  "lossmix_both_e7-after": {
+   "PPO policy": {
+    "n": 141,
+    "caught": 0.468,
+    "reward": 0.127,
+    "catch_depth": 0.262,
+    "opening": 0.409,
+    "travel_m": 0.067
+   },
+   "reactive": {
+    "n": 141,
+    "caught": 0.234,
+    "reward": -0.505,
+    "catch_depth": 0.47,
+    "opening": 0.5,
+    "travel_m": 0.054
+   },
+   "trust forecast": {
+    "n": 141,
+    "caught": 0.305,
+    "reward": -0.32,
+    "catch_depth": 0.48,
+    "opening": 0.3,
+    "travel_m": 0.067
+   }
+  }
+ },
+ "forecast_errors": {
+  "both-before": {
+   "coverage": 0.0,
+   "median_err_s_px": null,
+   "median_err_t_s": null,
+   "median_err_v_frac": null,
+   "sim_predicted_caught": 0.5
+  },
+  "commit_both-after": {
+   "coverage": 0.546,
+   "median_err_s_px": 9.5,
+   "median_err_t_s": 0.124,
+   "median_err_v_frac": 0.75,
+   "matched_u": 0.107,
+   "sim_predicted_caught": 0.607
+  },
+  "lossmix_both-after": {
+   "coverage": 0.752,
+   "median_err_s_px": 9.1,
+   "median_err_t_s": 0.124,
+   "median_err_v_frac": 0.61,
+   "matched_u": 0.102,
+   "sim_predicted_caught": 0.648
+  },
+  "lossmix_both_e1-after": {
+   "coverage": 0.0,
+   "median_err_s_px": null,
+   "median_err_t_s": null,
+   "median_err_v_frac": null,
+   "sim_predicted_caught": 0.5
+  },
+  "lossmix_both_e10-after": {
+   "coverage": 0.61,
+   "median_err_s_px": 9.2,
+   "median_err_t_s": 0.124,
+   "median_err_v_frac": 0.72,
+   "matched_u": 0.103,
+   "sim_predicted_caught": 0.62
+  },
+  "lossmix_both_e15-after": {
+   "coverage": 0.738,
+   "median_err_s_px": 8.8,
+   "median_err_t_s": 0.124,
+   "median_err_v_frac": 0.67,
+   "matched_u": 0.099,
+   "sim_predicted_caught": 0.645
+  },
+  "lossmix_both_e2-after": {
+   "coverage": 0.0,
+   "median_err_s_px": null,
+   "median_err_t_s": null,
+   "median_err_v_frac": null,
+   "sim_predicted_caught": 0.5
+  },
+  "lossmix_both_e4-after": {
+   "coverage": 0.227,
+   "median_err_s_px": 9.1,
+   "median_err_t_s": 0.126,
+   "median_err_v_frac": 0.93,
+   "matched_u": 0.102,
+   "sim_predicted_caught": 0.545
+  },
+  "lossmix_both_e7-after": {
+   "coverage": 0.376,
+   "median_err_s_px": 9.6,
+   "median_err_t_s": 0.124,
+   "median_err_v_frac": 0.75,
+   "matched_u": 0.108,
+   "sim_predicted_caught": 0.574
+  }
+ },
+ "experiment": {
+  "tag": "pb_fingerslow",
+  "env": "pybullet",
+  "params": "{\"EARLY\": 1.0, \"WIDE\": 0.6, \"FINGER_SPEED\": 0.1}",
+  "honest_sigmas": false
+ }
+}
