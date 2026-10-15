@@ -68,6 +68,10 @@ EXPERIMENTS = [
      "speed-limited gripper: 0.15 m/s, fingers close at 0.1 m/s"),
     ("pb_slowgrip", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "GRIP_SPEED": 0.15, "FINGER_SPEED": 0.1}, 1_500_000, None,
      "box_slowgrip in PyBullet"),
+    # Fin (15 Oct): pb_slowgrip's slow travel (0.15 m/s) cost the post-trained gripper its catches. Keep only the
+    # finger limit that stops the snap shut, with pb_early1_wide06's travel speed, trained on from its policies.
+    ("pb_fingerslow", "pybullet", {"EARLY": 1.0, "WIDE": 0.6, "FINGER_SPEED": 0.1}, 2_250_000, "pb_early1_wide06",
+     "pb_early1_wide06 trained on with fingers closing at most 0.1 m/s (no snapping shut)"),
     ("pb_early1_wide06_3m", "pybullet", {"EARLY": 1.0, "WIDE": 0.6}, 3_000_000, "pb_early1_wide06",
      "pb_early1_wide06 (best on the blockade test) trained on to 3M steps per fold"),
     ("pb_base_4m", "pybullet", {}, 4_000_000, "pb_base", "pb_base trained on to 4M steps per fold"),
