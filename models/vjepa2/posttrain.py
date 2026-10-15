@@ -660,7 +660,7 @@ def train_one(model, base_state, train: list[dict], test: list[dict], args, devi
 @torch.no_grad()
 def weight_change(pred, base_state: dict) -> float:
     """||weights - pretrained|| / ||pretrained|| over the whole predictor."""
-    num = sum(float((v.float() - base_state[k].float()).norm()) ** 2 for k, v in pred.state_dict().items())
+    num = sum(float((v.float() - base_state[k].to(v.device).float()).norm()) ** 2 for k, v in pred.state_dict().items())
     den = sum(float(v.float().norm()) ** 2 for v in base_state.values())
     return round(math.sqrt(num / max(den, 1e-12)), 6)
 
@@ -781,7 +781,7 @@ def train_all(args) -> None:
                 ck = torch.load(args.init_from / f"{tag}.pt", map_location="cpu", weights_only=False)
                 if set(ck.get("train_clip_ids", [])) & {c["clip_id"] for c in test}:
                     raise SystemExit(f"{args.init_from}/{tag}.pt was trained on clips this fold holds out")
-                start = {k: v.to(base_state[k].dtype) for k, v in ck["predictor"].items()}
+                start = {k: v.to(device=base_state[k].device, dtype=base_state[k].dtype) for k, v in ck["predictor"].items()}
                 print(f"  [{tag}] starting from {args.init_from}/{tag}.pt", flush=True)
             log, mode = train_one(model, start, train, test, args, device, tag, partial, snapshot)
             save_atomic({"predictor": model.predictor.state_dict(), **saved_mode(mode), "model_id": args.model_id,

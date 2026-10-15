@@ -162,9 +162,11 @@ def draw_frames(plan: Path, out: Path) -> list[str]:
     maps = {n: np.load(plan / "scores" / n / "maps.npz") for n, *_ in RUNS
             if (plan / "scores" / n / "maps.npz").exists()}
     after = [n for n, *_ in RUNS[1:] if n in maps]
-    if "both-before" not in maps or not after:
+    if not after:
         return []
-    shown = [("both-before", "imagined, before")] + [(n, f"imagined, {lab}") for n, lab, _ in RUNS if n == after[-1]]
+    shown = ([("both-before", "imagined, before")] if "both-before" in maps else []) + \
+        [(n, f"imagined, {lab}") for n, lab, _ in RUNS if n == after[-1]]
+    real = maps["both-before"] if "both-before" in maps else maps[after[-1]]   # real-frame maps: same in every run
     paths, written = clip_paths(), []
     steps = [0, 2, 4, 6, 8, 11]                      # target steps shown (1/8 s each)
     for f, tag in (("per_clip.json", "plank"), ("per_clip_open.json", "open")):
@@ -172,13 +174,13 @@ def draw_frames(plan: Path, out: Path) -> list[str]:
         if not runs:
             continue
         for cid in pick(runs, tag == "open"):
-            if cid not in paths or not paths[cid].exists() or f"{cid}/real" not in maps["both-before"]:
+            if cid not in paths or not paths[cid].exists() or f"{cid}/real" not in real:
                 continue
             frames = read_video(paths[cid])
             cs = len(frames) // 2
             fig, axes = plt.subplots(1 + len(shown), len(steps) + 1, figsize=(2.0 * (len(steps) + 1),
                                                                                2.1 * (1 + len(shown))))
-            rows = [("real frame + probe", maps["both-before"][f"{cid}/real"], 1.0)] + \
+            rows = [("real frame + probe", real[f"{cid}/real"], 1.0)] + \
                    [(lab, maps[n][f"{cid}/imagined"], 0.45) for n, lab in shown if f"{cid}/imagined" in maps[n]]
             for r, (lab, m, bright) in enumerate(rows):
                 for c in range(len(steps) + 1):
