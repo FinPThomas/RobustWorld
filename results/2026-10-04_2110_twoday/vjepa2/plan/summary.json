@@ -838,5 +838,55 @@
   "p_no_gain": null,
   "one_ball_p_correct": 0.512,
   "balanced_accuracy": 0.577
+ },
+ {
+  "method": "V-JEPA 2 lossmix_topup-after",
+  "variant": "lossmix_topup",
+  "phase": "after",
+  "n": 337,
+  "outcome_auroc": 0.925,
+  "auroc_ci": [
+   0.895,
+   0.954
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.535,
+  "balanced_accuracy": 0.523,
+  "cell_auroc": 0.883,
+  "far_cell_auroc": 0.874,
+  "argmax_hit_rate": 0.693,
+  "overfit_folds": "0/5",
+  "best_epochs": "5/5/5/4/4"
+ },
+ {
+  "method": "V-JEPA 2 lossmix_topup-after (ball from L)",
+  "variant": "lossmix_topup",
+  "phase": "after",
+  "n": 83,
+  "outcome_auroc": 0.873,
+  "auroc_ci": [
+   0.784,
+   0.949
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.446,
+  "balanced_accuracy": 0.358
+ },
+ {
+  "method": "V-JEPA 2 lossmix_topup-after (ball from R)",
+  "variant": "lossmix_topup",
+  "phase": "after",
+  "n": 254,
+  "outcome_auroc": 0.971,
+  "auroc_ci": [
+   0.952,
+   0.987
+  ],
+  "delta_vs_before_ci": null,
+  "p_no_gain": null,
+  "one_ball_p_correct": 0.57,
+  "balanced_accuracy": 0.622
  }
 ]
