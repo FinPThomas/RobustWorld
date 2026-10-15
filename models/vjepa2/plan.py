@@ -935,7 +935,7 @@ def step_hours(name: str) -> float:
                "rescore-aligned": 0.5,            # one scoring pass
                "rescore-aligned-C": 0.5,
                "rescore-aligned-E": 0.5,
-               "lossmix_topup-after": 2.6,        # 5 epochs from C with the open clips, two scoring passes
+               "lossmix_topup-after": 2.3,        # 5 epochs from C with the open clips (fold-epoch 3.8 min on T4), two scoring passes
                "lossmix_open-after": 7.2,         # C with about a fifth more clips, two scoring passes
                "lossmix_both_e30-after": 8.6}     # 30 epochs on both directions, two scoring passes
     if name in special:

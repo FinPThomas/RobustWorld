@@ -406,3 +406,34 @@ def test_loss_sampling_trains_and_resumes(tmp_path, monkeypatch):
     assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns == stamp
     posttrain.main(argv[:-2] + ["--resume"])                          # without sampling: a different run
     assert (tmp_path / "ck" / "s" / "fold0.pt").stat().st_mtime_ns != stamp
+
+
+def test_top_up_from_exported_half_weights_with_extra_clips(tmp_path, monkeypatch):
+    """G (plan.py lossmix_topup-after): start each fold from another run's float16-exported weights, with extra
+    training clips, the same flags as on Kaggle. Weight change is measured from that start, not the pretrained."""
+    clips, cache = fake_clips(tmp_path, 30)
+    main, extra = clips[:24], clips[24:]
+    man = tmp_path / "extra.jsonl"
+    man.write_text("".join(json.dumps(c) + "\n" for c in extra))
+    monkeypatch.setattr(posttrain, "cache_dir", lambda model_id: cache)
+    monkeypatch.setattr(posttrain, "training_clips", lambda manifest: main)
+    monkeypatch.setattr(posttrain, "CKPT_ROOT", tmp_path / "ck")
+    monkeypatch.setattr(transformers.VJEPA2Model, "from_pretrained", staticmethod(lambda model_id: tiny_model()))
+    import robust_world.eval.ball as ball                          # extra clips' folds come from the tracker
+    monkeypatch.setattr(ball, "video_of", lambda clips: "v")
+    monkeypatch.setattr(ball, "load_tracking", lambda name: (None, None))
+    monkeypatch.setattr(ball, "extra_folds", lambda extra, clips, folds, tracks: [i % 5 for i in range(len(extra))])
+    flags = ["--loss", "commit", "--sample-by-loss", "0.25", "--patience", "0", "--workers", "0", "--lr", "3e-3"]
+    posttrain.main(["train", "--run", "c", "--epochs", "1", *flags])
+    exported = tmp_path / "input" / "weights" / "c"
+    exported.mkdir(parents=True)
+    for pt in sorted((tmp_path / "ck" / "c").glob("fold?.pt")):    # as plan.export_weights writes them
+        ck = torch.load(pt, map_location="cpu", weights_only=False)
+        ck["predictor"] = {k: v.half() if v.is_floating_point() else v for k, v in ck["predictor"].items()}
+        torch.save(ck, exported / pt.name)
+    posttrain.main(["train", "--run", "g", "--epochs", "2", "--init-from", str(exported), "--extra-train", str(man),
+                    *flags])
+    logs = json.loads((tmp_path / "ck" / "g" / "log.json").read_text())
+    assert len(logs) == 5 and all(e["weight_change"] >= 0 for lg in logs for e in lg["epochs"])
+    ck = torch.load(tmp_path / "ck" / "g" / "fold0.pt", map_location="cpu", weights_only=False)
+    assert len(set(ck["train_clip_ids"]) & {c["clip_id"] for c in extra}) == 4    # fold0 holds one out
