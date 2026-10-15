@@ -109,3 +109,26 @@ def test_raw_feature_decoder_is_isolated_too():
     assert same(fit_raw(clips), fit_raw(tampered))
     with pytest.raises(TypeError):
         eval_decoder.fit_raw_features([{"context": None}])
+
+
+@pytest.mark.parametrize("cfg", [("last", "linear", "token", "ln", "sigmoid"), ("last", "mlp", "nbhd", "raw", "softmax"),
+                                 ("L12", "linear", "global", "ln", "softmax")])
+def test_probing_sweep_probes_are_isolated(cfg):
+    """The probe sweep (probing.py) compares readouts; each must obey the same rule as the decoder."""
+    import probing
+    rng = np.random.default_rng(0)
+    clips = [fake_clip(rng, o) for o in ["through", "hidden"] * 6]
+    tampered = [dict(c, outcome="hidden", labels=np.where(np.arange(CTX + TGT)[:, None, None] >= CTX, True, c["labels"]),
+                     enc=dict(c["enc"], imagined=c["enc"]["imagined"] * 9, real=c["enc"]["real"] * 0)) for c in clips]
+    fit = lambda cs: probing.fit_probe(probing.Config(*cfg),  # noqa: E731
+                                       [eval_decoder.examples_from(c["enc"], c["labels"]) for c in cs])
+    a, b = fit(clips).state_dict(), fit(tampered).state_dict()
+    assert all(torch.equal(a[k], b[k]) for k in a)
+    torch.manual_seed(1)
+    changed = [dict(c, enc=dict(c["enc"], context=c["enc"]["context"] + torch.randn_like(c["enc"]["context"])))
+               for c in clips]
+    c = fit(changed).state_dict()
+    assert not all(torch.equal(a[k], c[k]) for k in a)
+    assert set(inspect.signature(probing.fit_probe).parameters) == {"cfg", "examples", "seed"}
+    with pytest.raises(TypeError):
+        probing.fit_probe(probing.Config(*cfg), [{"context": None}])

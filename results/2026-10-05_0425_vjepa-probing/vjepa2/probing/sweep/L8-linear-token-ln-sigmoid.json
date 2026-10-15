@@ -1,0 +1,35 @@
+{
+ "layer": "L8",
+ "model": "linear",
+ "input": "token",
+ "norm": "ln",
+ "head": "sigmoid",
+ "name": "L8-linear-token-ln-sigmoid",
+ "n_clips": 254,
+ "seconds": 66.9,
+ "context": {
+  "cell_auroc": 0.9993,
+  "visible_auroc": 0.9999,
+  "phantom_rate": 0.0249,
+  "hit_rate": 1.0,
+  "error_px": 14.8,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.9604,
+  "visible_auroc": 0.9984,
+  "phantom_rate": 0.0702,
+  "hit_rate": 0.9996,
+  "error_px": 17.8,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.9964,
+  "far_hit_rate": 1.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.9919,
+  "outcome_auroc_one_ball": 0.9979,
+  "p_correct_balanced": 0.636,
+  "balanced_accuracy": 0.659,
+  "p_correct_balanced_one_ball": 0.62,
+  "balanced_accuracy_one_ball": 0.871
+ }
+}

@@ -1,0 +1,334 @@
+[
+ {
+  "tag": "all",
+  "n_train": 229,
+  "n_val": 25,
+  "n_test": 0,
+  "train_loss": [
+   0.74986,
+   0.69299,
+   0.66504,
+   0.65194,
+   0.63907,
+   0.63294,
+   0.62365,
+   0.62153,
+   0.61726,
+   0.6157
+  ],
+  "train_parts": [
+   {
+    "l1": 0.56172,
+    "wl1": 0.56314,
+    "nce": 1.8672
+   },
+   {
+    "l1": 0.54323,
+    "wl1": 0.54463,
+    "nce": 1.48353
+   },
+   {
+    "l1": 0.53553,
+    "wl1": 0.53684,
+    "nce": 1.28194
+   },
+   {
+    "l1": 0.53156,
+    "wl1": 0.53286,
+    "nce": 1.19077
+   },
+   {
+    "l1": 0.52696,
+    "wl1": 0.52831,
+    "nce": 1.10757
+   },
+   {
+    "l1": 0.52546,
+    "wl1": 0.52686,
+    "nce": 1.06081
+   },
+   {
+    "l1": 0.52338,
+    "wl1": 0.52474,
+    "nce": 0.98909
+   },
+   {
+    "l1": 0.52282,
+    "wl1": 0.52423,
+    "nce": 0.97294
+   },
+   {
+    "l1": 0.52152,
+    "wl1": 0.52294,
+    "nce": 0.94321
+   },
+   {
+    "l1": 0.52088,
+    "wl1": 0.52226,
+    "nce": 0.93446
+   }
+  ],
+  "val_l1": [
+   0.54704,
+   0.53403,
+   0.53201,
+   0.52693,
+   0.52673,
+   0.52116,
+   0.52158,
+   0.52306,
+   0.52074,
+   0.52125
+  ],
+  "train_clip_l1": [
+   0.54686,
+   0.53212,
+   0.53137,
+   0.5236,
+   0.52167,
+   0.51768,
+   0.51654,
+   0.51814,
+   0.51682,
+   0.51696
+  ],
+  "epochs": [
+   {
+    "epoch": 1,
+    "train_loss": 0.74986,
+    "parts": {
+     "l1": 0.56172,
+     "wl1": 0.56314,
+     "nce": 1.8672
+    },
+    "grad_norm_mean": 5.2003,
+    "grad_norm_max": 8.1024,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 2.9265847744427305e-05,
+    "weight_change": 0.002482,
+    "peak_gpu_gb": 2.31,
+    "seconds": 161.8,
+    "val_l1": 0.54704,
+    "train_clip_l1": 0.54686
+   },
+   {
+    "epoch": 2,
+    "train_loss": 0.69299,
+    "parts": {
+     "l1": 0.54323,
+     "wl1": 0.54463,
+     "nce": 1.48353
+    },
+    "grad_norm_mean": 4.5963,
+    "grad_norm_max": 9.0302,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 2.7135254915624213e-05,
+    "weight_change": 0.004491,
+    "peak_gpu_gb": 2.31,
+    "seconds": 161.7,
+    "val_l1": 0.53403,
+    "train_clip_l1": 0.53212
+   },
+   {
+    "epoch": 3,
+    "train_loss": 0.66504,
+    "parts": {
+     "l1": 0.53553,
+     "wl1": 0.53684,
+     "nce": 1.28194
+    },
+    "grad_norm_mean": 4.7301,
+    "grad_norm_max": 12.3997,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 2.3816778784387097e-05,
+    "weight_change": 0.005829,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.1,
+    "val_l1": 0.53201,
+    "train_clip_l1": 0.53137
+   },
+   {
+    "epoch": 4,
+    "train_loss": 0.65194,
+    "parts": {
+     "l1": 0.53156,
+     "wl1": 0.53286,
+     "nce": 1.19077
+    },
+    "grad_norm_mean": 4.4883,
+    "grad_norm_max": 8.4588,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 1.963525491562421e-05,
+    "weight_change": 0.006617,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.3,
+    "val_l1": 0.52693,
+    "train_clip_l1": 0.5236
+   },
+   {
+    "epoch": 5,
+    "train_loss": 0.63907,
+    "parts": {
+     "l1": 0.52696,
+     "wl1": 0.52831,
+     "nce": 1.10757
+    },
+    "grad_norm_mean": 4.4375,
+    "grad_norm_max": 9.8558,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 1.5e-05,
+    "weight_change": 0.007155,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.3,
+    "val_l1": 0.52673,
+    "train_clip_l1": 0.52167
+   },
+   {
+    "epoch": 6,
+    "train_loss": 0.63294,
+    "parts": {
+     "l1": 0.52546,
+     "wl1": 0.52686,
+     "nce": 1.06081
+    },
+    "grad_norm_mean": 4.3706,
+    "grad_norm_max": 11.2627,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 1.036474508437579e-05,
+    "weight_change": 0.007544,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.2,
+    "val_l1": 0.52116,
+    "train_clip_l1": 0.51768
+   },
+   {
+    "epoch": 7,
+    "train_loss": 0.62365,
+    "parts": {
+     "l1": 0.52338,
+     "wl1": 0.52474,
+     "nce": 0.98909
+    },
+    "grad_norm_mean": 5.5743,
+    "grad_norm_max": 19.9642,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 6.1832212156129045e-06,
+    "weight_change": 0.007775,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.2,
+    "val_l1": 0.52158,
+    "train_clip_l1": 0.51654
+   },
+   {
+    "epoch": 8,
+    "train_loss": 0.62153,
+    "parts": {
+     "l1": 0.52282,
+     "wl1": 0.52423,
+     "nce": 0.97294
+    },
+    "grad_norm_mean": 4.8214,
+    "grad_norm_max": 18.1304,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 2.86474508437579e-06,
+    "weight_change": 0.007908,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.1,
+    "val_l1": 0.52306,
+    "train_clip_l1": 0.51814
+   },
+   {
+    "epoch": 9,
+    "train_loss": 0.61726,
+    "parts": {
+     "l1": 0.52152,
+     "wl1": 0.52294,
+     "nce": 0.94321
+    },
+    "grad_norm_mean": 4.9879,
+    "grad_norm_max": 17.5095,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 7.341522555726971e-07,
+    "weight_change": 0.007958,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.0,
+    "val_l1": 0.52074,
+    "train_clip_l1": 0.51682
+   },
+   {
+    "epoch": 10,
+    "train_loss": 0.6157,
+    "parts": {
+     "l1": 0.52088,
+     "wl1": 0.52226,
+     "nce": 0.93446
+    },
+    "grad_norm_mean": 4.1218,
+    "grad_norm_max": 10.473,
+    "grad_clipped_share": 1.0,
+    "nonfinite_steps": 0,
+    "optimizer_steps": 29,
+    "lr": 0.0,
+    "weight_change": 0.007966,
+    "peak_gpu_gb": 2.31,
+    "seconds": 160.3,
+    "val_l1": 0.52125,
+    "train_clip_l1": 0.51696
+   }
+  ],
+  "val_clip_ids": [
+   "whole_0001",
+   "whole_0041",
+   "whole_0051",
+   "whole_0061",
+   "whole_0067",
+   "whole_0078",
+   "whole_0091",
+   "whole_0097",
+   "whole_0100",
+   "whole_0122",
+   "whole_0138",
+   "whole_0150",
+   "whole_0168",
+   "whole_0171",
+   "whole_0173",
+   "whole_0195",
+   "whole_0206",
+   "whole_0214",
+   "whole_0218",
+   "whole_0225",
+   "whole_0232",
+   "whole_0233",
+   "whole_0243",
+   "whole_0244",
+   "whole_0255"
+  ],
+  "val_l1_pretrained": 0.57773,
+  "best_epoch": 9,
+  "overfit": {
+   "val_rise_from_best": 0.001,
+   "val_over_train": 1.008,
+   "flag": false
+  },
+  "seconds": 1691.1,
+  "final_weight_change": 0.007958
+ }
+]

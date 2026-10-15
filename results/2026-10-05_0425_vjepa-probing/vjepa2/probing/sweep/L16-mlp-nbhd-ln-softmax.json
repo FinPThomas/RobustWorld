@@ -1,0 +1,35 @@
+{
+ "layer": "L16",
+ "model": "mlp",
+ "input": "nbhd",
+ "norm": "ln",
+ "head": "softmax",
+ "name": "L16-mlp-nbhd-ln-softmax",
+ "n_clips": 254,
+ "seconds": 134.6,
+ "context": {
+  "cell_auroc": 0.9994,
+  "visible_auroc": 0.9997,
+  "phantom_rate": 0.0142,
+  "hit_rate": 0.9897,
+  "error_px": 25.2,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.9931,
+  "visible_auroc": 0.9825,
+  "phantom_rate": 0.4342,
+  "hit_rate": 0.9966,
+  "error_px": 17.2,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.9976,
+  "far_hit_rate": 0.9939,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.9994,
+  "outcome_auroc_one_ball": 0.998,
+  "p_correct_balanced": 0.69,
+  "balanced_accuracy": 0.721,
+  "p_correct_balanced_one_ball": 0.67,
+  "balanced_accuracy_one_ball": 0.676
+ }
+}

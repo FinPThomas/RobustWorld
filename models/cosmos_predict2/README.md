@@ -7,9 +7,9 @@ be deleted without affecting anything else.
 
 **How it predicts.**
 - Cosmos-Predict2 was trained to condition on 1 or 5 frames, so it receives the last
-  5 context frames (11–15).
+  5 context frames (19–23).
 - It generates `--num-frames` frames in total, including those 5. Its native length is 93.
-- Generated frames 5–20 are compared with ground-truth frames 16–31.
+- Generated frames 5–28 are compared with ground-truth frames 24–47.
 - The diffusers weights are the 720p version. Square clips are therefore run at
   960×960, the 1:1 shape at 720p, and scaled back down to 512.
 

@@ -1,0 +1,262 @@
+[
+ {
+  "tag": "fold0",
+  "n_train": 183,
+  "n_val": 20,
+  "n_test": 51,
+  "held_out_l1_pretrained": {
+   "through": 0.63619,
+   "hidden": 0.6389,
+   "bounce": 0.65337
+  },
+  "train_loss": [],
+  "train_parts": [],
+  "val_l1": [],
+  "train_clip_l1": [],
+  "epochs": [],
+  "val_clip_ids": [
+   "whole_0023",
+   "whole_0033",
+   "whole_0037",
+   "whole_0052",
+   "whole_0054",
+   "whole_0056",
+   "whole_0060",
+   "whole_0089",
+   "whole_0134",
+   "whole_0150",
+   "whole_0167",
+   "whole_0171",
+   "whole_0172",
+   "whole_0196",
+   "whole_0201",
+   "whole_0208",
+   "whole_0229",
+   "whole_0241",
+   "whole_0244",
+   "whole_0253"
+  ],
+  "val_l1_pretrained": 0.63759,
+  "best_epoch": 0,
+  "overfit": {
+   "val_rise_from_best": 0.0,
+   "val_over_train": 1.0,
+   "flag": false
+  },
+  "held_out_l1_posttrained": {
+   "through": 0.63619,
+   "hidden": 0.6389,
+   "bounce": 0.65337
+  },
+  "seconds": 8.9,
+  "final_weight_change": 0.0
+ },
+ {
+  "tag": "fold1",
+  "n_train": 183,
+  "n_val": 20,
+  "n_test": 51,
+  "held_out_l1_pretrained": {
+   "through": 0.63138,
+   "hidden": 0.634,
+   "bounce": 0.64824
+  },
+  "train_loss": [],
+  "train_parts": [],
+  "val_l1": [],
+  "train_clip_l1": [],
+  "epochs": [],
+  "val_clip_ids": [
+   "whole_0019",
+   "whole_0031",
+   "whole_0038",
+   "whole_0056",
+   "whole_0057",
+   "whole_0059",
+   "whole_0064",
+   "whole_0092",
+   "whole_0135",
+   "whole_0149",
+   "whole_0169",
+   "whole_0173",
+   "whole_0174",
+   "whole_0197",
+   "whole_0203",
+   "whole_0207",
+   "whole_0225",
+   "whole_0236",
+   "whole_0239",
+   "whole_0247"
+  ],
+  "val_l1_pretrained": 0.63563,
+  "best_epoch": 0,
+  "overfit": {
+   "val_rise_from_best": 0.0,
+   "val_over_train": 1.0,
+   "flag": false
+  },
+  "held_out_l1_posttrained": {
+   "through": 0.63138,
+   "hidden": 0.634,
+   "bounce": 0.64824
+  },
+  "seconds": 8.6,
+  "final_weight_change": 0.0
+ },
+ {
+  "tag": "fold2",
+  "n_train": 183,
+  "n_val": 20,
+  "n_test": 51,
+  "held_out_l1_pretrained": {
+   "through": 0.63301,
+   "hidden": 0.63356,
+   "bounce": 0.64625
+  },
+  "train_loss": [],
+  "train_parts": [],
+  "val_l1": [],
+  "train_clip_l1": [],
+  "epochs": [],
+  "val_clip_ids": [
+   "whole_0023",
+   "whole_0037",
+   "whole_0041",
+   "whole_0060",
+   "whole_0061",
+   "whole_0063",
+   "whole_0067",
+   "whole_0095",
+   "whole_0138",
+   "whole_0149",
+   "whole_0166",
+   "whole_0172",
+   "whole_0173",
+   "whole_0199",
+   "whole_0207",
+   "whole_0211",
+   "whole_0232",
+   "whole_0241",
+   "whole_0244",
+   "whole_0251"
+  ],
+  "val_l1_pretrained": 0.63428,
+  "best_epoch": 0,
+  "overfit": {
+   "val_rise_from_best": 0.0,
+   "val_over_train": 1.0,
+   "flag": false
+  },
+  "held_out_l1_posttrained": {
+   "through": 0.63301,
+   "hidden": 0.63356,
+   "bounce": 0.64625
+  },
+  "seconds": 8.3,
+  "final_weight_change": 0.0
+ },
+ {
+  "tag": "fold3",
+  "n_train": 183,
+  "n_val": 20,
+  "n_test": 51,
+  "held_out_l1_pretrained": {
+   "through": 0.6331,
+   "hidden": 0.63417,
+   "bounce": 0.64674
+  },
+  "train_loss": [],
+  "train_parts": [],
+  "val_l1": [],
+  "train_clip_l1": [],
+  "epochs": [],
+  "val_clip_ids": [
+   "whole_0019",
+   "whole_0030",
+   "whole_0037",
+   "whole_0056",
+   "whole_0057",
+   "whole_0059",
+   "whole_0062",
+   "whole_0092",
+   "whole_0140",
+   "whole_0152",
+   "whole_0170",
+   "whole_0174",
+   "whole_0175",
+   "whole_0201",
+   "whole_0207",
+   "whole_0211",
+   "whole_0229",
+   "whole_0241",
+   "whole_0245",
+   "whole_0251"
+  ],
+  "val_l1_pretrained": 0.6382,
+  "best_epoch": 0,
+  "overfit": {
+   "val_rise_from_best": 0.0,
+   "val_over_train": 1.0,
+   "flag": false
+  },
+  "held_out_l1_posttrained": {
+   "through": 0.6331,
+   "hidden": 0.63417,
+   "bounce": 0.64674
+  },
+  "seconds": 8.3,
+  "final_weight_change": 0.0
+ },
+ {
+  "tag": "fold4",
+  "n_train": 184,
+  "n_val": 20,
+  "n_test": 50,
+  "held_out_l1_pretrained": {
+   "through": 0.63687,
+   "hidden": 0.63857,
+   "bounce": 0.6531
+  },
+  "train_loss": [],
+  "train_parts": [],
+  "val_l1": [],
+  "train_clip_l1": [],
+  "epochs": [],
+  "val_clip_ids": [
+   "whole_0023",
+   "whole_0036",
+   "whole_0040",
+   "whole_0056",
+   "whole_0058",
+   "whole_0060",
+   "whole_0063",
+   "whole_0091",
+   "whole_0135",
+   "whole_0150",
+   "whole_0156",
+   "whole_0167",
+   "whole_0177",
+   "whole_0199",
+   "whole_0205",
+   "whole_0213",
+   "whole_0216",
+   "whole_0220",
+   "whole_0223",
+   "whole_0229"
+  ],
+  "val_l1_pretrained": 0.63712,
+  "best_epoch": 0,
+  "overfit": {
+   "val_rise_from_best": 0.0,
+   "val_over_train": 1.0,
+   "flag": false
+  },
+  "held_out_l1_posttrained": {
+   "through": 0.63687,
+   "hidden": 0.63857,
+   "bounce": 0.6531
+  },
+  "seconds": 8.3,
+  "final_weight_change": 0.0
+ }
+]

@@ -1,0 +1,189 @@
+{
+ "run": "/tmp/RobustWorld/checkpoints/vjepa2/plan/plain-all",
+ "groups": {
+  "other side (from L)": {
+   "n": 83,
+   "n_through": 32,
+   "n_hidden": 3,
+   "n_bounce": 48,
+   "real": {
+    "outcome_auroc": 0.98,
+    "outcome_accuracy": 0.59,
+    "blocked_called_through": 33,
+    "through_called_blocked": 1,
+    "peak_far_mean": {
+     "through": 0.973,
+     "hidden": 0.629,
+     "bounce": 0.499
+    },
+    "bounce_auroc": 0.993,
+    "outcome3_accuracy": 0.578,
+    "p_correct": {
+     "through": 0.973,
+     "hidden": 0.248,
+     "bounce": 0.442
+    },
+    "p_correct_balanced": 0.554,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.271
+    },
+    "balanced_accuracy": 0.424,
+    "cell_auroc": 0.983,
+    "argmax_hit_rate": 0.999
+   },
+   "before": {
+    "outcome_auroc": 0.643,
+    "outcome_accuracy": 0.386,
+    "blocked_called_through": 51,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.742,
+     "hidden": 0.7,
+     "bounce": 0.73
+    },
+    "bounce_auroc": 0.181,
+    "outcome3_accuracy": 0.386,
+    "p_correct": {
+     "through": 0.742,
+     "hidden": 0.254,
+     "bounce": 0.037
+    },
+    "p_correct_balanced": 0.344,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.643,
+    "argmax_hit_rate": 0.156
+   },
+   "after": {
+    "outcome_auroc": 0.39,
+    "outcome_accuracy": 0.361,
+    "blocked_called_through": 46,
+    "through_called_blocked": 7,
+    "peak_far_mean": {
+     "through": 0.595,
+     "hidden": 0.509,
+     "bounce": 0.634
+    },
+    "bounce_auroc": 0.285,
+    "outcome3_accuracy": 0.325,
+    "p_correct": {
+     "through": 0.595,
+     "hidden": 0.291,
+     "bounce": 0.116
+    },
+    "p_correct_balanced": 0.334,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.689,
+    "argmax_hit_rate": 0.192
+   },
+   "mirror_real": {
+    "outcome_auroc": 0.996,
+    "outcome_accuracy": 0.916,
+    "blocked_called_through": 6,
+    "through_called_blocked": 1,
+    "peak_far_mean": {
+     "through": 0.953,
+     "hidden": 0.434,
+     "bounce": 0.317
+    },
+    "bounce_auroc": 0.993,
+    "outcome3_accuracy": 0.904,
+    "p_correct": {
+     "through": 0.953,
+     "hidden": 0.353,
+     "bounce": 0.574
+    },
+    "p_correct_balanced": 0.627,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.333,
+     "bounce": 0.812
+    },
+    "balanced_accuracy": 0.715,
+    "cell_auroc": 0.983,
+    "argmax_hit_rate": 0.997
+   },
+   "mirror_before": {
+    "outcome_auroc": 0.726,
+    "outcome_accuracy": 0.602,
+    "blocked_called_through": 1,
+    "through_called_blocked": 32,
+    "peak_far_mean": {
+     "through": 0.421,
+     "hidden": 0.34,
+     "bounce": 0.395
+    },
+    "bounce_auroc": 0.309,
+    "outcome3_accuracy": 0.036,
+    "p_correct": {
+     "through": 0.421,
+     "hidden": 0.473,
+     "bounce": 0.164
+    },
+    "p_correct_balanced": 0.353,
+    "recall": {
+     "through": 0.5,
+     "hidden": 1.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.5,
+    "cell_auroc": 0.702,
+    "argmax_hit_rate": 0.229
+   },
+   "mirror_after": {
+    "outcome_auroc": 0.523,
+    "outcome_accuracy": 0.639,
+    "blocked_called_through": 4,
+    "through_called_blocked": 26,
+    "peak_far_mean": {
+     "through": 0.406,
+     "hidden": 0.293,
+     "bounce": 0.389
+    },
+    "bounce_auroc": 0.257,
+    "outcome3_accuracy": 0.205,
+    "p_correct": {
+     "through": 0.406,
+     "hidden": 0.385,
+     "bounce": 0.224
+    },
+    "p_correct_balanced": 0.338,
+    "recall": {
+     "through": 0.312,
+     "hidden": 0.333,
+     "bounce": 0.188
+    },
+    "balanced_accuracy": 0.278,
+    "cell_auroc": 0.71,
+    "argmax_hit_rate": 0.245
+   },
+   "height": {
+    "range": [
+     176.3,
+     329.4
+    ],
+    "n_with_height": 83,
+    "accuracy_on_real_outcomes": 0.855,
+    "auroc_vs_height_rule": {
+     "real": 0.842948717948718,
+     "before": 0.6503496503496504,
+     "after": 0.32517482517482516,
+     "mirror_real": 0.8438228438228439,
+     "mirror_before": 0.7377622377622377,
+     "mirror_after": 0.5308857808857809
+    }
+   }
+  }
+ }
+}

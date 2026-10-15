@@ -1,0 +1,35 @@
+{
+ "layer": "L20",
+ "model": "linear",
+ "input": "global",
+ "norm": "ln",
+ "head": "softmax",
+ "name": "L20-linear-global-ln-softmax",
+ "n_clips": 254,
+ "seconds": 28.3,
+ "context": {
+  "cell_auroc": 0.9935,
+  "visible_auroc": 0.9909,
+  "phantom_rate": 0.0726,
+  "hit_rate": 0.8917,
+  "error_px": 25.7,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.7289,
+  "visible_auroc": 0.8154,
+  "phantom_rate": 0.9444,
+  "hit_rate": 0.1019,
+  "error_px": 105.0,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.4491,
+  "far_hit_rate": 0.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.6805,
+  "outcome_auroc_one_ball": 0.696,
+  "p_correct_balanced": 0.291,
+  "balanced_accuracy": 0.26,
+  "p_correct_balanced_one_ball": 0.303,
+  "balanced_accuracy_one_ball": 0.29
+ }
+}

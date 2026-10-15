@@ -1,0 +1,35 @@
+{
+ "layer": "L4",
+ "model": "linear",
+ "input": "global",
+ "norm": "ln",
+ "head": "sigmoid",
+ "name": "L4-linear-global-ln-sigmoid",
+ "n_clips": 254,
+ "seconds": 29.7,
+ "context": {
+  "cell_auroc": 0.9727,
+  "visible_auroc": 0.9502,
+  "phantom_rate": 0.0036,
+  "hit_rate": 0.6156,
+  "error_px": 39.9,
+  "n_ball_steps": 1644
+ },
+ "target": {
+  "cell_auroc": 0.5787,
+  "visible_auroc": 0.4004,
+  "phantom_rate": 0.3173,
+  "hit_rate": 0.0723,
+  "error_px": 162.1,
+  "n_ball_steps": 2364,
+  "far_cell_auroc": 0.4915,
+  "far_hit_rate": 0.0,
+  "n_far_ball_steps": 491,
+  "outcome_auroc": 0.5012,
+  "outcome_auroc_one_ball": 0.447,
+  "p_correct_balanced": 0.316,
+  "balanced_accuracy": 0.327,
+  "p_correct_balanced_one_ball": 0.328,
+  "balanced_accuracy_one_ball": 0.32
+ }
+}

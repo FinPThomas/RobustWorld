@@ -1,0 +1,72 @@
+{
+ "run": "plan/plain-all",
+ "code_version": "e717d1c",
+ "device": "cuda",
+ "gpu": "Tesla T4",
+ "torch": "2.11.0+cu128",
+ "transformers": "5.16.1",
+ "started": "2026-10-08 19:19:24 UTC",
+ "n_clips": 254,
+ "clips_per_outcome": {
+  "through": 111,
+  "hidden": 77,
+  "bounce": 66
+ },
+ "args": {
+  "stage": "train",
+  "manifest": "/tmp/RobustWorld/outputs/vjepa2/plan/manifest_seen.jsonl",
+  "model_id": "facebook/vjepa2-vitl-fpc64-256",
+  "run": "plan/plain-all",
+  "folds": 5,
+  "fold": null,
+  "all": true,
+  "epochs": 10,
+  "batch_size": 4,
+  "accum": 2,
+  "lr": 3e-05,
+  "weight_decay": 0.04,
+  "workers": 2,
+  "seed": 0,
+  "loss": "l1",
+  "grad_checkpoint": true,
+  "val_frac": 0.1,
+  "patience": 3,
+  "keep_best": true,
+  "rollout": false,
+  "copy_gate": false,
+  "hypotheses": 1,
+  "wta_relax": 0.05,
+  "train_frac": 1.0,
+  "resume": true,
+  "codes": 256,
+  "code_tau": 0.05,
+  "motion_alpha": 4.0,
+  "contrast_weight": 0.1,
+  "tau": 0.02,
+  "negatives": 8
+ },
+ "scale_check": {
+  "pred_spread": 0.6176,
+  "target_spread_raw": 3.2694,
+  "target_spread_ln": 1.0005,
+  "l1_vs_raw": 2.0517,
+  "l1_vs_ln": 0.5922
+ },
+ "folds": [
+  {
+   "split": "all",
+   "seconds": 1638.8,
+   "best_epoch": 10,
+   "overfit": {
+    "val_rise_from_best": 0.0,
+    "val_over_train": 1.004,
+    "flag": false
+   },
+   "final_weight_change": 0.010368,
+   "held_out_l1_pretrained": null,
+   "held_out_l1_posttrained": null,
+   "peak_gpu_gb": 1.68
+  }
+ ],
+ "seconds": 1644.5
+}
