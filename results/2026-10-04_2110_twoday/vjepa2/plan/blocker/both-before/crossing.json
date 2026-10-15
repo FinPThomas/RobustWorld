@@ -1,0 +1,7088 @@
+{
+ "label": "both-before",
+ "plank_length_px": 449.6,
+ "blocker_span_px": null,
+ "n_passes": 337,
+ "n_blocked": 194,
+ "auroc_real": 0.994,
+ "auroc_imagined": 0.392,
+ "passes": [
+  {
+   "clip_id": "whole_0000",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 266.1,
+   "exit_along": 267.9,
+   "fit_xy": [
+    288.5,
+    272.6
+   ],
+   "entry_xy": [
+    263.5,
+    270.9
+   ],
+   "exit_xy": [
+    141.8,
+    262.3
+   ]
+  },
+  {
+   "clip_id": "whole_0001",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 285.0,
+   "exit_along": 272.2,
+   "fit_xy": [
+    293.1,
+    295.4
+   ],
+   "entry_xy": [
+    263.0,
+    289.8
+   ],
+   "exit_xy": [
+    138.4,
+    266.3
+   ]
+  },
+  {
+   "clip_id": "whole_0002",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 135.7,
+   "exit_along": 127.3,
+   "fit_xy": [
+    294.3,
+    145.1
+   ],
+   "entry_xy": [
+    265.7,
+    140.1
+   ],
+   "exit_xy": [
+    171.4,
+    123.7
+   ]
+  },
+  {
+   "clip_id": "whole_0003",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 1.0,
+   "entry_along": 279.1,
+   "exit_along": 265.5,
+   "fit_xy": [
+    284.6,
+    288.3
+   ],
+   "entry_xy": [
+    261.1,
+    283.7
+   ],
+   "exit_xy": [
+    140.7,
+    259.8
+   ]
+  },
+  {
+   "clip_id": "whole_0004",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 255.6,
+   "exit_along": 245.4,
+   "fit_xy": [
+    288.6,
+    264.6
+   ],
+   "entry_xy": [
+    263.7,
+    260.3
+   ],
+   "exit_xy": [
+    145.7,
+    240.0
+   ]
+  },
+  {
+   "clip_id": "whole_0005",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 333.3,
+   "exit_along": 330.3,
+   "fit_xy": [
+    287.8,
+    340.9
+   ],
+   "entry_xy": [
+    260.6,
+    338.0
+   ],
+   "exit_xy": [
+    128.9,
+    323.8
+   ]
+  },
+  {
+   "clip_id": "whole_0006",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 155.8,
+   "exit_along": 142.4,
+   "fit_xy": [
+    289.5,
+    165.9
+   ],
+   "entry_xy": [
+    264.4,
+    160.2
+   ],
+   "exit_xy": [
+    169.3,
+    138.7
+   ]
+  },
+  {
+   "clip_id": "whole_0007",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.973,
+   "imagined": 1.0,
+   "entry_along": 287.9,
+   "exit_along": 270.2,
+   "fit_xy": [
+    291.0,
+    299.5
+   ],
+   "entry_xy": [
+    261.1,
+    292.5
+   ],
+   "exit_xy": [
+    141.8,
+    264.6
+   ]
+  },
+  {
+   "clip_id": "whole_0008",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.993,
+   "imagined": 1.0,
+   "entry_along": 104.3,
+   "exit_along": 96.9,
+   "fit_xy": [
+    284.2,
+    111.6
+   ],
+   "entry_xy": [
+    266.9,
+    108.7
+   ],
+   "exit_xy": [
+    180.1,
+    93.9
+   ]
+  },
+  {
+   "clip_id": "whole_0009",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 131.8,
+   "exit_along": 138.8,
+   "fit_xy": [
+    291.5,
+    136.5
+   ],
+   "entry_xy": [
+    266.4,
+    136.3
+   ],
+   "exit_xy": [
+    169.9,
+    135.2
+   ]
+  },
+  {
+   "clip_id": "whole_0010",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 1.0,
+   "entry_along": 160.6,
+   "exit_along": 165.0,
+   "fit_xy": [
+    291.0,
+    166.3
+   ],
+   "entry_xy": [
+    266.3,
+    165.2
+   ],
+   "exit_xy": [
+    164.0,
+    160.9
+   ]
+  },
+  {
+   "clip_id": "whole_0011",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.978,
+   "imagined": 0.999,
+   "entry_along": 249.1,
+   "exit_along": 230.2,
+   "fit_xy": [
+    293.8,
+    261.6
+   ],
+   "entry_xy": [
+    262.5,
+    253.7
+   ],
+   "exit_xy": [
+    149.2,
+    225.1
+   ]
+  },
+  {
+   "clip_id": "whole_0012",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 128.4,
+   "exit_along": 121.9,
+   "fit_xy": [
+    285.5,
+    135.9
+   ],
+   "entry_xy": [
+    266.5,
+    132.9
+   ],
+   "exit_xy": [
+    173.5,
+    118.5
+   ]
+  },
+  {
+   "clip_id": "whole_0013",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.964,
+   "imagined": 0.999,
+   "entry_along": 276.2,
+   "exit_along": 269.2,
+   "fit_xy": [
+    291.3,
+    284.9
+   ],
+   "entry_xy": [
+    263.4,
+    280.9
+   ],
+   "exit_xy": [
+    142.2,
+    263.6
+   ]
+  },
+  {
+   "clip_id": "whole_0014",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 125.8,
+   "exit_along": 111.5,
+   "fit_xy": [
+    286.6,
+    135.3
+   ],
+   "entry_xy": [
+    265.9,
+    130.3
+   ],
+   "exit_xy": [
+    176.2,
+    108.3
+   ]
+  },
+  {
+   "clip_id": "whole_0015",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 1.0,
+   "entry_along": 283.3,
+   "exit_along": 274.6,
+   "fit_xy": [
+    292.6,
+    292.7
+   ],
+   "entry_xy": [
+    262.8,
+    288.0
+   ],
+   "exit_xy": [
+    140.3,
+    268.9
+   ]
+  },
+  {
+   "clip_id": "whole_0016",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.989,
+   "imagined": 1.0,
+   "entry_along": 369.1,
+   "exit_along": 381.1,
+   "fit_xy": [
+    291.4,
+    373.8
+   ],
+   "entry_xy": [
+    259.1,
+    373.8
+   ],
+   "exit_xy": [
+    118.0,
+    373.9
+   ]
+  },
+  {
+   "clip_id": "whole_0017",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 180.9,
+   "exit_along": 169.8,
+   "fit_xy": [
+    291.3,
+    190.6
+   ],
+   "entry_xy": [
+    265.1,
+    185.5
+   ],
+   "exit_xy": [
+    162.9,
+    165.7
+   ]
+  },
+  {
+   "clip_id": "whole_0018",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 356.3,
+   "exit_along": 351.2,
+   "fit_xy": [
+    289.1,
+    364.6
+   ],
+   "entry_xy": [
+    261.0,
+    361.1
+   ],
+   "exit_xy": [
+    125.3,
+    344.5
+   ]
+  },
+  {
+   "clip_id": "whole_0019",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.964,
+   "imagined": 1.0,
+   "entry_along": 304.7,
+   "exit_along": 296.7,
+   "fit_xy": [
+    287.0,
+    313.2
+   ],
+   "entry_xy": [
+    262.2,
+    309.5
+   ],
+   "exit_xy": [
+    135.2,
+    290.6
+   ]
+  },
+  {
+   "clip_id": "whole_0020",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 1.0,
+   "entry_along": 143.0,
+   "exit_along": 122.3,
+   "fit_xy": [
+    287.0,
+    154.0
+   ],
+   "entry_xy": [
+    266.4,
+    147.6
+   ],
+   "exit_xy": [
+    174.8,
+    119.0
+   ]
+  },
+  {
+   "clip_id": "whole_0021",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.006,
+   "imagined": 1.0,
+   "entry_along": 329.7,
+   "exit_along": 326.2,
+   "fit_xy": [
+    292.4,
+    338.0
+   ],
+   "entry_xy": [
+    259.6,
+    334.4
+   ],
+   "exit_xy": [
+    128.6,
+    319.7
+   ]
+  },
+  {
+   "clip_id": "whole_0022",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 164.6,
+   "exit_along": 152.7,
+   "fit_xy": [
+    287.8,
+    173.7
+   ],
+   "entry_xy": [
+    265.5,
+    169.1
+   ],
+   "exit_xy": [
+    166.5,
+    148.8
+   ]
+  },
+  {
+   "clip_id": "whole_0023",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.969,
+   "imagined": 0.999,
+   "entry_along": 221.3,
+   "exit_along": 215.4,
+   "fit_xy": [
+    289.6,
+    229.4
+   ],
+   "entry_xy": [
+    263.8,
+    225.9
+   ],
+   "exit_xy": [
+    154.1,
+    210.7
+   ]
+  },
+  {
+   "clip_id": "whole_0024",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 1.0,
+   "entry_along": 247.1,
+   "exit_along": 221.8,
+   "fit_xy": [
+    289.2,
+    259.6
+   ],
+   "entry_xy": [
+    264.0,
+    251.8
+   ],
+   "exit_xy": [
+    151.7,
+    216.9
+   ]
+  },
+  {
+   "clip_id": "whole_0025",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.989,
+   "imagined": 1.0,
+   "entry_along": 261.5,
+   "exit_along": 277.9,
+   "fit_xy": [
+    296.1,
+    264.4
+   ],
+   "entry_xy": [
+    262.6,
+    266.2
+   ],
+   "exit_xy": [
+    141.4,
+    272.4
+   ]
+  },
+  {
+   "clip_id": "whole_0026",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 143.0,
+   "exit_along": 140.8,
+   "fit_xy": [
+    292.2,
+    150.3
+   ],
+   "entry_xy": [
+    266.3,
+    147.5
+   ],
+   "exit_xy": [
+    169.8,
+    137.1
+   ]
+  },
+  {
+   "clip_id": "whole_0027",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 1.0,
+   "entry_along": 222.6,
+   "exit_along": 199.7,
+   "fit_xy": [
+    289.7,
+    234.8
+   ],
+   "entry_xy": [
+    264.5,
+    227.3
+   ],
+   "exit_xy": [
+    156.8,
+    195.1
+   ]
+  },
+  {
+   "clip_id": "whole_0028",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.955,
+   "imagined": 0.999,
+   "entry_along": 248.1,
+   "exit_along": 256.5,
+   "fit_xy": [
+    288.7,
+    253.0
+   ],
+   "entry_xy": [
+    262.6,
+    252.7
+   ],
+   "exit_xy": [
+    144.4,
+    251.1
+   ]
+  },
+  {
+   "clip_id": "whole_0029",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 167.7,
+   "exit_along": 142.9,
+   "fit_xy": [
+    288.5,
+    180.7
+   ],
+   "entry_xy": [
+    263.8,
+    172.1
+   ],
+   "exit_xy": [
+    170.2,
+    139.3
+   ]
+  },
+  {
+   "clip_id": "whole_0030",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.967,
+   "imagined": 1.0,
+   "entry_along": 308.3,
+   "exit_along": 286.6,
+   "fit_xy": [
+    287.3,
+    319.5
+   ],
+   "entry_xy": [
+    262.3,
+    313.1
+   ],
+   "exit_xy": [
+    136.8,
+    280.7
+   ]
+  },
+  {
+   "clip_id": "whole_0031",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.977,
+   "imagined": 0.999,
+   "entry_along": 272.6,
+   "exit_along": 265.0,
+   "fit_xy": [
+    291.6,
+    281.7
+   ],
+   "entry_xy": [
+    261.5,
+    277.2
+   ],
+   "exit_xy": [
+    143.8,
+    259.6
+   ]
+  },
+  {
+   "clip_id": "whole_0033",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.986,
+   "imagined": 1.0,
+   "entry_along": 303.0,
+   "exit_along": 308.4,
+   "fit_xy": [
+    290.3,
+    308.9
+   ],
+   "entry_xy": [
+    261.1,
+    307.6
+   ],
+   "exit_xy": [
+    133.1,
+    302.2
+   ]
+  },
+  {
+   "clip_id": "whole_0035",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 1.0,
+   "entry_along": 280.6,
+   "exit_along": 284.0,
+   "fit_xy": [
+    294.8,
+    287.0
+   ],
+   "entry_xy": [
+    259.9,
+    285.0
+   ],
+   "exit_xy": [
+    137.7,
+    278.1
+   ]
+  },
+  {
+   "clip_id": "whole_0036",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 0.999,
+   "entry_along": 219.2,
+   "exit_along": 216.0,
+   "fit_xy": [
+    290.7,
+    226.9
+   ],
+   "entry_xy": [
+    262.1,
+    223.6
+   ],
+   "exit_xy": [
+    154.4,
+    211.3
+   ]
+  },
+  {
+   "clip_id": "whole_0037",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 1.0,
+   "entry_along": 190.0,
+   "exit_along": 179.5,
+   "fit_xy": [
+    299.6,
+    201.5
+   ],
+   "entry_xy": [
+    261.5,
+    194.2
+   ],
+   "exit_xy": [
+    161.5,
+    175.3
+   ]
+  },
+  {
+   "clip_id": "whole_0038",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.958,
+   "imagined": 1.0,
+   "entry_along": 377.3,
+   "exit_along": 401.5,
+   "fit_xy": [
+    297.6,
+    379.2
+   ],
+   "entry_xy": [
+    260.4,
+    382.2
+   ],
+   "exit_xy": [
+    114.7,
+    394.1
+   ]
+  },
+  {
+   "clip_id": "whole_0039",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.9,
+   "imagined": 1.0,
+   "entry_along": 260.1,
+   "exit_along": 252.0,
+   "fit_xy": [
+    287.3,
+    268.6
+   ],
+   "entry_xy": [
+    262.6,
+    264.8
+   ],
+   "exit_xy": [
+    145.9,
+    246.7
+   ]
+  },
+  {
+   "clip_id": "whole_0040",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 142.9,
+   "exit_along": 125.7,
+   "fit_xy": [
+    289.6,
+    153.9
+   ],
+   "entry_xy": [
+    265.5,
+    147.4
+   ],
+   "exit_xy": [
+    172.0,
+    122.2
+   ]
+  },
+  {
+   "clip_id": "whole_0041",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 344.4,
+   "exit_along": 340.8,
+   "fit_xy": [
+    299.9,
+    353.6
+   ],
+   "entry_xy": [
+    260.8,
+    349.2
+   ],
+   "exit_xy": [
+    125.9,
+    334.1
+   ]
+  },
+  {
+   "clip_id": "whole_0042",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 113.2,
+   "exit_along": 111.8,
+   "fit_xy": [
+    291.9,
+    120.2
+   ],
+   "entry_xy": [
+    266.3,
+    117.7
+   ],
+   "exit_xy": [
+    176.8,
+    108.6
+   ]
+  },
+  {
+   "clip_id": "whole_0043",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.986,
+   "imagined": 1.0,
+   "entry_along": 314.1,
+   "exit_along": 301.8,
+   "fit_xy": [
+    289.3,
+    324.0
+   ],
+   "entry_xy": [
+    260.0,
+    318.7
+   ],
+   "exit_xy": [
+    135.8,
+    295.9
+   ]
+  },
+  {
+   "clip_id": "whole_0044",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 1.0,
+   "entry_along": 254.3,
+   "exit_along": 232.1,
+   "fit_xy": [
+    290.1,
+    266.4
+   ],
+   "entry_xy": [
+    263.8,
+    259.0
+   ],
+   "exit_xy": [
+    151.0,
+    227.1
+   ]
+  },
+  {
+   "clip_id": "whole_0045",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.998,
+   "entry_along": 229.7,
+   "exit_along": 236.5,
+   "fit_xy": [
+    298.0,
+    235.1
+   ],
+   "entry_xy": [
+    261.8,
+    234.2
+   ],
+   "exit_xy": [
+    147.4,
+    231.3
+   ]
+  },
+  {
+   "clip_id": "whole_0046",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 0.999,
+   "entry_along": 301.6,
+   "exit_along": 306.6,
+   "fit_xy": [
+    286.6,
+    307.4
+   ],
+   "entry_xy": [
+    261.6,
+    306.3
+   ],
+   "exit_xy": [
+    133.5,
+    300.4
+   ]
+  },
+  {
+   "clip_id": "whole_0047",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 153.9,
+   "exit_along": 153.3,
+   "fit_xy": [
+    293.6,
+    160.9
+   ],
+   "entry_xy": [
+    263.8,
+    158.2
+   ],
+   "exit_xy": [
+    165.6,
+    149.3
+   ]
+  },
+  {
+   "clip_id": "whole_0048",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 143.1,
+   "exit_along": 144.6,
+   "fit_xy": [
+    292.9,
+    149.5
+   ],
+   "entry_xy": [
+    265.5,
+    147.6
+   ],
+   "exit_xy": [
+    169.8,
+    140.9
+   ]
+  },
+  {
+   "clip_id": "whole_0049",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 342.0,
+   "exit_along": 317.8,
+   "fit_xy": [
+    292.7,
+    355.7
+   ],
+   "entry_xy": [
+    259.4,
+    346.6
+   ],
+   "exit_xy": [
+    130.0,
+    311.3
+   ]
+  },
+  {
+   "clip_id": "whole_0050",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 146.0,
+   "exit_along": 150.7,
+   "fit_xy": [
+    288.4,
+    151.4
+   ],
+   "entry_xy": [
+    266.0,
+    150.5
+   ],
+   "exit_xy": [
+    166.5,
+    146.8
+   ]
+  },
+  {
+   "clip_id": "whole_0051",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 119.3,
+   "exit_along": 115.9,
+   "fit_xy": [
+    287.5,
+    126.3
+   ],
+   "entry_xy": [
+    267.0,
+    123.8
+   ],
+   "exit_xy": [
+    174.7,
+    112.5
+   ]
+  },
+  {
+   "clip_id": "whole_0052",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 135.4,
+   "exit_along": 131.0,
+   "fit_xy": [
+    291.0,
+    143.1
+   ],
+   "entry_xy": [
+    266.5,
+    139.9
+   ],
+   "exit_xy": [
+    171.1,
+    127.4
+   ]
+  },
+  {
+   "clip_id": "whole_0053",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.97,
+   "imagined": 0.999,
+   "entry_along": 248.2,
+   "exit_along": 238.3,
+   "fit_xy": [
+    289.9,
+    257.4
+   ],
+   "entry_xy": [
+    262.7,
+    252.8
+   ],
+   "exit_xy": [
+    148.8,
+    233.2
+   ]
+  },
+  {
+   "clip_id": "whole_0054",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.917,
+   "imagined": 0.999,
+   "entry_along": 197.9,
+   "exit_along": 185.8,
+   "fit_xy": [
+    292.2,
+    208.1
+   ],
+   "entry_xy": [
+    264.3,
+    202.4
+   ],
+   "exit_xy": [
+    161.0,
+    181.5
+   ]
+  },
+  {
+   "clip_id": "whole_0055",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 140.0,
+   "exit_along": 100.7,
+   "fit_xy": [
+    284.8,
+    154.7
+   ],
+   "entry_xy": [
+    265.4,
+    144.4
+   ],
+   "exit_xy": [
+    177.3,
+    97.6
+   ]
+  },
+  {
+   "clip_id": "whole_0056",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 132.3,
+   "exit_along": 98.8,
+   "fit_xy": [
+    287.1,
+    146.6
+   ],
+   "entry_xy": [
+    266.2,
+    136.8
+   ],
+   "exit_xy": [
+    178.4,
+    95.7
+   ]
+  },
+  {
+   "clip_id": "whole_0057",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.982,
+   "imagined": 0.999,
+   "entry_along": 207.4,
+   "exit_along": 161.7,
+   "fit_xy": [
+    288.9,
+    226.4
+   ],
+   "entry_xy": [
+    262.7,
+    211.9
+   ],
+   "exit_xy": [
+    164.2,
+    157.6
+   ]
+  },
+  {
+   "clip_id": "whole_0058",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.982,
+   "imagined": 1.0,
+   "entry_along": 242.9,
+   "exit_along": 197.2,
+   "fit_xy": [
+    294.0,
+    263.0
+   ],
+   "entry_xy": [
+    264.1,
+    247.6
+   ],
+   "exit_xy": [
+    158.1,
+    192.8
+   ]
+  },
+  {
+   "clip_id": "whole_0059",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 114.6,
+   "exit_along": 106.8,
+   "fit_xy": [
+    289.9,
+    123.0
+   ],
+   "entry_xy": [
+    267.0,
+    119.1
+   ],
+   "exit_xy": [
+    177.7,
+    103.6
+   ]
+  },
+  {
+   "clip_id": "whole_0060",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 1.0,
+   "entry_along": 223.8,
+   "exit_along": 165.0,
+   "fit_xy": [
+    289.3,
+    246.5
+   ],
+   "entry_xy": [
+    262.9,
+    228.3
+   ],
+   "exit_xy": [
+    165.2,
+    161.0
+   ]
+  },
+  {
+   "clip_id": "whole_0061",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.977,
+   "imagined": 1.0,
+   "entry_along": 338.7,
+   "exit_along": 269.3,
+   "fit_xy": [
+    285.6,
+    360.4
+   ],
+   "entry_xy": [
+    260.6,
+    343.5
+   ],
+   "exit_xy": [
+    143.2,
+    263.9
+   ]
+  },
+  {
+   "clip_id": "whole_0062",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 0.999,
+   "entry_along": 240.8,
+   "exit_along": 171.1,
+   "fit_xy": [
+    288.6,
+    265.4
+   ],
+   "entry_xy": [
+    262.7,
+    245.4
+   ],
+   "exit_xy": [
+    161.8,
+    166.9
+   ]
+  },
+  {
+   "clip_id": "whole_0063",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 186.3,
+   "exit_along": 132.1,
+   "fit_xy": [
+    287.8,
+    205.8
+   ],
+   "entry_xy": [
+    265.6,
+    190.9
+   ],
+   "exit_xy": [
+    172.1,
+    128.6
+   ]
+  },
+  {
+   "clip_id": "whole_0064",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.004,
+   "imagined": 1.0,
+   "entry_along": 144.4,
+   "exit_along": 98.6,
+   "fit_xy": [
+    291.2,
+    164.0
+   ],
+   "entry_xy": [
+    266.6,
+    149.0
+   ],
+   "exit_xy": [
+    179.3,
+    95.6
+   ]
+  },
+  {
+   "clip_id": "whole_0065",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 119.1,
+   "exit_along": 68.4,
+   "fit_xy": [
+    285.5,
+    136.7
+   ],
+   "entry_xy": [
+    266.8,
+    123.6
+   ],
+   "exit_xy": [
+    184.9,
+    65.8
+   ]
+  },
+  {
+   "clip_id": "whole_0066",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 180.8,
+   "exit_along": 124.6,
+   "fit_xy": [
+    284.6,
+    199.5
+   ],
+   "entry_xy": [
+    264.4,
+    185.3
+   ],
+   "exit_xy": [
+    173.9,
+    121.2
+   ]
+  },
+  {
+   "clip_id": "whole_0067",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 0.999,
+   "entry_along": 157.9,
+   "exit_along": 104.9,
+   "fit_xy": [
+    284.7,
+    175.1
+   ],
+   "entry_xy": [
+    266.4,
+    162.5
+   ],
+   "exit_xy": [
+    178.6,
+    101.9
+   ]
+  },
+  {
+   "clip_id": "whole_0068",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.004,
+   "imagined": 1.0,
+   "entry_along": 147.0,
+   "exit_along": 109.3,
+   "fit_xy": [
+    292.2,
+    164.6
+   ],
+   "entry_xy": [
+    266.0,
+    151.5
+   ],
+   "exit_xy": [
+    175.5,
+    106.1
+   ]
+  },
+  {
+   "clip_id": "whole_0069",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.946,
+   "imagined": 1.0,
+   "entry_along": 420.8,
+   "exit_along": 419.3,
+   "fit_xy": [
+    305.0,
+    430.1
+   ],
+   "entry_xy": [
+    257.7,
+    425.6
+   ],
+   "exit_xy": [
+    106.4,
+    411.3
+   ]
+  },
+  {
+   "clip_id": "whole_0070",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.946,
+   "imagined": 0.999,
+   "entry_along": 216.0,
+   "exit_along": 209.9,
+   "fit_xy": [
+    290.7,
+    224.4
+   ],
+   "entry_xy": [
+    262.0,
+    220.4
+   ],
+   "exit_xy": [
+    153.5,
+    205.1
+   ]
+  },
+  {
+   "clip_id": "whole_0071",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 140.4,
+   "exit_along": 112.5,
+   "fit_xy": [
+    288.0,
+    153.4
+   ],
+   "entry_xy": [
+    266.2,
+    144.9
+   ],
+   "exit_xy": [
+    175.6,
+    109.2
+   ]
+  },
+  {
+   "clip_id": "whole_0072",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.975,
+   "imagined": 1.0,
+   "entry_along": 296.0,
+   "exit_along": 252.2,
+   "fit_xy": [
+    290.9,
+    314.5
+   ],
+   "entry_xy": [
+    261.0,
+    300.6
+   ],
+   "exit_xy": [
+    144.6,
+    246.8
+   ]
+  },
+  {
+   "clip_id": "whole_0073",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.936,
+   "imagined": 0.999,
+   "entry_along": 238.7,
+   "exit_along": 227.7,
+   "fit_xy": [
+    294.5,
+    249.1
+   ],
+   "entry_xy": [
+    263.3,
+    243.3
+   ],
+   "exit_xy": [
+    151.9,
+    222.8
+   ]
+  },
+  {
+   "clip_id": "whole_0074",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 108.4,
+   "exit_along": 109.7,
+   "fit_xy": [
+    286.8,
+    114.2
+   ],
+   "entry_xy": [
+    266.5,
+    112.8
+   ],
+   "exit_xy": [
+    176.8,
+    106.5
+   ]
+  },
+  {
+   "clip_id": "whole_0075",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 0.999,
+   "entry_along": 76.9,
+   "exit_along": 48.9,
+   "fit_xy": [
+    287.5,
+    89.8
+   ],
+   "entry_xy": [
+    268.1,
+    81.3
+   ],
+   "exit_xy": [
+    189.1,
+    46.6
+   ]
+  },
+  {
+   "clip_id": "whole_0076",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.37,
+   "imagined": 1.0,
+   "entry_along": 322.5,
+   "exit_along": 318.3,
+   "fit_xy": [
+    293.2,
+    331.1
+   ],
+   "entry_xy": [
+    259.1,
+    327.1
+   ],
+   "exit_xy": [
+    129.5,
+    311.9
+   ]
+  },
+  {
+   "clip_id": "whole_0077",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.994,
+   "imagined": 1.0,
+   "entry_along": 214.5,
+   "exit_along": 151.9,
+   "fit_xy": [
+    289.9,
+    238.4
+   ],
+   "entry_xy": [
+    263.6,
+    219.1
+   ],
+   "exit_xy": [
+    167.4,
+    148.0
+   ]
+  },
+  {
+   "clip_id": "whole_0078",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 1.0,
+   "entry_along": 240.1,
+   "exit_along": 178.7,
+   "fit_xy": [
+    290.4,
+    263.4
+   ],
+   "entry_xy": [
+    263.4,
+    244.7
+   ],
+   "exit_xy": [
+    161.9,
+    174.5
+   ]
+  },
+  {
+   "clip_id": "whole_0079",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 136.5,
+   "exit_along": 141.1,
+   "fit_xy": [
+    289.5,
+    141.8
+   ],
+   "entry_xy": [
+    266.3,
+    141.0
+   ],
+   "exit_xy": [
+    169.8,
+    137.4
+   ]
+  },
+  {
+   "clip_id": "whole_0080",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 144.4,
+   "exit_along": 137.8,
+   "fit_xy": [
+    293.0,
+    153.1
+   ],
+   "entry_xy": [
+    265.4,
+    148.9
+   ],
+   "exit_xy": [
+    171.6,
+    134.3
+   ]
+  },
+  {
+   "clip_id": "whole_0081",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.972,
+   "imagined": 1.0,
+   "entry_along": 288.6,
+   "exit_along": 255.9,
+   "fit_xy": [
+    295.0,
+    305.1
+   ],
+   "entry_xy": [
+    262.1,
+    293.3
+   ],
+   "exit_xy": [
+    143.1,
+    250.3
+   ]
+  },
+  {
+   "clip_id": "whole_0082",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 1.0,
+   "entry_along": 432.4,
+   "exit_along": 450.8,
+   "fit_xy": [
+    302.6,
+    435.7
+   ],
+   "entry_xy": [
+    257.8,
+    437.2
+   ],
+   "exit_xy": [
+    101.2,
+    442.5
+   ]
+  },
+  {
+   "clip_id": "whole_0083",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 0.999,
+   "entry_along": 221.3,
+   "exit_along": 202.8,
+   "fit_xy": [
+    291.4,
+    232.9
+   ],
+   "entry_xy": [
+    263.9,
+    225.9
+   ],
+   "exit_xy": [
+    156.4,
+    198.2
+   ]
+  },
+  {
+   "clip_id": "whole_0084",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 364.5,
+   "exit_along": 374.7,
+   "fit_xy": [
+    288.5,
+    369.6
+   ],
+   "entry_xy": [
+    260.4,
+    369.3
+   ],
+   "exit_xy": [
+    119.8,
+    367.6
+   ]
+  },
+  {
+   "clip_id": "whole_0085",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 1.0,
+   "entry_along": 310.2,
+   "exit_along": 300.2,
+   "fit_xy": [
+    297.7,
+    321.1
+   ],
+   "entry_xy": [
+    258.9,
+    314.7
+   ],
+   "exit_xy": [
+    132.9,
+    294.0
+   ]
+  },
+  {
+   "clip_id": "whole_0087",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 325.3,
+   "exit_along": 331.7,
+   "fit_xy": [
+    300.5,
+    331.4
+   ],
+   "entry_xy": [
+    261.1,
+    330.0
+   ],
+   "exit_xy": [
+    129.8,
+    325.3
+   ]
+  },
+  {
+   "clip_id": "whole_0088",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 371.7,
+   "exit_along": 371.4,
+   "fit_xy": [
+    296.1,
+    379.6
+   ],
+   "entry_xy": [
+    257.7,
+    376.3
+   ],
+   "exit_xy": [
+    120.6,
+    364.4
+   ]
+  },
+  {
+   "clip_id": "whole_0089",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 1.0,
+   "entry_along": 381.2,
+   "exit_along": 407.6,
+   "fit_xy": [
+    293.6,
+    382.3
+   ],
+   "entry_xy": [
+    257.0,
+    385.8
+   ],
+   "exit_xy": [
+    110.8,
+    399.8
+   ]
+  },
+  {
+   "clip_id": "whole_0090",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 357.9,
+   "exit_along": 381.5,
+   "fit_xy": [
+    290.5,
+    360.3
+   ],
+   "entry_xy": [
+    260.5,
+    362.7
+   ],
+   "exit_xy": [
+    118.2,
+    374.3
+   ]
+  },
+  {
+   "clip_id": "whole_0091",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 1.0,
+   "entry_along": 401.9,
+   "exit_along": 432.8,
+   "fit_xy": [
+    290.7,
+    403.1
+   ],
+   "entry_xy": [
+    258.6,
+    406.7
+   ],
+   "exit_xy": [
+    103.6,
+    424.6
+   ]
+  },
+  {
+   "clip_id": "whole_0092",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.943,
+   "imagined": 1.0,
+   "entry_along": 274.6,
+   "exit_along": 266.1,
+   "fit_xy": [
+    286.1,
+    283.1
+   ],
+   "entry_xy": [
+    260.1,
+    279.1
+   ],
+   "exit_xy": [
+    140.3,
+    260.4
+   ]
+  },
+  {
+   "clip_id": "whole_0093",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 0.999,
+   "entry_along": 232.3,
+   "exit_along": 228.7,
+   "fit_xy": [
+    288.4,
+    239.8
+   ],
+   "entry_xy": [
+    263.8,
+    236.9
+   ],
+   "exit_xy": [
+    150.9,
+    223.8
+   ]
+  },
+  {
+   "clip_id": "whole_0094",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 0.999,
+   "entry_along": 210.5,
+   "exit_along": 227.8,
+   "fit_xy": [
+    294.1,
+    213.1
+   ],
+   "entry_xy": [
+    264.9,
+    215.1
+   ],
+   "exit_xy": [
+    151.6,
+    222.9
+   ]
+  },
+  {
+   "clip_id": "whole_0095",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 1.0,
+   "entry_along": 289.3,
+   "exit_along": 278.3,
+   "fit_xy": [
+    291.6,
+    299.1
+   ],
+   "entry_xy": [
+    262.2,
+    294.0
+   ],
+   "exit_xy": [
+    138.6,
+    272.5
+   ]
+  },
+  {
+   "clip_id": "whole_0096",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.973,
+   "imagined": 1.0,
+   "entry_along": 301.7,
+   "exit_along": 297.1,
+   "fit_xy": [
+    287.5,
+    309.6
+   ],
+   "entry_xy": [
+    260.0,
+    306.3
+   ],
+   "exit_xy": [
+    134.2,
+    291.0
+   ]
+  },
+  {
+   "clip_id": "whole_0097",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.948,
+   "imagined": 1.0,
+   "entry_along": 303.0,
+   "exit_along": 309.3,
+   "fit_xy": [
+    291.4,
+    308.6
+   ],
+   "entry_xy": [
+    259.1,
+    307.5
+   ],
+   "exit_xy": [
+    134.6,
+    303.2
+   ]
+  },
+  {
+   "clip_id": "whole_0098",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 124.2,
+   "exit_along": 124.0,
+   "fit_xy": [
+    285.3,
+    130.3
+   ],
+   "entry_xy": [
+    265.7,
+    128.6
+   ],
+   "exit_xy": [
+    172.2,
+    120.4
+   ]
+  },
+  {
+   "clip_id": "whole_0099",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 355.7,
+   "exit_along": 366.3,
+   "fit_xy": [
+    285.4,
+    360.7
+   ],
+   "entry_xy": [
+    260.0,
+    360.5
+   ],
+   "exit_xy": [
+    118.0,
+    359.0
+   ]
+  },
+  {
+   "clip_id": "whole_0100",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.948,
+   "imagined": 1.0,
+   "entry_along": 314.8,
+   "exit_along": 307.2,
+   "fit_xy": [
+    289.8,
+    323.6
+   ],
+   "entry_xy": [
+    261.2,
+    319.5
+   ],
+   "exit_xy": [
+    134.5,
+    301.1
+   ]
+  },
+  {
+   "clip_id": "whole_0101",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 1.0,
+   "entry_along": 368.6,
+   "exit_along": 397.0,
+   "fit_xy": [
+    298.4,
+    368.3
+   ],
+   "entry_xy": [
+    256.8,
+    373.1
+   ],
+   "exit_xy": [
+    113.4,
+    389.5
+   ]
+  },
+  {
+   "clip_id": "whole_0102",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 347.4,
+   "exit_along": 363.0,
+   "fit_xy": [
+    297.9,
+    351.0
+   ],
+   "entry_xy": [
+    260.1,
+    352.1
+   ],
+   "exit_xy": [
+    123.0,
+    356.1
+   ]
+  },
+  {
+   "clip_id": "whole_0103",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.96,
+   "imagined": 1.0,
+   "entry_along": 259.9,
+   "exit_along": 245.3,
+   "fit_xy": [
+    286.2,
+    269.8
+   ],
+   "entry_xy": [
+    261.5,
+    264.5
+   ],
+   "exit_xy": [
+    147.3,
+    240.1
+   ]
+  },
+  {
+   "clip_id": "whole_0104",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 275.1,
+   "exit_along": 262.4,
+   "fit_xy": [
+    285.7,
+    284.1
+   ],
+   "entry_xy": [
+    263.2,
+    279.8
+   ],
+   "exit_xy": [
+    143.3,
+    257.0
+   ]
+  },
+  {
+   "clip_id": "whole_0105",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 1.0,
+   "entry_along": 295.8,
+   "exit_along": 282.0,
+   "fit_xy": [
+    287.1,
+    305.4
+   ],
+   "entry_xy": [
+    262.6,
+    300.6
+   ],
+   "exit_xy": [
+    140.1,
+    276.4
+   ]
+  },
+  {
+   "clip_id": "whole_0106",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.932,
+   "imagined": 1.0,
+   "entry_along": 374.3,
+   "exit_along": 401.6,
+   "fit_xy": [
+    300.8,
+    374.4
+   ],
+   "entry_xy": [
+    257.9,
+    378.9
+   ],
+   "exit_xy": [
+    113.2,
+    394.1
+   ]
+  },
+  {
+   "clip_id": "whole_0107",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 1.0,
+   "entry_along": 254.0,
+   "exit_along": 254.6,
+   "fit_xy": [
+    302.2,
+    261.7
+   ],
+   "entry_xy": [
+    259.6,
+    258.4
+   ],
+   "exit_xy": [
+    142.6,
+    249.1
+   ]
+  },
+  {
+   "clip_id": "whole_0111",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.97,
+   "imagined": 1.0,
+   "entry_along": 264.4,
+   "exit_along": 263.7,
+   "fit_xy": [
+    292.0,
+    271.7
+   ],
+   "entry_xy": [
+    262.0,
+    269.0
+   ],
+   "exit_xy": [
+    141.6,
+    258.1
+   ]
+  },
+  {
+   "clip_id": "whole_0112",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 156.6,
+   "exit_along": 152.0,
+   "fit_xy": [
+    286.6,
+    164.0
+   ],
+   "entry_xy": [
+    263.1,
+    160.9
+   ],
+   "exit_xy": [
+    165.5,
+    148.0
+   ]
+  },
+  {
+   "clip_id": "whole_0113",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 366.8,
+   "exit_along": 379.6,
+   "fit_xy": [
+    301.0,
+    371.3
+   ],
+   "entry_xy": [
+    259.0,
+    371.5
+   ],
+   "exit_xy": [
+    116.1,
+    372.2
+   ]
+  },
+  {
+   "clip_id": "whole_0114",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.962,
+   "imagined": 0.999,
+   "entry_along": 385.0,
+   "exit_along": 407.4,
+   "fit_xy": [
+    292.3,
+    387.0
+   ],
+   "entry_xy": [
+    256.3,
+    389.6
+   ],
+   "exit_xy": [
+    112.3,
+    399.8
+   ]
+  },
+  {
+   "clip_id": "whole_0115",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 112.2,
+   "exit_along": 116.6,
+   "fit_xy": [
+    289.3,
+    117.5
+   ],
+   "entry_xy": [
+    265.9,
+    116.6
+   ],
+   "exit_xy": [
+    175.2,
+    113.3
+   ]
+  },
+  {
+   "clip_id": "whole_0116",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 164.2,
+   "exit_along": 182.2,
+   "fit_xy": [
+    291.2,
+    166.4
+   ],
+   "entry_xy": [
+    264.9,
+    168.7
+   ],
+   "exit_xy": [
+    159.9,
+    177.8
+   ]
+  },
+  {
+   "clip_id": "whole_0117",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 324.0,
+   "exit_along": 343.8,
+   "fit_xy": [
+    292.7,
+    326.9
+   ],
+   "entry_xy": [
+    262.0,
+    328.8
+   ],
+   "exit_xy": [
+    125.8,
+    337.1
+   ]
+  },
+  {
+   "clip_id": "whole_0118",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.975,
+   "imagined": 1.0,
+   "entry_along": 423.1,
+   "exit_along": 448.9,
+   "fit_xy": [
+    306.6,
+    406.3
+   ],
+   "entry_xy": [
+    255.7,
+    427.8
+   ],
+   "exit_xy": [
+    204.8,
+    449.3
+   ]
+  },
+  {
+   "clip_id": "whole_0119",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 338.3,
+   "exit_along": 372.8,
+   "fit_xy": [
+    292.8,
+    337.3
+   ],
+   "entry_xy": [
+    258.8,
+    342.9
+   ],
+   "exit_xy": [
+    119.3,
+    365.7
+   ]
+  },
+  {
+   "clip_id": "whole_0120",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 1.0,
+   "entry_along": 361.6,
+   "exit_along": 405.8,
+   "fit_xy": [
+    290.4,
+    360.1
+   ],
+   "entry_xy": [
+    260.6,
+    366.4
+   ],
+   "exit_xy": [
+    111.4,
+    398.1
+   ]
+  },
+  {
+   "clip_id": "whole_0121",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 1.0,
+   "entry_along": 317.5,
+   "exit_along": 316.8,
+   "fit_xy": [
+    297.1,
+    325.4
+   ],
+   "entry_xy": [
+    260.2,
+    322.1
+   ],
+   "exit_xy": [
+    131.3,
+    310.5
+   ]
+  },
+  {
+   "clip_id": "whole_0122",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.982,
+   "imagined": 0.999,
+   "entry_along": 303.8,
+   "exit_along": 312.0,
+   "fit_xy": [
+    287.3,
+    309.0
+   ],
+   "entry_xy": [
+    259.8,
+    308.4
+   ],
+   "exit_xy": [
+    130.3,
+    305.6
+   ]
+  },
+  {
+   "clip_id": "whole_0123",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 1.0,
+   "entry_along": 375.2,
+   "exit_along": 422.3,
+   "fit_xy": [
+    303.0,
+    370.4
+   ],
+   "entry_xy": [
+    260.6,
+    380.1
+   ],
+   "exit_xy": [
+    110.3,
+    414.6
+   ]
+  },
+  {
+   "clip_id": "whole_0124",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.004,
+   "imagined": 1.0,
+   "entry_along": 131.4,
+   "exit_along": 139.6,
+   "fit_xy": [
+    290.3,
+    135.9
+   ],
+   "entry_xy": [
+    266.7,
+    135.9
+   ],
+   "exit_xy": [
+    169.9,
+    135.9
+   ]
+  },
+  {
+   "clip_id": "whole_0125",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 140.3,
+   "exit_along": 131.1,
+   "fit_xy": [
+    290.7,
+    149.2
+   ],
+   "entry_xy": [
+    266.0,
+    144.8
+   ],
+   "exit_xy": [
+    170.4,
+    127.4
+   ]
+  },
+  {
+   "clip_id": "whole_0126",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.964,
+   "imagined": 0.999,
+   "entry_along": 214.4,
+   "exit_along": 209.3,
+   "fit_xy": [
+    287.0,
+    222.1
+   ],
+   "entry_xy": [
+    262.4,
+    218.9
+   ],
+   "exit_xy": [
+    154.2,
+    204.5
+   ]
+  },
+  {
+   "clip_id": "whole_0127",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.923,
+   "imagined": 0.999,
+   "entry_along": 249.9,
+   "exit_along": 244.2,
+   "fit_xy": [
+    294.6,
+    258.7
+   ],
+   "entry_xy": [
+    262.6,
+    254.5
+   ],
+   "exit_xy": [
+    146.7,
+    239.0
+   ]
+  },
+  {
+   "clip_id": "whole_0128",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.989,
+   "imagined": 0.999,
+   "entry_along": 256.6,
+   "exit_along": 211.0,
+   "fit_xy": [
+    286.3,
+    273.8
+   ],
+   "entry_xy": [
+    261.5,
+    261.1
+   ],
+   "exit_xy": [
+    153.8,
+    206.3
+   ]
+  },
+  {
+   "clip_id": "whole_0129",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.955,
+   "imagined": 1.0,
+   "entry_along": 275.2,
+   "exit_along": 281.2,
+   "fit_xy": [
+    293.2,
+    281.0
+   ],
+   "entry_xy": [
+    262.1,
+    279.9
+   ],
+   "exit_xy": [
+    137.5,
+    275.3
+   ]
+  },
+  {
+   "clip_id": "whole_0130",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.976,
+   "imagined": 0.999,
+   "entry_along": 293.8,
+   "exit_along": 278.7,
+   "fit_xy": [
+    288.7,
+    304.4
+   ],
+   "entry_xy": [
+    260.4,
+    298.4
+   ],
+   "exit_xy": [
+    140.6,
+    273.1
+   ]
+  },
+  {
+   "clip_id": "whole_0131",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.999,
+   "entry_along": 206.9,
+   "exit_along": 193.3,
+   "fit_xy": [
+    294.0,
+    217.7
+   ],
+   "entry_xy": [
+    264.5,
+    211.5
+   ],
+   "exit_xy": [
+    157.0,
+    188.8
+   ]
+  },
+  {
+   "clip_id": "whole_0132",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 1.0,
+   "entry_along": 186.8,
+   "exit_along": 144.6,
+   "fit_xy": [
+    287.2,
+    203.8
+   ],
+   "entry_xy": [
+    263.4,
+    191.2
+   ],
+   "exit_xy": [
+    168.1,
+    140.8
+   ]
+  },
+  {
+   "clip_id": "whole_0133",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 1.0,
+   "entry_along": 221.3,
+   "exit_along": 181.4,
+   "fit_xy": [
+    288.9,
+    238.4
+   ],
+   "entry_xy": [
+    262.8,
+    225.8
+   ],
+   "exit_xy": [
+    161.4,
+    177.2
+   ]
+  },
+  {
+   "clip_id": "whole_0134",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 179.9,
+   "exit_along": 156.2,
+   "fit_xy": [
+    283.4,
+    190.2
+   ],
+   "entry_xy": [
+    265.6,
+    184.5
+   ],
+   "exit_xy": [
+    165.1,
+    152.2
+   ]
+  },
+  {
+   "clip_id": "whole_0135",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 159.9,
+   "exit_along": 170.6,
+   "fit_xy": [
+    290.1,
+    163.9
+   ],
+   "entry_xy": [
+    265.3,
+    164.4
+   ],
+   "exit_xy": [
+    163.7,
+    166.5
+   ]
+  },
+  {
+   "clip_id": "whole_0136",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 128.2,
+   "exit_along": 126.6,
+   "fit_xy": [
+    293.7,
+    135.5
+   ],
+   "entry_xy": [
+    267.2,
+    132.8
+   ],
+   "exit_xy": [
+    171.7,
+    123.1
+   ]
+  },
+  {
+   "clip_id": "whole_0137",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 158.1,
+   "exit_along": 146.1,
+   "fit_xy": [
+    293.4,
+    168.3
+   ],
+   "entry_xy": [
+    266.3,
+    162.7
+   ],
+   "exit_xy": [
+    167.8,
+    142.3
+   ]
+  },
+  {
+   "clip_id": "whole_0138",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 136.4,
+   "exit_along": 112.0,
+   "fit_xy": [
+    291.8,
+    149.7
+   ],
+   "entry_xy": [
+    266.7,
+    140.9
+   ],
+   "exit_xy": [
+    174.8,
+    108.6
+   ]
+  },
+  {
+   "clip_id": "whole_0139",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.986,
+   "imagined": 0.999,
+   "entry_along": 212.0,
+   "exit_along": 199.7,
+   "fit_xy": [
+    289.0,
+    221.6
+   ],
+   "entry_xy": [
+    264.2,
+    216.6
+   ],
+   "exit_xy": [
+    155.8,
+    195.1
+   ]
+  },
+  {
+   "clip_id": "whole_0140",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 121.1,
+   "exit_along": 103.3,
+   "fit_xy": [
+    291.1,
+    132.9
+   ],
+   "entry_xy": [
+    265.6,
+    125.5
+   ],
+   "exit_xy": [
+    177.4,
+    100.2
+   ]
+  },
+  {
+   "clip_id": "whole_0141",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.95,
+   "imagined": 1.0,
+   "entry_along": 314.2,
+   "exit_along": 311.7,
+   "fit_xy": [
+    299.5,
+    322.9
+   ],
+   "entry_xy": [
+    261.0,
+    318.9
+   ],
+   "exit_xy": [
+    134.0,
+    305.6
+   ]
+  },
+  {
+   "clip_id": "whole_0142",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.968,
+   "imagined": 1.0,
+   "entry_along": 292.7,
+   "exit_along": 281.2,
+   "fit_xy": [
+    288.9,
+    302.1
+   ],
+   "entry_xy": [
+    262.4,
+    297.4
+   ],
+   "exit_xy": [
+    140.0,
+    275.5
+   ]
+  },
+  {
+   "clip_id": "whole_0143",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 1.0,
+   "entry_along": 421.4,
+   "exit_along": 456.2,
+   "fit_xy": [
+    297.8,
+    420.7
+   ],
+   "entry_xy": [
+    258.5,
+    426.3
+   ],
+   "exit_xy": [
+    106.0,
+    448.3
+   ]
+  },
+  {
+   "clip_id": "whole_0144",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 357.0,
+   "exit_along": 373.0,
+   "fit_xy": [
+    298.9,
+    360.4
+   ],
+   "entry_xy": [
+    258.3,
+    361.6
+   ],
+   "exit_xy": [
+    117.8,
+    365.8
+   ]
+  },
+  {
+   "clip_id": "whole_0145",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.951,
+   "imagined": 1.0,
+   "entry_along": 233.9,
+   "exit_along": 236.8,
+   "fit_xy": [
+    297.1,
+    240.6
+   ],
+   "entry_xy": [
+    263.6,
+    238.6
+   ],
+   "exit_xy": [
+    148.0,
+    231.6
+   ]
+  },
+  {
+   "clip_id": "whole_0146",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 340.3,
+   "exit_along": 350.6,
+   "fit_xy": [
+    293.1,
+    345.1
+   ],
+   "entry_xy": [
+    258.5,
+    344.8
+   ],
+   "exit_xy": [
+    124.2,
+    343.8
+   ]
+  },
+  {
+   "clip_id": "whole_0147",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 1.0,
+   "entry_along": 293.4,
+   "exit_along": 307.4,
+   "fit_xy": [
+    292.3,
+    297.1
+   ],
+   "entry_xy": [
+    260.6,
+    297.9
+   ],
+   "exit_xy": [
+    134.0,
+    301.3
+   ]
+  },
+  {
+   "clip_id": "whole_0148",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 342.7,
+   "exit_along": 364.3,
+   "fit_xy": [
+    305.1,
+    343.8
+   ],
+   "entry_xy": [
+    258.1,
+    347.3
+   ],
+   "exit_xy": [
+    121.8,
+    357.4
+   ]
+  },
+  {
+   "clip_id": "whole_0149",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 1.0,
+   "entry_along": 411.3,
+   "exit_along": 454.0,
+   "fit_xy": [
+    298.3,
+    409.1
+   ],
+   "entry_xy": [
+    259.6,
+    416.2
+   ],
+   "exit_xy": [
+    99.4,
+    445.5
+   ]
+  },
+  {
+   "clip_id": "whole_0150",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 318.7,
+   "exit_along": 341.7,
+   "fit_xy": [
+    289.9,
+    320.5
+   ],
+   "entry_xy": [
+    259.0,
+    323.3
+   ],
+   "exit_xy": [
+    127.6,
+    335.2
+   ]
+  },
+  {
+   "clip_id": "whole_0151",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.973,
+   "imagined": 0.999,
+   "entry_along": 309.9,
+   "exit_along": 300.0,
+   "fit_xy": [
+    289.6,
+    319.4
+   ],
+   "entry_xy": [
+    260.3,
+    314.5
+   ],
+   "exit_xy": [
+    136.3,
+    294.1
+   ]
+  },
+  {
+   "clip_id": "whole_0152",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.96,
+   "imagined": 1.0,
+   "entry_along": 405.4,
+   "exit_along": 448.4,
+   "fit_xy": [
+    291.2,
+    404.4
+   ],
+   "entry_xy": [
+    259.8,
+    410.4
+   ],
+   "exit_xy": [
+    102.5,
+    440.1
+   ]
+  },
+  {
+   "clip_id": "whole_0153",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.96,
+   "imagined": 1.0,
+   "entry_along": 306.4,
+   "exit_along": 319.4,
+   "fit_xy": [
+    300.3,
+    310.3
+   ],
+   "entry_xy": [
+    260.2,
+    311.0
+   ],
+   "exit_xy": [
+    131.2,
+    313.1
+   ]
+  },
+  {
+   "clip_id": "whole_0154",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.976,
+   "imagined": 1.0,
+   "entry_along": 295.4,
+   "exit_along": 316.8,
+   "fit_xy": [
+    299.0,
+    297.3
+   ],
+   "entry_xy": [
+    262.5,
+    300.2
+   ],
+   "exit_xy": [
+    131.1,
+    310.4
+   ]
+  },
+  {
+   "clip_id": "whole_0155",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.935,
+   "imagined": 1.0,
+   "entry_along": 287.2,
+   "exit_along": 304.3,
+   "fit_xy": [
+    288.9,
+    290.7
+   ],
+   "entry_xy": [
+    262.6,
+    291.9
+   ],
+   "exit_xy": [
+    134.7,
+    298.2
+   ]
+  },
+  {
+   "clip_id": "whole_0156",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 319.4,
+   "exit_along": 351.2,
+   "fit_xy": [
+    289.3,
+    319.8
+   ],
+   "entry_xy": [
+    260.1,
+    324.0
+   ],
+   "exit_xy": [
+    122.7,
+    344.3
+   ]
+  },
+  {
+   "clip_id": "whole_0157",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 331.4,
+   "exit_along": 350.6,
+   "fit_xy": [
+    296.7,
+    334.0
+   ],
+   "entry_xy": [
+    259.8,
+    336.1
+   ],
+   "exit_xy": [
+    124.8,
+    343.9
+   ]
+  },
+  {
+   "clip_id": "whole_0158",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 1.0,
+   "entry_along": 352.0,
+   "exit_along": 368.5,
+   "fit_xy": [
+    294.4,
+    355.4
+   ],
+   "entry_xy": [
+    258.4,
+    356.6
+   ],
+   "exit_xy": [
+    120.7,
+    361.4
+   ]
+  },
+  {
+   "clip_id": "whole_0159",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 357.1,
+   "exit_along": 371.9,
+   "fit_xy": [
+    297.5,
+    361.1
+   ],
+   "entry_xy": [
+    260.3,
+    361.9
+   ],
+   "exit_xy": [
+    118.5,
+    364.7
+   ]
+  },
+  {
+   "clip_id": "whole_0160",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 283.6,
+   "exit_along": 279.9,
+   "fit_xy": [
+    287.1,
+    291.2
+   ],
+   "entry_xy": [
+    260.8,
+    288.1
+   ],
+   "exit_xy": [
+    140.8,
+    274.3
+   ]
+  },
+  {
+   "clip_id": "whole_0161",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.003,
+   "imagined": 1.0,
+   "entry_along": 115.9,
+   "exit_along": 99.2,
+   "fit_xy": [
+    289.7,
+    126.5
+   ],
+   "entry_xy": [
+    267.5,
+    120.4
+   ],
+   "exit_xy": [
+    178.9,
+    96.2
+   ]
+  },
+  {
+   "clip_id": "whole_0162",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.004,
+   "imagined": 0.999,
+   "entry_along": 133.1,
+   "exit_along": 144.0,
+   "fit_xy": [
+    290.2,
+    136.9
+   ],
+   "entry_xy": [
+    265.5,
+    137.6
+   ],
+   "exit_xy": [
+    169.7,
+    140.3
+   ]
+  },
+  {
+   "clip_id": "whole_0166",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 112.8,
+   "exit_along": 156.1,
+   "fit_xy": [
+    294.7,
+    107.3
+   ],
+   "entry_xy": [
+    266.4,
+    117.2
+   ],
+   "exit_xy": [
+    166.3,
+    152.1
+   ]
+  },
+  {
+   "clip_id": "whole_0167",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 125.5,
+   "exit_along": 170.9,
+   "fit_xy": [
+    291.1,
+    121.5
+   ],
+   "entry_xy": [
+    267.1,
+    130.0
+   ],
+   "exit_xy": [
+    163.5,
+    166.8
+   ]
+  },
+  {
+   "clip_id": "whole_0168",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 144.9,
+   "exit_along": 165.3,
+   "fit_xy": [
+    286.6,
+    146.7
+   ],
+   "entry_xy": [
+    264.9,
+    149.3
+   ],
+   "exit_xy": [
+    163.6,
+    161.2
+   ]
+  },
+  {
+   "clip_id": "whole_0169",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 1.0,
+   "entry_along": 77.6,
+   "exit_along": 85.0,
+   "fit_xy": [
+    291.9,
+    81.8
+   ],
+   "entry_xy": [
+    266.9,
+    81.9
+   ],
+   "exit_xy": [
+    181.7,
+    82.2
+   ]
+  },
+  {
+   "clip_id": "whole_0170",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 135.3,
+   "exit_along": 161.7,
+   "fit_xy": [
+    292.5,
+    135.3
+   ],
+   "entry_xy": [
+    266.5,
+    139.8
+   ],
+   "exit_xy": [
+    164.7,
+    157.7
+   ]
+  },
+  {
+   "clip_id": "whole_0171",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.004,
+   "imagined": 1.0,
+   "entry_along": 110.9,
+   "exit_along": 116.9,
+   "fit_xy": [
+    287.6,
+    115.7
+   ],
+   "entry_xy": [
+    265.8,
+    115.3
+   ],
+   "exit_xy": [
+    174.6,
+    113.6
+   ]
+  },
+  {
+   "clip_id": "whole_0172",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 126.1,
+   "exit_along": 139.9,
+   "fit_xy": [
+    288.5,
+    129.3
+   ],
+   "entry_xy": [
+    266.6,
+    130.6
+   ],
+   "exit_xy": [
+    169.7,
+    136.3
+   ]
+  },
+  {
+   "clip_id": "whole_0173",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.938,
+   "imagined": 0.999,
+   "entry_along": 90.0,
+   "exit_along": 87.1,
+   "fit_xy": [
+    291.2,
+    97.3
+   ],
+   "entry_xy": [
+    267.4,
+    94.5
+   ],
+   "exit_xy": [
+    181.6,
+    84.3
+   ]
+  },
+  {
+   "clip_id": "whole_0174",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 140.9,
+   "exit_along": 150.1,
+   "fit_xy": [
+    292.1,
+    145.1
+   ],
+   "entry_xy": [
+    265.5,
+    145.3
+   ],
+   "exit_xy": [
+    167.0,
+    146.3
+   ]
+  },
+  {
+   "clip_id": "whole_0175",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.948,
+   "imagined": 1.0,
+   "entry_along": 96.6,
+   "exit_along": 98.1,
+   "fit_xy": [
+    289.7,
+    102.6
+   ],
+   "entry_xy": [
+    267.7,
+    101.1
+   ],
+   "exit_xy": [
+    179.4,
+    95.1
+   ]
+  },
+  {
+   "clip_id": "whole_0176",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.953,
+   "imagined": 1.0,
+   "entry_along": 92.5,
+   "exit_along": 81.3,
+   "fit_xy": [
+    288.0,
+    101.3
+   ],
+   "entry_xy": [
+    267.7,
+    96.9
+   ],
+   "exit_xy": [
+    182.8,
+    78.6
+   ]
+  },
+  {
+   "clip_id": "whole_0177",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.999,
+   "entry_along": 99.7,
+   "exit_along": 93.6,
+   "fit_xy": [
+    285.9,
+    107.0
+   ],
+   "entry_xy": [
+    267.3,
+    104.2
+   ],
+   "exit_xy": [
+    179.8,
+    90.6
+   ]
+  },
+  {
+   "clip_id": "whole_0178",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 147.7,
+   "exit_along": 156.5,
+   "fit_xy": [
+    289.4,
+    152.0
+   ],
+   "entry_xy": [
+    265.3,
+    152.2
+   ],
+   "exit_xy": [
+    166.8,
+    152.7
+   ]
+  },
+  {
+   "clip_id": "whole_0179",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.949,
+   "imagined": 1.0,
+   "entry_along": 164.9,
+   "exit_along": 247.2,
+   "fit_xy": [
+    293.6,
+    152.2
+   ],
+   "entry_xy": [
+    265.4,
+    169.4
+   ],
+   "exit_xy": [
+    147.1,
+    242.0
+   ]
+  },
+  {
+   "clip_id": "whole_0180",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 122.5,
+   "exit_along": 166.9,
+   "fit_xy": [
+    294.6,
+    116.5
+   ],
+   "entry_xy": [
+    265.6,
+    126.9
+   ],
+   "exit_xy": [
+    164.8,
+    162.9
+   ]
+  },
+  {
+   "clip_id": "whole_0181",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 1.0,
+   "entry_along": 224.5,
+   "exit_along": 314.8,
+   "fit_xy": [
+    293.2,
+    211.7
+   ],
+   "entry_xy": [
+    264.3,
+    229.2
+   ],
+   "exit_xy": [
+    133.3,
+    308.7
+   ]
+  },
+  {
+   "clip_id": "whole_0182",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 166.5,
+   "exit_along": 238.9,
+   "fit_xy": [
+    293.5,
+    156.5
+   ],
+   "entry_xy": [
+    266.2,
+    171.2
+   ],
+   "exit_xy": [
+    149.6,
+    233.9
+   ]
+  },
+  {
+   "clip_id": "whole_0183",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 129.1,
+   "exit_along": 178.9,
+   "fit_xy": [
+    286.7,
+    125.6
+   ],
+   "entry_xy": [
+    266.4,
+    133.6
+   ],
+   "exit_xy": [
+    161.4,
+    174.7
+   ]
+  },
+  {
+   "clip_id": "whole_0184",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 0.999,
+   "entry_along": 194.7,
+   "exit_along": 274.3,
+   "fit_xy": [
+    288.8,
+    185.1
+   ],
+   "entry_xy": [
+    264.0,
+    199.2
+   ],
+   "exit_xy": [
+    141.4,
+    268.7
+   ]
+  },
+  {
+   "clip_id": "whole_0185",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 0.999,
+   "entry_along": 174.8,
+   "exit_along": 248.0,
+   "fit_xy": [
+    287.8,
+    167.2
+   ],
+   "entry_xy": [
+    265.2,
+    179.3
+   ],
+   "exit_xy": [
+    147.1,
+    242.8
+   ]
+  },
+  {
+   "clip_id": "whole_0186",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.941,
+   "imagined": 0.999,
+   "entry_along": 253.3,
+   "exit_along": 369.7,
+   "fit_xy": [
+    293.2,
+    235.6
+   ],
+   "entry_xy": [
+    262.9,
+    258.0
+   ],
+   "exit_xy": [
+    121.2,
+    362.8
+   ]
+  },
+  {
+   "clip_id": "whole_0187",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 355.6,
+   "exit_along": 450.6,
+   "fit_xy": [
+    299.3,
+    314.5
+   ],
+   "entry_xy": [
+    259.4,
+    360.3
+   ],
+   "exit_xy": [
+    182.1,
+    449.1
+   ]
+  },
+  {
+   "clip_id": "whole_0188",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 138.6,
+   "exit_along": 199.3,
+   "fit_xy": [
+    287.7,
+    132.2
+   ],
+   "entry_xy": [
+    265.2,
+    143.0
+   ],
+   "exit_xy": [
+    157.5,
+    194.8
+   ]
+  },
+  {
+   "clip_id": "whole_0189",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.947,
+   "imagined": 0.999,
+   "entry_along": 278.5,
+   "exit_along": 432.1,
+   "fit_xy": [
+    298.9,
+    248.3
+   ],
+   "entry_xy": [
+    261.1,
+    283.0
+   ],
+   "exit_xy": [
+    107.6,
+    424.2
+   ]
+  },
+  {
+   "clip_id": "whole_0190",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.97,
+   "imagined": 0.999,
+   "entry_along": 209.1,
+   "exit_along": 304.7,
+   "fit_xy": [
+    292.5,
+    195.9
+   ],
+   "entry_xy": [
+    264.9,
+    213.7
+   ],
+   "exit_xy": [
+    134.1,
+    298.6
+   ]
+  },
+  {
+   "clip_id": "whole_0192",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 156.8,
+   "exit_along": 238.7,
+   "fit_xy": [
+    291.4,
+    146.0
+   ],
+   "entry_xy": [
+    266.4,
+    161.4
+   ],
+   "exit_xy": [
+    148.8,
+    233.7
+   ]
+  },
+  {
+   "clip_id": "whole_0193",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.879,
+   "imagined": 0.999,
+   "entry_along": 245.0,
+   "exit_along": 402.7,
+   "fit_xy": [
+    288.3,
+    225.0
+   ],
+   "entry_xy": [
+    262.9,
+    249.6
+   ],
+   "exit_xy": [
+    113.0,
+    395.1
+   ]
+  },
+  {
+   "clip_id": "whole_0194",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 142.3,
+   "exit_along": 206.2,
+   "fit_xy": [
+    291.0,
+    133.8
+   ],
+   "entry_xy": [
+    265.3,
+    146.7
+   ],
+   "exit_xy": [
+    156.0,
+    201.6
+   ]
+  },
+  {
+   "clip_id": "whole_0195",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 169.5,
+   "exit_along": 177.2,
+   "fit_xy": [
+    294.5,
+    174.3
+   ],
+   "entry_xy": [
+    265.0,
+    174.0
+   ],
+   "exit_xy": [
+    161.8,
+    173.0
+   ]
+  },
+  {
+   "clip_id": "whole_0196",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 178.8,
+   "exit_along": 187.9,
+   "fit_xy": [
+    293.6,
+    183.2
+   ],
+   "entry_xy": [
+    264.0,
+    183.3
+   ],
+   "exit_xy": [
+    160.4,
+    183.6
+   ]
+  },
+  {
+   "clip_id": "whole_0197",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 161.3,
+   "exit_along": 187.8,
+   "fit_xy": [
+    289.8,
+    161.9
+   ],
+   "entry_xy": [
+    265.8,
+    165.9
+   ],
+   "exit_xy": [
+    159.5,
+    183.5
+   ]
+  },
+  {
+   "clip_id": "whole_0198",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.989,
+   "imagined": 0.998,
+   "entry_along": 220.4,
+   "exit_along": 277.9,
+   "fit_xy": [
+    286.1,
+    217.0
+   ],
+   "entry_xy": [
+    264.7,
+    225.1
+   ],
+   "exit_xy": [
+    140.1,
+    272.2
+   ]
+  },
+  {
+   "clip_id": "whole_0199",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 0.999,
+   "entry_along": 242.8,
+   "exit_along": 368.5,
+   "fit_xy": [
+    296.7,
+    219.8
+   ],
+   "entry_xy": [
+    262.6,
+    247.3
+   ],
+   "exit_xy": [
+    121.1,
+    361.5
+   ]
+  },
+  {
+   "clip_id": "whole_0200",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 1.0,
+   "entry_along": 195.8,
+   "exit_along": 298.4,
+   "fit_xy": [
+    287.5,
+    182.9
+   ],
+   "entry_xy": [
+    263.4,
+    200.2
+   ],
+   "exit_xy": [
+    135.9,
+    292.4
+   ]
+  },
+  {
+   "clip_id": "whole_0201",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.964,
+   "imagined": 0.999,
+   "entry_along": 228.7,
+   "exit_along": 347.1,
+   "fit_xy": [
+    292.6,
+    210.2
+   ],
+   "entry_xy": [
+    262.7,
+    233.3
+   ],
+   "exit_xy": [
+    124.5,
+    340.3
+   ]
+  },
+  {
+   "clip_id": "whole_0203",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 155.1,
+   "exit_along": 183.8,
+   "fit_xy": [
+    297.5,
+    154.0
+   ],
+   "entry_xy": [
+    266.3,
+    159.7
+   ],
+   "exit_xy": [
+    158.8,
+    179.4
+   ]
+  },
+  {
+   "clip_id": "whole_0204",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.946,
+   "imagined": 1.0,
+   "entry_along": 296.7,
+   "exit_along": 381.5,
+   "fit_xy": [
+    291.7,
+    285.3
+   ],
+   "entry_xy": [
+    260.6,
+    301.3
+   ],
+   "exit_xy": [
+    118.3,
+    374.3
+   ]
+  },
+  {
+   "clip_id": "whole_0205",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 174.6,
+   "exit_along": 171.9,
+   "fit_xy": [
+    282.8,
+    181.0
+   ],
+   "entry_xy": [
+    265.1,
+    179.1
+   ],
+   "exit_xy": [
+    161.9,
+    167.7
+   ]
+  },
+  {
+   "clip_id": "whole_0206",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 160.7,
+   "exit_along": 185.2,
+   "fit_xy": [
+    288.8,
+    161.8
+   ],
+   "entry_xy": [
+    265.7,
+    165.3
+   ],
+   "exit_xy": [
+    161.3,
+    181.0
+   ]
+  },
+  {
+   "clip_id": "whole_0207",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 0.999,
+   "entry_along": 187.9,
+   "exit_along": 230.2,
+   "fit_xy": [
+    287.6,
+    185.9
+   ],
+   "entry_xy": [
+    264.7,
+    192.4
+   ],
+   "exit_xy": [
+    150.1,
+    225.2
+   ]
+  },
+  {
+   "clip_id": "whole_0208",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 0.999,
+   "entry_along": 185.9,
+   "exit_along": 215.5,
+   "fit_xy": [
+    293.4,
+    185.0
+   ],
+   "entry_xy": [
+    264.2,
+    190.4
+   ],
+   "exit_xy": [
+    152.8,
+    210.7
+   ]
+  },
+  {
+   "clip_id": "whole_0209",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.975,
+   "imagined": 0.998,
+   "entry_along": 209.9,
+   "exit_along": 244.2,
+   "fit_xy": [
+    290.2,
+    209.3
+   ],
+   "entry_xy": [
+    265.1,
+    214.6
+   ],
+   "exit_xy": [
+    148.6,
+    239.1
+   ]
+  },
+  {
+   "clip_id": "whole_0210",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 1.0,
+   "entry_along": 254.1,
+   "exit_along": 311.8,
+   "fit_xy": [
+    299.4,
+    245.9
+   ],
+   "entry_xy": [
+    263.7,
+    258.8
+   ],
+   "exit_xy": [
+    134.0,
+    305.7
+   ]
+  },
+  {
+   "clip_id": "whole_0211",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.999,
+   "entry_along": 212.8,
+   "exit_along": 253.4,
+   "fit_xy": [
+    291.0,
+    210.8
+   ],
+   "entry_xy": [
+    264.8,
+    217.5
+   ],
+   "exit_xy": [
+    144.5,
+    248.0
+   ]
+  },
+  {
+   "clip_id": "whole_0212",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 168.2,
+   "exit_along": 194.9,
+   "fit_xy": [
+    291.9,
+    168.3
+   ],
+   "entry_xy": [
+    265.1,
+    172.8
+   ],
+   "exit_xy": [
+    157.7,
+    190.4
+   ]
+  },
+  {
+   "clip_id": "whole_0213",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 0.999,
+   "entry_along": 188.3,
+   "exit_along": 211.7,
+   "fit_xy": [
+    284.8,
+    190.3
+   ],
+   "entry_xy": [
+    264.6,
+    192.8
+   ],
+   "exit_xy": [
+    153.6,
+    206.9
+   ]
+  },
+  {
+   "clip_id": "whole_0214",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 0.999,
+   "entry_along": 239.0,
+   "exit_along": 295.3,
+   "fit_xy": [
+    293.6,
+    232.6
+   ],
+   "entry_xy": [
+    263.3,
+    243.6
+   ],
+   "exit_xy": [
+    136.8,
+    289.4
+   ]
+  },
+  {
+   "clip_id": "whole_0215",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 0.999,
+   "entry_along": 205.8,
+   "exit_along": 251.0,
+   "fit_xy": [
+    301.3,
+    198.9
+   ],
+   "entry_xy": [
+    263.3,
+    210.3
+   ],
+   "exit_xy": [
+    145.8,
+    245.6
+   ]
+  },
+  {
+   "clip_id": "whole_0216",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.914,
+   "imagined": 1.0,
+   "entry_along": 267.2,
+   "exit_along": 337.1,
+   "fit_xy": [
+    299.8,
+    255.8
+   ],
+   "entry_xy": [
+    263.1,
+    271.9
+   ],
+   "exit_xy": [
+    128.6,
+    330.7
+   ]
+  },
+  {
+   "clip_id": "whole_0218",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.826,
+   "imagined": 0.998,
+   "entry_along": 227.7,
+   "exit_along": 251.9,
+   "fit_xy": [
+    290.5,
+    228.2
+   ],
+   "entry_xy": [
+    260.8,
+    232.0
+   ],
+   "exit_xy": [
+    146.1,
+    246.7
+   ]
+  },
+  {
+   "clip_id": "whole_0219",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.002,
+   "imagined": 1.0,
+   "entry_along": 156.3,
+   "exit_along": 181.2,
+   "fit_xy": [
+    292.7,
+    156.4
+   ],
+   "entry_xy": [
+    264.7,
+    160.7
+   ],
+   "exit_xy": [
+    159.7,
+    176.8
+   ]
+  },
+  {
+   "clip_id": "whole_0220",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.993,
+   "imagined": 1.0,
+   "entry_along": 177.1,
+   "exit_along": 215.5,
+   "fit_xy": [
+    291.9,
+    174.7
+   ],
+   "entry_xy": [
+    265.0,
+    181.7
+   ],
+   "exit_xy": [
+    153.1,
+    210.7
+   ]
+  },
+  {
+   "clip_id": "whole_0221",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 0.999,
+   "entry_along": 188.1,
+   "exit_along": 215.9,
+   "fit_xy": [
+    294.7,
+    187.7
+   ],
+   "entry_xy": [
+    264.6,
+    192.7
+   ],
+   "exit_xy": [
+    153.2,
+    211.1
+   ]
+  },
+  {
+   "clip_id": "whole_0222",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 151.5,
+   "exit_along": 154.7,
+   "fit_xy": [
+    292.7,
+    157.4
+   ],
+   "entry_xy": [
+    265.3,
+    156.0
+   ],
+   "exit_xy": [
+    167.2,
+    150.8
+   ]
+  },
+  {
+   "clip_id": "whole_0223",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 1.0,
+   "entry_along": 90.8,
+   "exit_along": 145.1,
+   "fit_xy": [
+    288.7,
+    85.5
+   ],
+   "entry_xy": [
+    268.0,
+    95.2
+   ],
+   "exit_xy": [
+    169.8,
+    141.5
+   ]
+  },
+  {
+   "clip_id": "whole_0224",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 145.3,
+   "exit_along": 232.3,
+   "fit_xy": [
+    292.8,
+    131.8
+   ],
+   "entry_xy": [
+    266.0,
+    149.8
+   ],
+   "exit_xy": [
+    150.1,
+    227.2
+   ]
+  },
+  {
+   "clip_id": "whole_0225",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 1.0,
+   "entry_along": 175.9,
+   "exit_along": 255.6,
+   "fit_xy": [
+    294.0,
+    163.8
+   ],
+   "entry_xy": [
+    265.2,
+    180.4
+   ],
+   "exit_xy": [
+    144.9,
+    250.2
+   ]
+  },
+  {
+   "clip_id": "whole_0226",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.931,
+   "imagined": 0.999,
+   "entry_along": 208.7,
+   "exit_along": 225.9,
+   "fit_xy": [
+    298.3,
+    210.5
+   ],
+   "entry_xy": [
+    261.8,
+    213.1
+   ],
+   "exit_xy": [
+    152.4,
+    221.0
+   ]
+  },
+  {
+   "clip_id": "whole_0227",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 151.4,
+   "exit_along": 153.1,
+   "fit_xy": [
+    290.8,
+    157.6
+   ],
+   "entry_xy": [
+    264.9,
+    155.8
+   ],
+   "exit_xy": [
+    166.3,
+    149.1
+   ]
+  },
+  {
+   "clip_id": "whole_0228",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 172.3,
+   "exit_along": 184.6,
+   "fit_xy": [
+    293.2,
+    176.0
+   ],
+   "entry_xy": [
+    266.1,
+    176.9
+   ],
+   "exit_xy": [
+    161.3,
+    180.4
+   ]
+  },
+  {
+   "clip_id": "whole_0229",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 112.2,
+   "exit_along": 112.3,
+   "fit_xy": [
+    294.3,
+    118.9
+   ],
+   "entry_xy": [
+    267.4,
+    116.7
+   ],
+   "exit_xy": [
+    175.5,
+    109.0
+   ]
+  },
+  {
+   "clip_id": "whole_0231",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 138.0,
+   "exit_along": 133.8,
+   "fit_xy": [
+    284.8,
+    144.9
+   ],
+   "entry_xy": [
+    266.3,
+    142.5
+   ],
+   "exit_xy": [
+    170.5,
+    130.1
+   ]
+  },
+  {
+   "clip_id": "whole_0232",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.973,
+   "imagined": 0.999,
+   "entry_along": 185.5,
+   "exit_along": 224.5,
+   "fit_xy": [
+    297.2,
+    181.5
+   ],
+   "entry_xy": [
+    264.2,
+    190.0
+   ],
+   "exit_xy": [
+    150.2,
+    219.5
+   ]
+  },
+  {
+   "clip_id": "whole_0233",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.941,
+   "imagined": 0.999,
+   "entry_along": 208.2,
+   "exit_along": 234.6,
+   "fit_xy": [
+    290.6,
+    209.2
+   ],
+   "entry_xy": [
+    265.0,
+    212.9
+   ],
+   "exit_xy": [
+    148.5,
+    229.5
+   ]
+  },
+  {
+   "clip_id": "whole_0234",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 0.998,
+   "entry_along": 205.3,
+   "exit_along": 242.4,
+   "fit_xy": [
+    289.9,
+    203.4
+   ],
+   "entry_xy": [
+    263.0,
+    209.8
+   ],
+   "exit_xy": [
+    147.1,
+    237.1
+   ]
+  },
+  {
+   "clip_id": "whole_0235",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.991,
+   "imagined": 0.999,
+   "entry_along": 214.9,
+   "exit_along": 309.2,
+   "fit_xy": [
+    296.6,
+    198.2
+   ],
+   "entry_xy": [
+    263.7,
+    219.5
+   ],
+   "exit_xy": [
+    134.5,
+    303.1
+   ]
+  },
+  {
+   "clip_id": "whole_0236",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.946,
+   "imagined": 0.999,
+   "entry_along": 260.8,
+   "exit_along": 379.4,
+   "fit_xy": [
+    288.3,
+    246.9
+   ],
+   "entry_xy": [
+    263.2,
+    265.4
+   ],
+   "exit_xy": [
+    118.9,
+    372.3
+   ]
+  },
+  {
+   "clip_id": "whole_0237",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 123.5,
+   "exit_along": 171.1,
+   "fit_xy": [
+    290.9,
+    119.0
+   ],
+   "entry_xy": [
+    266.9,
+    128.0
+   ],
+   "exit_xy": [
+    163.2,
+    166.9
+   ]
+  },
+  {
+   "clip_id": "whole_0238",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.957,
+   "imagined": 0.999,
+   "entry_along": 192.7,
+   "exit_along": 291.8,
+   "fit_xy": [
+    287.2,
+    182.4
+   ],
+   "entry_xy": [
+    265.4,
+    197.4
+   ],
+   "exit_xy": [
+    137.0,
+    285.9
+   ]
+  },
+  {
+   "clip_id": "whole_0239",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.982,
+   "imagined": 0.999,
+   "entry_along": 256.2,
+   "exit_along": 345.8,
+   "fit_xy": [
+    293.3,
+    242.9
+   ],
+   "entry_xy": [
+    262.3,
+    260.8
+   ],
+   "exit_xy": [
+    126.7,
+    339.2
+   ]
+  },
+  {
+   "clip_id": "whole_0240",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 347.7,
+   "exit_along": 453.6,
+   "fit_xy": [
+    295.6,
+    326.3
+   ],
+   "entry_xy": [
+    261.4,
+    352.5
+   ],
+   "exit_xy": [
+    136.7,
+    448.3
+   ]
+  },
+  {
+   "clip_id": "whole_0241",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.952,
+   "imagined": 1.0,
+   "entry_along": 437.0,
+   "exit_along": 444.0,
+   "fit_xy": [
+    290.1,
+    416.6
+   ],
+   "entry_xy": [
+    259.1,
+    442.0
+   ],
+   "exit_xy": [
+    251.3,
+    448.3
+   ]
+  },
+  {
+   "clip_id": "whole_0242",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 145.9,
+   "exit_along": 208.1,
+   "fit_xy": [
+    288.2,
+    139.3
+   ],
+   "entry_xy": [
+    265.3,
+    150.4
+   ],
+   "exit_xy": [
+    155.8,
+    203.5
+   ]
+  },
+  {
+   "clip_id": "whole_0243",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.944,
+   "imagined": 0.999,
+   "entry_along": 205.7,
+   "exit_along": 257.2,
+   "fit_xy": [
+    288.5,
+    202.2
+   ],
+   "entry_xy": [
+    264.9,
+    210.3
+   ],
+   "exit_xy": [
+    144.8,
+    251.8
+   ]
+  },
+  {
+   "clip_id": "whole_0244",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 1.0,
+   "entry_along": 177.2,
+   "exit_along": 210.9,
+   "fit_xy": [
+    290.4,
+    176.2
+   ],
+   "entry_xy": [
+    264.9,
+    181.8
+   ],
+   "exit_xy": [
+    154.0,
+    206.1
+   ]
+  },
+  {
+   "clip_id": "whole_0245",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 0.999,
+   "entry_along": 385.3,
+   "exit_along": 450.1,
+   "fit_xy": [
+    294.5,
+    362.5
+   ],
+   "entry_xy": [
+    257.5,
+    390.0
+   ],
+   "exit_xy": [
+    179.0,
+    448.4
+   ]
+  },
+  {
+   "clip_id": "whole_0247",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 1.0,
+   "entry_along": 257.5,
+   "exit_along": 328.6,
+   "fit_xy": [
+    297.7,
+    245.4
+   ],
+   "entry_xy": [
+    261.1,
+    262.0
+   ],
+   "exit_xy": [
+    128.2,
+    322.1
+   ]
+  },
+  {
+   "clip_id": "whole_0248",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 0.998,
+   "entry_along": 234.2,
+   "exit_along": 285.2,
+   "fit_xy": [
+    292.0,
+    229.3
+   ],
+   "entry_xy": [
+    263.1,
+    238.8
+   ],
+   "exit_xy": [
+    138.6,
+    279.4
+   ]
+  },
+  {
+   "clip_id": "whole_0249",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 0.999,
+   "entry_along": 190.5,
+   "exit_along": 230.3,
+   "fit_xy": [
+    292.3,
+    187.4
+   ],
+   "entry_xy": [
+    263.6,
+    195.0
+   ],
+   "exit_xy": [
+    148.8,
+    225.2
+   ]
+  },
+  {
+   "clip_id": "whole_0250",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 149.2,
+   "exit_along": 174.5,
+   "fit_xy": [
+    288.1,
+    149.9
+   ],
+   "entry_xy": [
+    264.9,
+    153.7
+   ],
+   "exit_xy": [
+    162.2,
+    170.3
+   ]
+  },
+  {
+   "clip_id": "whole_0251",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 140.8,
+   "exit_along": 162.3,
+   "fit_xy": [
+    294.1,
+    141.9
+   ],
+   "entry_xy": [
+    266.7,
+    145.4
+   ],
+   "exit_xy": [
+    164.4,
+    158.3
+   ]
+  },
+  {
+   "clip_id": "whole_0252",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.97,
+   "imagined": 0.999,
+   "entry_along": 261.3,
+   "exit_along": 309.8,
+   "fit_xy": [
+    298.3,
+    254.9
+   ],
+   "entry_xy": [
+    261.2,
+    265.8
+   ],
+   "exit_xy": [
+    132.7,
+    303.6
+   ]
+  },
+  {
+   "clip_id": "whole_0253",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 159.2,
+   "exit_along": 184.2,
+   "fit_xy": [
+    290.7,
+    159.6
+   ],
+   "entry_xy": [
+    264.8,
+    163.7
+   ],
+   "exit_xy": [
+    161.2,
+    180.0
+   ]
+  },
+  {
+   "clip_id": "whole_0254",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 138.8,
+   "exit_along": 161.6,
+   "fit_xy": [
+    292.2,
+    139.1
+   ],
+   "entry_xy": [
+    264.9,
+    143.1
+   ],
+   "exit_xy": [
+    165.7,
+    157.7
+   ]
+  },
+  {
+   "clip_id": "whole_0255",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 135.3,
+   "exit_along": 111.9,
+   "fit_xy": [
+    293.0,
+    149.1
+   ],
+   "entry_xy": [
+    266.2,
+    139.8
+   ],
+   "exit_xy": [
+    176.4,
+    108.7
+   ]
+  },
+  {
+   "clip_id": "whole_0256",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.971,
+   "imagined": 1.0,
+   "entry_along": 315.2,
+   "exit_along": 321.8,
+   "fit_xy": [
+    291.3,
+    320.9
+   ],
+   "entry_xy": [
+    261.1,
+    319.9
+   ],
+   "exit_xy": [
+    131.1,
+    315.5
+   ]
+  },
+  {
+   "clip_id": "whole_0257",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.904,
+   "imagined": 1.0,
+   "entry_along": 231.4,
+   "exit_along": 226.9,
+   "fit_xy": [
+    301.2,
+    240.6
+   ],
+   "entry_xy": [
+    264.2,
+    236.0
+   ],
+   "exit_xy": [
+    147.6,
+    221.7
+   ]
+  },
+  {
+   "clip_id": "whole_0258",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 0.999,
+   "entry_along": 188.6,
+   "exit_along": 177.4,
+   "fit_xy": [
+    288.2,
+    197.7
+   ],
+   "entry_xy": [
+    265.0,
+    193.2
+   ],
+   "exit_xy": [
+    162.1,
+    173.2
+   ]
+  },
+  {
+   "clip_id": "whole_0259",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 0.999,
+   "entry_along": 318.3,
+   "exit_along": 317.3,
+   "fit_xy": [
+    289.6,
+    325.7
+   ],
+   "entry_xy": [
+    259.3,
+    322.9
+   ],
+   "exit_xy": [
+    129.1,
+    310.8
+   ]
+  },
+  {
+   "clip_id": "whole_0260",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 0.999,
+   "entry_along": 331.7,
+   "exit_along": 335.2,
+   "fit_xy": [
+    286.7,
+    337.9
+   ],
+   "entry_xy": [
+    259.7,
+    336.4
+   ],
+   "exit_xy": [
+    128.5,
+    328.7
+   ]
+  },
+  {
+   "clip_id": "whole_0261",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.001,
+   "imagined": 1.0,
+   "entry_along": 148.7,
+   "exit_along": 136.9,
+   "fit_xy": [
+    285.9,
+    157.4
+   ],
+   "entry_xy": [
+    265.9,
+    153.2
+   ],
+   "exit_xy": [
+    171.7,
+    133.4
+   ]
+  },
+  {
+   "clip_id": "whole_0262",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.953,
+   "imagined": 1.0,
+   "entry_along": 103.9,
+   "exit_along": 106.1,
+   "fit_xy": [
+    289.5,
+    109.7
+   ],
+   "entry_xy": [
+    266.9,
+    108.3
+   ],
+   "exit_xy": [
+    176.8,
+    102.9
+   ]
+  },
+  {
+   "clip_id": "whole_0263",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 319.2,
+   "exit_along": 329.5,
+   "fit_xy": [
+    292.9,
+    324.2
+   ],
+   "entry_xy": [
+    261.8,
+    324.0
+   ],
+   "exit_xy": [
+    127.3,
+    322.9
+   ]
+  },
+  {
+   "clip_id": "whole_0264",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.981,
+   "imagined": 1.0,
+   "entry_along": 99.1,
+   "exit_along": 74.5,
+   "fit_xy": [
+    284.4,
+    110.3
+   ],
+   "entry_xy": [
+    266.5,
+    103.5
+   ],
+   "exit_xy": [
+    182.9,
+    71.7
+   ]
+  },
+  {
+   "clip_id": "whole_0265",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.946,
+   "imagined": 0.999,
+   "entry_along": 235.1,
+   "exit_along": 233.1,
+   "fit_xy": [
+    285.9,
+    242.1
+   ],
+   "entry_xy": [
+    260.9,
+    239.5
+   ],
+   "exit_xy": [
+    150.1,
+    228.1
+   ]
+  },
+  {
+   "clip_id": "whole_0266",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.938,
+   "imagined": 0.999,
+   "entry_along": 98.0,
+   "exit_along": 75.9,
+   "fit_xy": [
+    286.7,
+    109.3
+   ],
+   "entry_xy": [
+    267.3,
+    102.4
+   ],
+   "exit_xy": [
+    184.4,
+    73.2
+   ]
+  },
+  {
+   "clip_id": "whole_0267",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 1.0,
+   "entry_along": 138.9,
+   "exit_along": 136.3,
+   "fit_xy": [
+    285.7,
+    145.7
+   ],
+   "entry_xy": [
+    265.2,
+    143.4
+   ],
+   "exit_xy": [
+    171.6,
+    132.8
+   ]
+  },
+  {
+   "clip_id": "whole_0268",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.976,
+   "imagined": 0.998,
+   "entry_along": 268.1,
+   "exit_along": 248.3,
+   "fit_xy": [
+    120.7,
+    264.8
+   ],
+   "entry_xy": [
+    144.9,
+    262.8
+   ],
+   "exit_xy": [
+    264.2,
+    253.0
+   ]
+  },
+  {
+   "clip_id": "whole_0270",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.859,
+   "imagined": 0.999,
+   "entry_along": 386.6,
+   "exit_along": 427.6,
+   "fit_xy": [
+    80.0,
+    363.8
+   ],
+   "entry_xy": [
+    121.9,
+    379.8
+   ],
+   "exit_xy": [
+    260.2,
+    432.6
+   ]
+  },
+  {
+   "clip_id": "whole_0271",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 373.3,
+   "exit_along": 408.9,
+   "fit_xy": [
+    93.4,
+    356.0
+   ],
+   "entry_xy": [
+    124.6,
+    366.6
+   ],
+   "exit_xy": [
+    265.0,
+    414.3
+   ]
+  },
+  {
+   "clip_id": "whole_0272",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 166.3,
+   "exit_along": 156.5,
+   "fit_xy": [
+    142.4,
+    162.7
+   ],
+   "entry_xy": [
+    166.0,
+    162.4
+   ],
+   "exit_xy": [
+    267.2,
+    161.1
+   ]
+  },
+  {
+   "clip_id": "whole_0273",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 143.6,
+   "exit_along": 138.7,
+   "fit_xy": [
+    149.6,
+    139.3
+   ],
+   "entry_xy": [
+    171.9,
+    140.1
+   ],
+   "exit_xy": [
+    268.4,
+    143.4
+   ]
+  },
+  {
+   "clip_id": "whole_0274",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.978,
+   "imagined": 0.999,
+   "entry_along": 227.3,
+   "exit_along": 234.9,
+   "fit_xy": [
+    128.0,
+    218.7
+   ],
+   "entry_xy": [
+    153.0,
+    222.5
+   ],
+   "exit_xy": [
+    267.4,
+    239.8
+   ]
+  },
+  {
+   "clip_id": "whole_0275",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.976,
+   "imagined": 0.998,
+   "entry_along": 222.7,
+   "exit_along": 237.9,
+   "fit_xy": [
+    133.6,
+    213.4
+   ],
+   "entry_xy": [
+    154.4,
+    218.0
+   ],
+   "exit_xy": [
+    267.1,
+    242.8
+   ]
+  },
+  {
+   "clip_id": "whole_0276",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.977,
+   "imagined": 0.999,
+   "entry_along": 219.2,
+   "exit_along": 177.9,
+   "fit_xy": [
+    127.2,
+    223.8
+   ],
+   "entry_xy": [
+    157.8,
+    214.8
+   ],
+   "exit_xy": [
+    267.1,
+    182.6
+   ]
+  },
+  {
+   "clip_id": "whole_0277",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 0.999,
+   "entry_along": 242.7,
+   "exit_along": 204.6,
+   "fit_xy": [
+    125.1,
+    243.9
+   ],
+   "entry_xy": [
+    150.7,
+    237.8
+   ],
+   "exit_xy": [
+    268.7,
+    209.5
+   ]
+  },
+  {
+   "clip_id": "whole_0281",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.953,
+   "imagined": 0.999,
+   "entry_along": 159.2,
+   "exit_along": 198.2,
+   "fit_xy": [
+    151.0,
+    147.5
+   ],
+   "entry_xy": [
+    167.5,
+    155.4
+   ],
+   "exit_xy": [
+    266.2,
+    202.9
+   ]
+  },
+  {
+   "clip_id": "whole_0283",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.954,
+   "imagined": 0.998,
+   "entry_along": 237.4,
+   "exit_along": 334.0,
+   "fit_xy": [
+    128.0,
+    210.2
+   ],
+   "entry_xy": [
+    151.4,
+    232.5
+   ],
+   "exit_xy": [
+    262.8,
+    339.0
+   ]
+  },
+  {
+   "clip_id": "whole_0284",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 152.5,
+   "exit_along": 171.4,
+   "fit_xy": [
+    147.6,
+    143.0
+   ],
+   "entry_xy": [
+    168.7,
+    148.8
+   ],
+   "exit_xy": [
+    267.6,
+    176.1
+   ]
+  },
+  {
+   "clip_id": "whole_0285",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.972,
+   "imagined": 0.999,
+   "entry_along": 181.2,
+   "exit_along": 218.1,
+   "fit_xy": [
+    146.6,
+    169.5
+   ],
+   "entry_xy": [
+    163.6,
+    177.2
+   ],
+   "exit_xy": [
+    266.1,
+    222.9
+   ]
+  },
+  {
+   "clip_id": "whole_0287",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.975,
+   "imagined": 0.998,
+   "entry_along": 255.7,
+   "exit_along": 258.4,
+   "fit_xy": [
+    108.3,
+    246.4
+   ],
+   "entry_xy": [
+    146.5,
+    250.5
+   ],
+   "exit_xy": [
+    265.8,
+    263.3
+   ]
+  },
+  {
+   "clip_id": "whole_0288",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 0.999,
+   "entry_along": 279.1,
+   "exit_along": 337.5,
+   "fit_xy": [
+    108.1,
+    253.9
+   ],
+   "entry_xy": [
+    142.5,
+    273.6
+   ],
+   "exit_xy": [
+    263.0,
+    342.4
+   ]
+  },
+  {
+   "clip_id": "whole_0289",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 162.9,
+   "exit_along": 179.2,
+   "fit_xy": [
+    143.2,
+    153.3
+   ],
+   "entry_xy": [
+    166.9,
+    159.1
+   ],
+   "exit_xy": [
+    268.3,
+    184.1
+   ]
+  },
+  {
+   "clip_id": "whole_0290",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 354.1,
+   "exit_along": 382.9,
+   "fit_xy": [
+    89.2,
+    336.0
+   ],
+   "entry_xy": [
+    127.7,
+    347.6
+   ],
+   "exit_xy": [
+    260.9,
+    387.8
+   ]
+  },
+  {
+   "clip_id": "whole_0291",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 357.1,
+   "exit_along": 379.4,
+   "fit_xy": [
+    82.0,
+    339.8
+   ],
+   "entry_xy": [
+    124.9,
+    350.4
+   ],
+   "exit_xy": [
+    262.8,
+    384.5
+   ]
+  },
+  {
+   "clip_id": "whole_0293",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.945,
+   "imagined": 0.997,
+   "entry_along": 216.3,
+   "exit_along": 220.2,
+   "fit_xy": [
+    131.6,
+    208.9
+   ],
+   "entry_xy": [
+    154.9,
+    211.7
+   ],
+   "exit_xy": [
+    267.0,
+    225.1
+   ]
+  },
+  {
+   "clip_id": "whole_0295",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 149.4,
+   "exit_along": 167.4,
+   "fit_xy": [
+    146.1,
+    139.4
+   ],
+   "entry_xy": [
+    169.6,
+    145.7
+   ],
+   "exit_xy": [
+    268.6,
+    172.2
+   ]
+  },
+  {
+   "clip_id": "whole_0296",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 155.1,
+   "exit_along": 181.4,
+   "fit_xy": [
+    148.0,
+    144.2
+   ],
+   "entry_xy": [
+    168.4,
+    151.3
+   ],
+   "exit_xy": [
+    268.1,
+    186.3
+   ]
+  },
+  {
+   "clip_id": "whole_0298",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.999,
+   "entry_along": 266.8,
+   "exit_along": 246.0,
+   "fit_xy": [
+    92.8,
+    266.0
+   ],
+   "entry_xy": [
+    144.9,
+    261.5
+   ],
+   "exit_xy": [
+    268.0,
+    251.0
+   ]
+  },
+  {
+   "clip_id": "whole_0299",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 0.999,
+   "entry_along": 208.6,
+   "exit_along": 276.7,
+   "fit_xy": [
+    129.6,
+    183.0
+   ],
+   "entry_xy": [
+    158.7,
+    204.2
+   ],
+   "exit_xy": [
+    264.3,
+    281.5
+   ]
+  },
+  {
+   "clip_id": "whole_0300",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.893,
+   "imagined": 0.999,
+   "entry_along": 168.7,
+   "exit_along": 214.3,
+   "fit_xy": [
+    140.7,
+    150.9
+   ],
+   "entry_xy": [
+    166.6,
+    164.9
+   ],
+   "exit_xy": [
+    267.2,
+    219.1
+   ]
+  },
+  {
+   "clip_id": "whole_0303",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 167.4,
+   "exit_along": 187.7,
+   "fit_xy": [
+    141.9,
+    156.7
+   ],
+   "entry_xy": [
+    165.7,
+    163.5
+   ],
+   "exit_xy": [
+    267.1,
+    192.4
+   ]
+  },
+  {
+   "clip_id": "whole_0305",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.988,
+   "imagined": 0.998,
+   "entry_along": 235.0,
+   "exit_along": 299.1,
+   "fit_xy": [
+    125.6,
+    212.3
+   ],
+   "entry_xy": [
+    152.5,
+    230.2
+   ],
+   "exit_xy": [
+    262.9,
+    303.9
+   ]
+  },
+  {
+   "clip_id": "whole_0306",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.979,
+   "imagined": 0.999,
+   "entry_along": 244.6,
+   "exit_along": 278.4,
+   "fit_xy": [
+    124.0,
+    229.9
+   ],
+   "entry_xy": [
+    149.3,
+    239.5
+   ],
+   "exit_xy": [
+    264.8,
+    283.3
+   ]
+  },
+  {
+   "clip_id": "whole_0307",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.98,
+   "imagined": 0.999,
+   "entry_along": 283.3,
+   "exit_along": 212.9,
+   "fit_xy": [
+    106.0,
+    297.3
+   ],
+   "entry_xy": [
+    144.6,
+    278.1
+   ],
+   "exit_xy": [
+    266.1,
+    217.7
+   ]
+  },
+  {
+   "clip_id": "whole_0309",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 0.998,
+   "entry_along": 190.6,
+   "exit_along": 244.2,
+   "fit_xy": [
+    135.0,
+    170.7
+   ],
+   "entry_xy": [
+    160.8,
+    186.4
+   ],
+   "exit_xy": [
+    264.3,
+    248.9
+   ]
+  },
+  {
+   "clip_id": "whole_0310",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 0.999,
+   "entry_along": 192.0,
+   "exit_along": 220.0,
+   "fit_xy": [
+    131.1,
+    177.2
+   ],
+   "entry_xy": [
+    161.0,
+    187.7
+   ],
+   "exit_xy": [
+    265.6,
+    224.7
+   ]
+  },
+  {
+   "clip_id": "whole_0311",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.94,
+   "imagined": 0.998,
+   "entry_along": 223.4,
+   "exit_along": 206.4,
+   "fit_xy": [
+    121.0,
+    221.0
+   ],
+   "entry_xy": [
+    155.1,
+    218.7
+   ],
+   "exit_xy": [
+    267.1,
+    211.2
+   ]
+  },
+  {
+   "clip_id": "whole_0312",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.962,
+   "imagined": 0.999,
+   "entry_along": 108.3,
+   "exit_along": 100.8,
+   "fit_xy": [
+    162.9,
+    105.3
+   ],
+   "entry_xy": [
+    179.7,
+    105.3
+   ],
+   "exit_xy": [
+    270.0,
+    105.4
+   ]
+  },
+  {
+   "clip_id": "whole_0314",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 150.1,
+   "exit_along": 148.4,
+   "fit_xy": [
+    149.0,
+    145.1
+   ],
+   "entry_xy": [
+    171.1,
+    146.5
+   ],
+   "exit_xy": [
+    267.7,
+    153.1
+   ]
+  },
+  {
+   "clip_id": "whole_0315",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.943,
+   "imagined": 0.999,
+   "entry_along": 102.6,
+   "exit_along": 92.2,
+   "fit_xy": [
+    156.3,
+    100.6
+   ],
+   "entry_xy": [
+    181.5,
+    99.8
+   ],
+   "exit_xy": [
+    269.4,
+    96.8
+   ]
+  },
+  {
+   "clip_id": "whole_0318",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 151.7,
+   "exit_along": 143.2,
+   "fit_xy": [
+    144.4,
+    148.1
+   ],
+   "entry_xy": [
+    170.0,
+    148.1
+   ],
+   "exit_xy": [
+    269.3,
+    148.0
+   ]
+  },
+  {
+   "clip_id": "whole_0319",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.997,
+   "entry_along": 172.6,
+   "exit_along": 175.5,
+   "fit_xy": [
+    141.9,
+    166.0
+   ],
+   "entry_xy": [
+    166.0,
+    168.7
+   ],
+   "exit_xy": [
+    269.1,
+    180.4
+   ]
+  },
+  {
+   "clip_id": "whole_0320",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 146.7,
+   "exit_along": 152.8,
+   "fit_xy": [
+    147.3,
+    139.6
+   ],
+   "entry_xy": [
+    172.0,
+    143.2
+   ],
+   "exit_xy": [
+    267.5,
+    157.4
+   ]
+  },
+  {
+   "clip_id": "whole_0322",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 131.1,
+   "exit_along": 81.6,
+   "fit_xy": [
+    150.5,
+    137.4
+   ],
+   "entry_xy": [
+    173.2,
+    127.7
+   ],
+   "exit_xy": [
+    270.9,
+    86.3
+   ]
+  },
+  {
+   "clip_id": "whole_0324",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 119.3,
+   "exit_along": 103.1,
+   "fit_xy": [
+    148.8,
+    119.0
+   ],
+   "entry_xy": [
+    178.2,
+    116.3
+   ],
+   "exit_xy": [
+    270.0,
+    107.8
+   ]
+  },
+  {
+   "clip_id": "whole_0325",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 346.2,
+   "exit_along": 341.3,
+   "fit_xy": [
+    96.1,
+    338.3
+   ],
+   "entry_xy": [
+    130.7,
+    340.0
+   ],
+   "exit_xy": [
+    264.5,
+    346.4
+   ]
+  },
+  {
+   "clip_id": "whole_0328",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 116.5,
+   "exit_along": 104.1,
+   "fit_xy": [
+    152.0,
+    114.7
+   ],
+   "entry_xy": [
+    177.4,
+    113.4
+   ],
+   "exit_xy": [
+    270.5,
+    108.9
+   ]
+  },
+  {
+   "clip_id": "whole_0329",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 363.9,
+   "exit_along": 380.8,
+   "fit_xy": [
+    91.9,
+    350.4
+   ],
+   "entry_xy": [
+    124.4,
+    357.2
+   ],
+   "exit_xy": [
+    262.5,
+    385.9
+   ]
+  },
+  {
+   "clip_id": "whole_0330",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 158.5,
+   "exit_along": 171.2,
+   "fit_xy": [
+    135.5,
+    147.5
+   ],
+   "entry_xy": [
+    170.1,
+    154.9
+   ],
+   "exit_xy": [
+    269.5,
+    176.1
+   ]
+  },
+  {
+   "clip_id": "whole_0331",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.936,
+   "imagined": 0.999,
+   "entry_along": 422.5,
+   "exit_along": 447.4,
+   "fit_xy": [
+    67.6,
+    399.7
+   ],
+   "entry_xy": [
+    112.7,
+    415.0
+   ],
+   "exit_xy": [
+    210.9,
+    448.3
+   ]
+  },
+  {
+   "clip_id": "whole_0332",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 168.4,
+   "exit_along": 186.7,
+   "fit_xy": [
+    146.8,
+    159.5
+   ],
+   "entry_xy": [
+    165.4,
+    164.5
+   ],
+   "exit_xy": [
+    266.0,
+    191.4
+   ]
+  },
+  {
+   "clip_id": "whole_0335",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.967,
+   "imagined": 0.999,
+   "entry_along": 101.3,
+   "exit_along": 96.1,
+   "fit_xy": [
+    161.3,
+    97.9
+   ],
+   "entry_xy": [
+    180.8,
+    98.4
+   ],
+   "exit_xy": [
+    270.0,
+    100.7
+   ]
+  },
+  {
+   "clip_id": "whole_0337",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 0.999,
+   "entry_along": 235.3,
+   "exit_along": 220.1,
+   "fit_xy": [
+    126.4,
+    232.3
+   ],
+   "entry_xy": [
+    156.2,
+    230.8
+   ],
+   "exit_xy": [
+    269.4,
+    225.2
+   ]
+  },
+  {
+   "clip_id": "whole_0338",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.982,
+   "imagined": 0.998,
+   "entry_along": 259.5,
+   "exit_along": 198.2,
+   "fit_xy": [
+    95.6,
+    277.7
+   ],
+   "entry_xy": [
+    150.0,
+    254.6
+   ],
+   "exit_xy": [
+    270.9,
+    203.3
+   ]
+  },
+  {
+   "clip_id": "whole_0340",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.877,
+   "imagined": 0.998,
+   "entry_along": 303.7,
+   "exit_along": 260.7,
+   "fit_xy": [
+    99.4,
+    307.3
+   ],
+   "entry_xy": [
+    137.5,
+    297.9
+   ],
+   "exit_xy": [
+    266.7,
+    265.7
+   ]
+  },
+  {
+   "clip_id": "whole_0342",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.983,
+   "imagined": 0.999,
+   "entry_along": 300.6,
+   "exit_along": 245.8,
+   "fit_xy": [
+    101.3,
+    307.4
+   ],
+   "entry_xy": [
+    138.3,
+    294.8
+   ],
+   "exit_xy": [
+    268.1,
+    250.9
+   ]
+  },
+  {
+   "clip_id": "whole_0344",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.964,
+   "imagined": 0.999,
+   "entry_along": 258.6,
+   "exit_along": 192.6,
+   "fit_xy": [
+    113.4,
+    268.4
+   ],
+   "entry_xy": [
+    146.2,
+    253.3
+   ],
+   "exit_xy": [
+    268.1,
+    197.4
+   ]
+  },
+  {
+   "clip_id": "whole_0345",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.961,
+   "imagined": 0.999,
+   "entry_along": 217.6,
+   "exit_along": 270.1,
+   "fit_xy": [
+    119.1,
+    192.3
+   ],
+   "entry_xy": [
+    156.0,
+    213.0
+   ],
+   "exit_xy": [
+    266.8,
+    275.1
+   ]
+  },
+  {
+   "clip_id": "whole_0346",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.967,
+   "imagined": 0.999,
+   "entry_along": 299.3,
+   "exit_along": 258.7,
+   "fit_xy": [
+    93.7,
+    303.4
+   ],
+   "entry_xy": [
+    137.2,
+    293.5
+   ],
+   "exit_xy": [
+    267.5,
+    263.7
+   ]
+  },
+  {
+   "clip_id": "whole_0347",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.987,
+   "imagined": 0.998,
+   "entry_along": 183.6,
+   "exit_along": 181.1,
+   "fit_xy": [
+    137.9,
+    178.0
+   ],
+   "entry_xy": [
+    164.2,
+    179.6
+   ],
+   "exit_xy": [
+    269.7,
+    186.0
+   ]
+  },
+  {
+   "clip_id": "whole_0348",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.938,
+   "imagined": 0.999,
+   "entry_along": 296.2,
+   "exit_along": 318.3,
+   "fit_xy": [
+    96.5,
+    279.2
+   ],
+   "entry_xy": [
+    139.5,
+    290.5
+   ],
+   "exit_xy": [
+    263.3,
+    323.2
+   ]
+  },
+  {
+   "clip_id": "whole_0349",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.931,
+   "imagined": 0.999,
+   "entry_along": 284.2,
+   "exit_along": 276.9,
+   "fit_xy": [
+    100.0,
+    277.7
+   ],
+   "entry_xy": [
+    142.9,
+    278.8
+   ],
+   "exit_xy": [
+    267.2,
+    281.9
+   ]
+  },
+  {
+   "clip_id": "whole_0350",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 0.998,
+   "entry_along": 237.1,
+   "exit_along": 252.2,
+   "fit_xy": [
+    123.8,
+    225.9
+   ],
+   "entry_xy": [
+    153.4,
+    232.4
+   ],
+   "exit_xy": [
+    266.9,
+    257.1
+   ]
+  },
+  {
+   "clip_id": "whole_0351",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.973,
+   "imagined": 0.998,
+   "entry_along": 281.4,
+   "exit_along": 226.6,
+   "fit_xy": [
+    92.7,
+    294.1
+   ],
+   "entry_xy": [
+    142.7,
+    275.9
+   ],
+   "exit_xy": [
+    264.8,
+    231.3
+   ]
+  },
+  {
+   "clip_id": "whole_0352",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 177.7,
+   "exit_along": 183.4,
+   "fit_xy": [
+    136.5,
+    169.8
+   ],
+   "entry_xy": [
+    164.2,
+    173.7
+   ],
+   "exit_xy": [
+    268.8,
+    188.3
+   ]
+  },
+  {
+   "clip_id": "whole_0354",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.961,
+   "imagined": 0.998,
+   "entry_along": 270.6,
+   "exit_along": 273.3,
+   "fit_xy": [
+    102.7,
+    260.8
+   ],
+   "entry_xy": [
+    143.7,
+    265.2
+   ],
+   "exit_xy": [
+    266.5,
+    278.3
+   ]
+  },
+  {
+   "clip_id": "whole_0355",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.967,
+   "imagined": 0.999,
+   "entry_along": 282.4,
+   "exit_along": 208.4,
+   "fit_xy": [
+    83.5,
+    307.1
+   ],
+   "entry_xy": [
+    142.4,
+    276.9
+   ],
+   "exit_xy": [
+    266.7,
+    213.2
+   ]
+  },
+  {
+   "clip_id": "whole_0356",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 149.6,
+   "exit_along": 180.6,
+   "fit_xy": [
+    132.4,
+    131.1
+   ],
+   "entry_xy": [
+    169.3,
+    145.9
+   ],
+   "exit_xy": [
+    267.7,
+    185.4
+   ]
+  },
+  {
+   "clip_id": "whole_0357",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 157.5,
+   "exit_along": 172.2,
+   "fit_xy": [
+    145.5,
+    148.6
+   ],
+   "entry_xy": [
+    167.8,
+    153.8
+   ],
+   "exit_xy": [
+    267.2,
+    176.9
+   ]
+  },
+  {
+   "clip_id": "whole_0360",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.971,
+   "imagined": 0.999,
+   "entry_along": 330.0,
+   "exit_along": 311.9,
+   "fit_xy": [
+    90.6,
+    326.6
+   ],
+   "entry_xy": [
+    135.1,
+    324.1
+   ],
+   "exit_xy": [
+    262.9,
+    316.8
+   ]
+  },
+  {
+   "clip_id": "whole_0362",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.985,
+   "imagined": 0.998,
+   "entry_along": 245.0,
+   "exit_along": 238.6,
+   "fit_xy": [
+    113.4,
+    239.2
+   ],
+   "entry_xy": [
+    152.8,
+    240.3
+   ],
+   "exit_xy": [
+    266.1,
+    243.4
+   ]
+  },
+  {
+   "clip_id": "whole_0363",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 0.999,
+   "entry_along": 245.5,
+   "exit_along": 172.0,
+   "fit_xy": [
+    118.4,
+    258.3
+   ],
+   "entry_xy": [
+    151.7,
+    240.6
+   ],
+   "exit_xy": [
+    271.6,
+    177.1
+   ]
+  },
+  {
+   "clip_id": "whole_0366",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.984,
+   "imagined": 0.999,
+   "entry_along": 277.0,
+   "exit_along": 346.2,
+   "fit_xy": [
+    112.9,
+    250.1
+   ],
+   "entry_xy": [
+    144.8,
+    271.7
+   ],
+   "exit_xy": [
+    261.6,
+    351.0
+   ]
+  },
+  {
+   "clip_id": "whole_0367",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.992,
+   "imagined": 0.999,
+   "entry_along": 227.6,
+   "exit_along": 256.3,
+   "fit_xy": [
+    119.2,
+    209.9
+   ],
+   "entry_xy": [
+    157.1,
+    223.2
+   ],
+   "exit_xy": [
+    265.9,
+    261.2
+   ]
+  },
+  {
+   "clip_id": "whole_0368",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.974,
+   "imagined": 0.999,
+   "entry_along": 261.0,
+   "exit_along": 258.5,
+   "fit_xy": [
+    122.3,
+    254.3
+   ],
+   "entry_xy": [
+    147.5,
+    255.9
+   ],
+   "exit_xy": [
+    264.7,
+    263.3
+   ]
+  },
+  {
+   "clip_id": "whole_0369",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.962,
+   "imagined": 0.998,
+   "entry_along": 221.3,
+   "exit_along": 199.5,
+   "fit_xy": [
+    108.0,
+    221.7
+   ],
+   "entry_xy": [
+    154.8,
+    216.7
+   ],
+   "exit_xy": [
+    268.3,
+    204.4
+   ]
+  },
+  {
+   "clip_id": "whole_0370",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.912,
+   "imagined": 0.999,
+   "entry_along": 236.9,
+   "exit_along": 307.0,
+   "fit_xy": [
+    118.8,
+    207.9
+   ],
+   "entry_xy": [
+    153.0,
+    232.2
+   ],
+   "exit_xy": [
+    265.9,
+    312.1
+   ]
+  },
+  {
+   "clip_id": "whole_0371",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.874,
+   "imagined": 0.999,
+   "entry_along": 286.7,
+   "exit_along": 269.1,
+   "fit_xy": [
+    93.1,
+    283.9
+   ],
+   "entry_xy": [
+    142.0,
+    281.2
+   ],
+   "exit_xy": [
+    266.4,
+    274.1
+   ]
+  },
+  {
+   "clip_id": "whole_0372",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 347.8,
+   "exit_along": 361.3,
+   "fit_xy": [
+    86.1,
+    333.7
+   ],
+   "entry_xy": [
+    127.6,
+    341.3
+   ],
+   "exit_xy": [
+    264.6,
+    366.4
+   ]
+  },
+  {
+   "clip_id": "whole_0373",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.975,
+   "imagined": 0.998,
+   "entry_along": 211.9,
+   "exit_along": 240.6,
+   "fit_xy": [
+    132.5,
+    198.3
+   ],
+   "entry_xy": [
+    158.5,
+    207.5
+   ],
+   "exit_xy": [
+    265.2,
+    245.4
+   ]
+  },
+  {
+   "clip_id": "whole_0374",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 165.7,
+   "exit_along": 178.4,
+   "fit_xy": [
+    147.7,
+    157.8
+   ],
+   "entry_xy": [
+    166.6,
+    161.8
+   ],
+   "exit_xy": [
+    267.9,
+    183.2
+   ]
+  },
+  {
+   "clip_id": "whole_0375",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.986,
+   "imagined": 0.999,
+   "entry_along": 177.1,
+   "exit_along": 194.5,
+   "fit_xy": [
+    140.5,
+    166.7
+   ],
+   "entry_xy": [
+    165.6,
+    173.2
+   ],
+   "exit_xy": [
+    266.1,
+    199.2
+   ]
+  },
+  {
+   "clip_id": "whole_0378",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.998,
+   "entry_along": 148.3,
+   "exit_along": 146.3,
+   "fit_xy": [
+    142.3,
+    142.9
+   ],
+   "entry_xy": [
+    170.0,
+    144.7
+   ],
+   "exit_xy": [
+    268.6,
+    151.0
+   ]
+  },
+  {
+   "clip_id": "whole_0379",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 369.9,
+   "exit_along": 425.0,
+   "fit_xy": [
+    84.3,
+    344.7
+   ],
+   "entry_xy": [
+    122.5,
+    363.0
+   ],
+   "exit_xy": [
+    262.6,
+    430.2
+   ]
+  },
+  {
+   "clip_id": "whole_0380",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 138.6,
+   "exit_along": 129.3,
+   "fit_xy": [
+    148.4,
+    135.5
+   ],
+   "entry_xy": [
+    172.7,
+    135.2
+   ],
+   "exit_xy": [
+    269.8,
+    134.1
+   ]
+  },
+  {
+   "clip_id": "whole_0381",
+   "outcome": "bounce",
+   "true": 1,
+   "real": 0.99,
+   "imagined": 0.999,
+   "entry_along": 304.6,
+   "exit_along": 313.7,
+   "fit_xy": [
+    95.7,
+    292.4
+   ],
+   "entry_xy": [
+    136.0,
+    298.7
+   ],
+   "exit_xy": [
+    262.6,
+    318.6
+   ]
+  },
+  {
+   "clip_id": "whole_0382",
+   "outcome": "hidden",
+   "true": 1,
+   "real": 0.937,
+   "imagined": 0.999,
+   "entry_along": 384.3,
+   "exit_along": 429.7,
+   "fit_xy": [
+    88.2,
+    363.2
+   ],
+   "entry_xy": [
+    122.5,
+    377.5
+   ],
+   "exit_xy": [
+    259.5,
+    434.7
+   ]
+  },
+  {
+   "clip_id": "whole_0384",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 149.4,
+   "exit_along": 162.7,
+   "fit_xy": [
+    145.8,
+    140.5
+   ],
+   "entry_xy": [
+    169.7,
+    145.8
+   ],
+   "exit_xy": [
+    268.3,
+    167.5
+   ]
+  },
+  {
+   "clip_id": "whole_0385",
+   "outcome": "through",
+   "true": 0,
+   "real": 0.0,
+   "imagined": 0.999,
+   "entry_along": 156.2,
+   "exit_along": 162.7,
+   "fit_xy": [
+    137.0,
+    147.8
+   ],
+   "entry_xy": [
+    168.1,
+    152.4
+   ],
+   "exit_xy": [
+    269.1,
+    167.5
+   ]
+  }
+ ]
+}

@@ -1,0 +1,178 @@
+{
+ "run": "plan/lossmix_both-after",
+ "code_version": "5258f04",
+ "device": "cuda",
+ "gpu": "Tesla T4",
+ "torch": "2.11.0+cu128",
+ "transformers": "5.16.1",
+ "started": "2026-10-11 01:03:34 UTC",
+ "n_clips": 337,
+ "clips_per_outcome": {
+  "through": 143,
+  "hidden": 80,
+  "bounce": 114
+ },
+ "args": {
+  "stage": "train",
+  "manifest": "/tmp/RobustWorld/outputs/vjepa2/plan/manifest_both.jsonl",
+  "model_id": "facebook/vjepa2-vitl-fpc64-256",
+  "run": "plan/lossmix_both-after",
+  "folds": 5,
+  "fold": null,
+  "all": false,
+  "epochs": 20,
+  "batch_size": 4,
+  "accum": 2,
+  "lr": 3e-05,
+  "weight_decay": 0.04,
+  "workers": 2,
+  "seed": 0,
+  "loss": "commit",
+  "grad_checkpoint": true,
+  "val_frac": 0.1,
+  "patience": 0,
+  "keep_best": true,
+  "rollout": false,
+  "copy_gate": false,
+  "hypotheses": 1,
+  "wta_relax": 0.05,
+  "train_frac": 1.0,
+  "sample_by_loss": 0.25,
+  "save_at": [
+   "1:plan/lossmix_both_e1-after",
+   "2:plan/lossmix_both_e2-after",
+   "4:plan/lossmix_both_e4-after",
+   "7:plan/lossmix_both_e7-after",
+   "10:plan/lossmix_both_e10-after",
+   "15:plan/lossmix_both_e15-after"
+  ],
+  "resume": true,
+  "extra_train": null,
+  "codes": 256,
+  "code_tau": 0.05,
+  "motion_alpha": 4.0,
+  "contrast_weight": 0.1,
+  "tau": 0.02,
+  "negatives": 8
+ },
+ "scale_check": {
+  "pred_spread": 0.6176,
+  "target_spread_raw": 3.2694,
+  "target_spread_ln": 1.0005,
+  "l1_vs_raw": 2.0517,
+  "l1_vs_ln": 0.5922
+ },
+ "folds": [
+  {
+   "split": "fold0",
+   "seconds": 3536.3,
+   "best_epoch": 18,
+   "overfit": {
+    "val_rise_from_best": 0.0008,
+    "val_over_train": 1.003,
+    "flag": false
+   },
+   "final_weight_change": 0.012137,
+   "held_out_l1_pretrained": {
+    "through": 0.57552,
+    "hidden": 0.57919,
+    "bounce": 0.58405
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.51322,
+    "hidden": 0.51594,
+    "bounce": 0.5216
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold1",
+   "seconds": 3535.4,
+   "best_epoch": 16,
+   "overfit": {
+    "val_rise_from_best": 0.0009,
+    "val_over_train": 1.004,
+    "flag": false
+   },
+   "final_weight_change": 0.012278,
+   "held_out_l1_pretrained": {
+    "through": 0.57553,
+    "hidden": 0.57878,
+    "bounce": 0.58207
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.51173,
+    "hidden": 0.51292,
+    "bounce": 0.52111
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold2",
+   "seconds": 3552.0,
+   "best_epoch": 20,
+   "overfit": {
+    "val_rise_from_best": -0.0,
+    "val_over_train": 1.01,
+    "flag": false
+   },
+   "final_weight_change": 0.012074,
+   "held_out_l1_pretrained": {
+    "through": 0.57514,
+    "hidden": 0.57628,
+    "bounce": 0.58338
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.51203,
+    "hidden": 0.5134,
+    "bounce": 0.52542
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold3",
+   "seconds": 3548.6,
+   "best_epoch": 18,
+   "overfit": {
+    "val_rise_from_best": 0.0001,
+    "val_over_train": 1.002,
+    "flag": false
+   },
+   "final_weight_change": 0.012017,
+   "held_out_l1_pretrained": {
+    "through": 0.57776,
+    "hidden": 0.57567,
+    "bounce": 0.57811
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.5167,
+    "hidden": 0.51317,
+    "bounce": 0.51649
+   },
+   "peak_gpu_gb": 2.31
+  },
+  {
+   "split": "fold4",
+   "seconds": 3549.9,
+   "best_epoch": 17,
+   "overfit": {
+    "val_rise_from_best": 0.0007,
+    "val_over_train": 1.011,
+    "flag": false
+   },
+   "final_weight_change": 0.011812,
+   "held_out_l1_pretrained": {
+    "through": 0.57777,
+    "hidden": 0.57117,
+    "bounce": 0.58047
+   },
+   "held_out_l1_posttrained": {
+    "through": 0.52135,
+    "hidden": 0.50364,
+    "bounce": 0.5227
+   },
+   "peak_gpu_gb": 2.31
+  }
+ ],
+ "seconds": 17836.6
+}
