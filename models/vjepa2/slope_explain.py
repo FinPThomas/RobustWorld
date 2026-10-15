@@ -158,33 +158,37 @@ def main(argv: list[str] | None = None) -> int:
 
     c = ax[2]
     probe = next((v for k, v in same.items() if k.startswith("probe on real")), {})
-    bars = [("real ball (tracker)", probe.get("s_real"), probe.get("s_real_ci")),
-            ("probe on real frames", probe.get("s_track"), probe.get("s_track_ci"))]
+    bars = [("real ball (tracker)", probe.get("s_real"), probe.get("s_real_ci"), True),
+            ("probe on real frames", probe.get("s_track"), probe.get("s_track_ci"), True)]
     for name, lab in RUNS[1:]:
         if name == "lossmix_both_e30-after":           # F: dropped for the last Kaggle hours
             continue
         r = next((v for k, v in same.items() if k.startswith(lab)), None)
         short = lab.replace("imagined, after post-training ", "imagined after ").replace("imagined, after ", "imagined after ").replace(" aligned open clips", "")
-        bars.append((short, r.get("s_track") if r else None, r.get("s_track_ci") if r else None))
-    for i, (lab, s, ci) in enumerate(bars):
+        bars.append((short, r.get("s_track") if r else None, r.get("s_track_ci") if r else None, r is not None))
+    hi = 0.06
+    if probe.get("s_track") is not None:
+        c.axvline(probe["s_track"], color="#86b6ef", lw=1, ls="--")
+    for i, (lab, s, ci, scored) in enumerate(bars):
         y = len(bars) - 1 - i
         if s is None:
-            c.text(0.001, y, "waiting for the next Kaggle run", va="center", fontsize=8.5,
-                   color=MUTED, style="italic")
+            c.text(0.001, y, "too few stretches to measure" if scored else "waiting for the next Kaggle run",
+                   va="center", fontsize=8.5, color=MUTED, style="italic")
         else:
             c.barh(y, s, color=DOWN if i == 0 else ("#86b6ef" if i == 1 else "#1c5cab"), height=0.55)
             if ci:
-                c.plot(ci, [y, y], color=INK, lw=1.2)
-            c.text(max(s, ci[1] if ci else s) + 0.002, y, f"{s:.3f}", va="center", fontsize=9, color=INK)
+                c.plot(np.clip(ci, -0.005, hi), [y, y], color=INK, lw=1.2)
+            c.text(s, y + 0.38, f"{s:.3f}", va="center", ha="center", fontsize=9, color=INK)
     c.set_yticks(range(len(bars)), [b_[0] for b_ in bars][::-1], fontsize=9)
+    c.tick_params(axis="y", length=0)
     c.set_ylim(-0.6, len(bars) - 0.4)
     c.axvline(0, color=MUTED, lw=0.8)
-    c.set_xlim(-0.005, 0.05)
+    c.set_xlim(-0.005, hi)
     c.set_xlabel("s: downhill pull (diam / step²), line = 95% interval")
     c.set_title("C. The slope number per track", loc="left", color=INK)
     c.grid(axis="x", color=GRID)
-    c.text(0.0, -0.2, "A world model that learnt the slope should reach the probe-on-real value,\nsince the "
-           "same probe reads its imagined ball.", transform=c.transAxes, color=MUTED, fontsize=9, va="top")
+    c.text(0.0, -0.2, "A world model that learnt the slope should reach the probe-on-real value\n(dashed), since the "
+           "same probe reads its imagined ball. Intervals are cut at the axis ends.", transform=c.transAxes, color=MUTED, fontsize=9, va="top")
     out = args.plan / "slope_map" / "slope_explained.png"
     fig.savefig(out, dpi=130, bbox_inches="tight")
     print(f"slope_explain: wrote {out}")
