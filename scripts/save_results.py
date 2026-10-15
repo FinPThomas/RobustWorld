@@ -35,9 +35,10 @@ def git(*args, cwd=REPO, check=True) -> str:
 
 def collect(dest: Path, repo: Path = REPO, source: str = "outputs/vjepa2") -> list[Path]:
     """Copy result files (not caches or weights) from `source` (under outputs/) and, for the default
-    source, checkpoints/ into dest. A non-default source (the two-day plan) also keeps its .txt step logs."""
+    source, checkpoints/ into dest. A non-default source (the two-day plan) also keeps its .txt step logs and the
+    probe maps (maps.npz, a few MB) that the frame figures need in a later session."""
     saved = []
-    kinds = (".json", ".md", ".png") if source == "outputs/vjepa2" else (".json", ".md", ".png", ".txt")
+    kinds = (".json", ".md", ".png") if source == "outputs/vjepa2" else (".json", ".md", ".png", ".txt", ".npz")
     sources = [(p, p.relative_to(repo / "outputs")) for p in (repo / source).rglob("*")
                if p.suffix in kinds and "cache" not in p.parts]
     if source == "outputs/vjepa2":
