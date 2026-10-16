@@ -377,10 +377,10 @@ ball's cells are averaged, and the colour direction is the normalised difference
 
 $$
 d = \frac{\mu_{\text{orange}} - \mu_{\text{blue}}}{\lVert \mu_{\text{orange}} - \mu_{\text{blue}} \rVert},
-\qquad \mu_b = \operatorname{mean}\big\{\mathrm{LN}(z_j) : j \text{ a ball cell, ball } b,\ \text{real context frame}\big\}.
+\qquad \mu_b = \frac{1}{\lvert \mathcal{B}_b \rvert} \sum_{j \in \mathcal{B}_b} \mathrm{LN}(z_j)
 $$
 
-Its only label is which ball is in the video: no outcomes, target halves or predictions are used, and because the
+where $\mathcal{B}_b$ is the set of ball-cell tokens of ball $b$ in real context frames. Its only label is which ball is in the video: no outcomes, target halves or predictions are used, and because the
 encoder is frozen the direction is the same before and after post-training. It is a difference of means rather than a
 trained classifier, so it cannot pick up anything beyond the average difference between the two balls.
 
