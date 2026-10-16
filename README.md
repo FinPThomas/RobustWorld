@@ -108,19 +108,19 @@ start). Yellow: the target track the model must predict. "Bounce" and "hidden" a
 
 ### 2.1 Why a latent world model rather than a generative video model
 
-Three generative video models, Wan 2.1 [1], Cosmos [2] and LTX-Video [3] (runners in `models/`), were evaluated
+Three generative video models, Wan 2.1 [1], Cosmos and LTX-Video (runners in `models/`), were evaluated
 zero-shot and did not meet the requirements of the problem. Pixel generation spends capacity on texture and
 lighting that carry no information about the blocker; their outputs were frequently blurry or physically
 implausible and had to be re-tracked before they could be scored. Billion-parameter diffusion models are also
 expensive to adapt on a few hundred clips and prone to overfitting at that scale, and iterative denoising is too
 slow for a robot control loop.
 
-V-JEPA 2 [4] instead predicts in a learned latent space, following the Joint-Embedding Predictive Architecture
-[5, 6]. Its targets abstract away unpredictable pixel detail, which suits multi-modal outcomes; its predictor can be
+V-JEPA 2 [2] instead predicts in a learned latent space, following the Joint-Embedding Predictive Architecture.
+Its targets abstract away unpredictable pixel detail, which suits multi-modal outcomes; its predictor can be
 post-trained alone with the encoder frozen, which is cheap and keeps the probe's input fixed; and one forward pass
-produces the forecast. The same architecture already supports zero-shot robot planning (V-JEPA 2-AC [4]), and
-self-supervised video pretraining of this kind yields measurable intuitive-physics understanding [7], in line with
-the case for predictive world models as the basis of autonomous agents [8]. The trade-off is that a latent model
+produces the forecast. The same architecture already supports zero-shot robot planning (V-JEPA 2-AC [2]), and
+self-supervised video pretraining of this kind yields measurable intuitive-physics understanding [3], in line with
+the case for predictive world models as the basis of autonomous agents [4]. The trade-off is that a latent model
 produces no human-viewable frames: its predictions are only as legible as the readout used to decode them, which
 motivates the measurement design in Section 2.3.
 
@@ -167,7 +167,7 @@ of real and predicted change makes a missed ball and a phantom ball equally cost
 loss by hallucinating motion, and the weights carry no gradient, so it cannot lower them by suppressing motion
 either. The *contrastive term* addresses averaging: an L1-optimal prediction under uncertainty is a blend of the
 possible futures, and a blend of "through" and "hidden" lies equally far from both, so it cannot single out its own
-clip among the candidates. InfoNCE [9] therefore rewards predictions that commit to one specific, identifiable
+clip among the candidates. InfoNCE [5] therefore rewards predictions that commit to one specific, identifiable
 future, which is what the probe needs to read a clear ball.
 
 ### 2.3 A probe that cannot learn the blockade
@@ -250,7 +250,7 @@ well, so capacity was not the bottleneck.
 
 **Multiple hypotheses.** Several predicted futures with a learned picker should, in principle, represent "through"
 and "hidden" separately. In practice training collapsed onto a single "no ball" future, with early best epochs and
-one fold overfitting. Winner-takes-all training is known to need careful balancing to avoid such collapse [10], and
+one fold overfitting. Winner-takes-all training is known to need careful balancing to avoid such collapse, and
 254 clips gave too little signal to separate the modes.
 
 **Autoregressive rollout.** Predicting one step at a time and feeding each prediction back was evaluated on the
@@ -406,7 +406,7 @@ above are what make the forecast matter.
 
 ### 6.3 Simulation and policy training
 
-The gripper is simulated in PyBullet [11] (`models/gripper/`). Only the grasp of a single rolling ball is modelled,
+The gripper is simulated in PyBullet (`models/gripper/`). Only the grasp of a single rolling ball is modelled,
 so a lightweight rigid-body simulator gives fast, reproducible training on a laptop CPU; heavier robotics stacks add
 fidelity this task does not need. Each episode replays a real exit (position, time and velocity from the tracker,
 with small jitter).
@@ -428,7 +428,7 @@ $$
 where $\delta \in [0, 1]$ is how deep into the catch zone the grasp happened (earlier is better), $g \in [0, 1]$ is
 how wide the fingers were open, and $c_{\text{move}}$ is a small cost on distance travelled.
 
-**Training.** The policy $\pi_\psi(a \mid o)$, a two-layer MLP (128 units per layer), is trained with PPO [12] by
+**Training.** The policy $\pi_\psi(a \mid o)$, a two-layer MLP (128 units per layer), is trained with PPO [6] by
 maximising the clipped surrogate objective
 
 $$
@@ -436,9 +436,9 @@ $$
 \qquad \rho_t(\psi) = \frac{\pi_\psi(a_t \mid o_t)}{\pi_{\psi_{\text{old}}}(a_t \mid o_t)}
 $$
 
-with advantages $\hat A_t$ from generalised advantage estimation [13] ($\gamma = 0.99$, $\lambda = 0.95$),
+with advantages $\hat A_t$ from generalised advantage estimation ($\gamma = 0.99$, $\lambda = 0.95$),
 $\epsilon = 0.2$, entropy weight $\beta = 0.003$, learning rate $3 \times 10^{-4}$, 512-step rollouts and 10 update
-epochs, for 2.5 M steps per fold over 5 folds (Stable-Baselines3 [14]). During training each episode draws
+epochs, for 2.5 M steps per fold over 5 folds (Stable-Baselines3). During training each episode draws
 $u \sim \mathcal{U}(0, 1)$ and a forecast equal to the true exit plus Gaussian noise of exactly the stated size,
 $\hat x = x + \varepsilon$ with $\varepsilon \sim \mathcal{N}(0, \sigma_s^2)$, and likewise for timing and speed.
 The policy therefore learns how much to trust a forecast from its stated uncertainty. It is then **frozen** and
@@ -511,15 +511,15 @@ limits, its observation layout and a reward tuned to its catch geometry, and the
 catch-rate curve $c(u)$. A different robot needs its own low-level controller, which is the cheapest part to obtain
 because it is trained in simulation.
 
-**A concrete route for a generalist policy: Octo.** Octo [15] is an open-source transformer policy whose inputs are
+**A concrete route for a generalist policy: Octo.** Octo [7] is an open-source transformer policy whose inputs are
 tokenised modality by modality, and which was designed to be fine-tuned to **new observation inputs and new action
 spaces** by adding a lightweight tokenizer and head while keeping the pretrained backbone. The forecast vector would
 enter as an additional low-dimensional observation token alongside the camera tokens, and Octo would be fine-tuned
 on demonstrations generated in simulation by the PPO policy above, which supplies unlimited, perfectly labelled
 trajectories for any embodiment that can be simulated. Octo suits this because its tokenised inputs accept a new
 sensor-like signal without architectural change and it fine-tunes on a single GPU from a few hundred
-demonstrations. π0 [16] is a viable alternative through its proprioceptive state input, at higher compute cost.
-OpenVLA [17] conditions only on an image and a language instruction, so the forecast would have to be rendered into
+demonstrations. π0 is a viable alternative through its proprioceptive state input, at higher compute cost.
+OpenVLA conditions only on an image and a language instruction, so the forecast would have to be rendered into
 the image or the prompt, which discards its numerical precision. This fine-tune has not been run; it is the natural
 next step for carrying the result to a general-purpose manipulator.
 
@@ -540,15 +540,14 @@ that will not emerge, against +1.27 for a perfect forecast.
 Homes contain hidden, persistent state: a drawer that sticks, an object behind another, an uneven floor, a door that
 swings back. A robot that post-trains its world model on its own observations of one home can learn such properties
 without labels and plan around them. World models are increasingly positioned as the predictive layer of robot
-systems, from latent predictive models used for planning [4, 8] to generative world models for humanoids [18, 19],
-and recent surveys frame them as a route to physical reasoning in manipulation [20, 21]. This work contributes a
+systems, from latent predictive models used for planning [2, 4] to generative world models for humanoid robots. This work contributes a
 verifiable test of the property those systems rely on: that scene-specific physics can be acquired from passive
 video and measured independently of the readout. Latent prediction also needs only one forward pass per forecast,
 which suits on-board inference on power-limited humanoid hardware better than iterative video generation.
 
 ### 7.3 Handheld and egocentric video
 
-Large egocentric datasets [22] and handheld data-collection tools [23] show that human-held cameras are the scalable
+Large egocentric datasets and handheld data-collection tools show that human-held cameras are the scalable
 source of home video. Handheld video introduces camera motion; latent models are better placed than pixel
 generators to absorb it, but the probe and the slope measurement would need to operate in a camera-stabilised or
 world-fixed frame.
@@ -614,25 +613,9 @@ Training (`train.py`) is described in [models/gripper/README.md](models/gripper/
 ## References
 
 1. Wan Team. *Wan: Open and Advanced Large-Scale Video Generative Models.* 2025. [arXiv:2503.20314](https://arxiv.org/abs/2503.20314)
-2. NVIDIA. *Cosmos World Foundation Model Platform for Physical AI.* 2025. [arXiv:2501.03575](https://arxiv.org/abs/2501.03575)
-3. HaCohen et al. *LTX-Video: Realtime Video Latent Diffusion.* 2025. [arXiv:2501.00103](https://arxiv.org/abs/2501.00103)
-4. Assran et al. *V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction and Planning.* 2025. [arXiv:2506.09985](https://arxiv.org/abs/2506.09985)
-5. Assran et al. *Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture.* CVPR 2023. [arXiv:2301.08243](https://arxiv.org/abs/2301.08243)
-6. Bardes et al. *Revisiting Feature Prediction for Learning Visual Representations from Video.* 2024. [arXiv:2404.08471](https://arxiv.org/abs/2404.08471)
-7. Garrido et al. *Intuitive Physics Understanding Emerges from Self-Supervised Pretraining on Natural Videos.* 2025. [arXiv:2502.11831](https://arxiv.org/abs/2502.11831)
-8. LeCun. *A Path Towards Autonomous Machine Intelligence.* 2022. [OpenReview](https://openreview.net/forum?id=BZ5a1r-kVsf)
-9. van den Oord, Li and Vinyals. *Representation Learning with Contrastive Predictive Coding.* 2018. [arXiv:1807.03748](https://arxiv.org/abs/1807.03748)
-10. Rupprecht et al. *Learning in an Uncertain World: Representing Ambiguity Through Multiple Hypotheses.* ICCV 2017. [arXiv:1612.00197](https://arxiv.org/abs/1612.00197)
-11. Coumans and Bai. *PyBullet, a Python module for physics simulation for games, robotics and machine learning.* 2016–2021. [pybullet.org](https://pybullet.org)
-12. Schulman et al. *Proximal Policy Optimization Algorithms.* 2017. [arXiv:1707.06347](https://arxiv.org/abs/1707.06347)
-13. Schulman et al. *High-Dimensional Continuous Control Using Generalized Advantage Estimation.* ICLR 2016. [arXiv:1506.02438](https://arxiv.org/abs/1506.02438)
-14. Raffin et al. *Stable-Baselines3: Reliable Reinforcement Learning Implementations.* JMLR 22(268), 2021. [jmlr.org](https://jmlr.org/papers/v22/20-1364.html)
-15. Octo Model Team. *Octo: An Open-Source Generalist Robot Policy.* RSS 2024. [arXiv:2405.12213](https://arxiv.org/abs/2405.12213)
-16. Black et al. *π0: A Vision-Language-Action Flow Model for General Robot Control.* 2024. [arXiv:2410.24164](https://arxiv.org/abs/2410.24164)
-17. Kim et al. *OpenVLA: An Open-Source Vision-Language-Action Model.* 2024. [arXiv:2406.09246](https://arxiv.org/abs/2406.09246)
-18. *Humanoid World Models: Open World Foundation Models for Humanoid Robotics.* 2025. [arXiv:2506.01182](https://arxiv.org/abs/2506.01182)
-19. *Generative World Modelling for Humanoids: 1X World Model Challenge Technical Report.* 2025. [arXiv:2510.07092](https://arxiv.org/abs/2510.07092)
-20. *World Models for Robotic Manipulation: A Survey.* 2026. [arXiv:2606.00113](https://arxiv.org/abs/2606.00113)
-21. *A Definition and Roadmap for World Models.* 2026. [arXiv:2607.06401](https://arxiv.org/abs/2607.06401)
-22. Grauman et al. *Ego4D: Around the World in 3,000 Hours of Egocentric Video.* CVPR 2022. [arXiv:2110.07058](https://arxiv.org/abs/2110.07058)
-23. Chi et al. *Universal Manipulation Interface: In-The-Wild Robot Teaching Without In-The-Wild Robots.* RSS 2024. [arXiv:2402.10329](https://arxiv.org/abs/2402.10329)
+2. Assran et al. *V-JEPA 2: Self-Supervised Video Models Enable Understanding, Prediction and Planning.* 2025. [arXiv:2506.09985](https://arxiv.org/abs/2506.09985)
+3. Garrido et al. *Intuitive Physics Understanding Emerges from Self-Supervised Pretraining on Natural Videos.* 2025. [arXiv:2502.11831](https://arxiv.org/abs/2502.11831)
+4. LeCun. *A Path Towards Autonomous Machine Intelligence.* 2022. [OpenReview](https://openreview.net/forum?id=BZ5a1r-kVsf)
+5. van den Oord, Li and Vinyals. *Representation Learning with Contrastive Predictive Coding.* 2018. [arXiv:1807.03748](https://arxiv.org/abs/1807.03748)
+6. Schulman et al. *Proximal Policy Optimization Algorithms.* 2017. [arXiv:1707.06347](https://arxiv.org/abs/1707.06347)
+7. Octo Model Team. *Octo: An Open-Source Generalist Robot Policy.* RSS 2024. [arXiv:2405.12213](https://arxiv.org/abs/2405.12213)
