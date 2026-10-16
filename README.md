@@ -17,13 +17,13 @@ from **−0.08 to +0.69** mean reward per pass (perfect forecast +1.27), chiefly
 
 **Key findings**
 
-| question | answer | evidence |
-|---|---|---|
-| Can post-training on home video teach a hidden blocker? | Yes | AUROC 0.44 → 0.97 (training direction), above a tracker fitted on outcomes (0.85) |
-| What made it work? | A loss that penalises hedging, hard-example sampling, a longer schedule, both entry directions | Section 3.2 |
-| Does it generalise? | Yes: across entry directions once both are seen, and to an unseen orange ball (AUROC 0.90) | Section 4 |
-| Is the table slope learnt? | Likely, not proven | s = 0.024 (95% CI −0.007 to 0.040) vs 0.014 attainable |
-| Does a robot benefit? | Yes | Gripper reward −0.08 → +0.69 per pass (perfect forecast +1.27) |
+| Question | Answer | Key result | Section |
+|---|---|---|---|
+| Can post-training teach a hidden blocker? | **Yes** | AUROC 0.44 → 0.97 (tracker fitted on outcomes: 0.85) | 3.3 |
+| What made it work? | **Training, not architecture** | Hedging-penalty loss, hard-pass sampling, longer schedule, both directions | 3.2 |
+| Does it generalise? | **Yes** | Other entry direction 0.87; unseen orange ball 0.90 | 4 |
+| Is the table slope learnt? | **Likely, not proven** | s = 0.024 (95% CI −0.007 to 0.040; attainable 0.014) | 5 |
+| Does a robot benefit? | **Yes** | Gripper reward −0.08 → +0.69 per pass (perfect +1.27) | 6.5 |
 
 <p align="center"><img src="docs/figures/rollout_through.gif" width="900"></p>
 
