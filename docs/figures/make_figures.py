@@ -26,9 +26,9 @@ PLAN = REPO / "results" / "2026-10-04_2110_twoday" / "vjepa2" / "plan"
 SCENE = json.loads((REPO / "configs" / "scenes" / "whole.json").read_text())
 PLANK = np.asarray(SCENE["occluder_polygon"], float)
 
-# hidden blocker as placed (Fin, 16 Oct): under the two dark markers on the plank's right edge,
-# about half the plank width, in the middle along the plank
-BLOCKER = np.array([[201, 255], [258, 255], [256, 370], [188, 370]], float)
+# hidden blocker as placed (Fin, 16 Oct): centred on the seam between the plank's two boards, about half
+# the plank's width, along the plank between its middle and far dark markers
+BLOCKER = np.array([[175, 265], [232, 265], [220, 360], [164, 360]], float)
 
 PRE, TWO, FINAL = "both-before", "lossmix_both-after", "lossmix_topup-after"
 NAMES = {PRE: "Pretrained V-JEPA 2",
@@ -55,11 +55,35 @@ FONT = str(Path(matplotlib.__file__).parent / "mpl-data" / "fonts" / "ttf" / "De
 OUTLINE = [pe.Stroke(linewidth=5, foreground="black", alpha=0.55), pe.Normal()]
 
 
+def _blocker(ax, label: bool = True) -> None:
+    """Dashed outline of the hidden blocker (never visible in the video)."""
+    import matplotlib.patheffects as pe
+    from matplotlib.patches import Polygon
+    ax.add_patch(Polygon(BLOCKER, closed=True, fill=False, ec="#ff2d2d", lw=2.2, ls=(0, (4, 2))))
+    if label:
+        ax.text(BLOCKER[:, 0].min() - 8, BLOCKER[:, 1].mean(), "hidden\nblocker", ha="right", va="center",
+                fontsize=10, color="white", fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=2.5, foreground="#b00000")])
+
+
+def _blocker_pil(im: Image.Image, scale: float) -> Image.Image:
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(im)
+    pts = [tuple(q) for q in (BLOCKER * scale)]
+    for a, b in zip(pts, pts[1:] + pts[:1]):          # dashed edges
+        n = int(np.hypot(b[0] - a[0], b[1] - a[1]) // 6) + 1
+        for k in range(0, n, 2):
+            t0, t1 = k / n, (k + 1) / n
+            d.line([(a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0),
+                    (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)], fill=(255, 45, 45), width=3)
+    return im
+
+
 def fig_outcomes(clips: Path) -> None:
     rows = {r["clip_id"]: r for r in json.loads((PLAN / "scores" / PRE / "per_clip.json").read_text())}
     picks = [("whole_0206", "Through", "the ball emerges on the far side"),
              ("whole_0000", "Bounce", "the ball rebounds off the hidden blocker"),
-             ("whole_0007", "Hidden", "the ball stops under the plank")]
+             ("whole_0061", "Hidden", "the ball stops under the plank")]
     fig, axes = plt.subplots(1, 3, figsize=(13, 5.0), gridspec_kw={"wspace": 0.04})
     for ax, (cid, title, sub) in zip(axes, picks):
         frames = iio.imread(clips / "right" / f"{cid}.mp4")
@@ -69,7 +93,14 @@ def fig_outcomes(clips: Path) -> None:
         fut = np.array([q for q in r["true_pos"] if q], float)
         ax.plot(ctx[:, 0], ctx[:, 1], "-", color="white", lw=3, path_effects=OUTLINE)
         ax.plot(*ctx[0], "o", color="white", ms=8, path_effects=OUTLINE)
-        if len(fut):
+        _blocker(ax, label=title == "Bounce")
+        if title == "Hidden":            # never seen again: the ball runs under the plank and stops there
+            end = ctx[-1] + 2.2 * (ctx[-1] - ctx[-2])
+            ax.annotate("", end, ctx[-1], arrowprops={"arrowstyle": "-|>", "color": "#ffd23f", "lw": 3,
+                                                      "ls": (0, (2, 1.5)), "mutation_scale": 22})
+            ax.text(end[0] + 22, end[1] - 26, "unseen", ha="left", fontsize=11, color="#ffd23f",
+                    fontweight="bold", path_effects=OUTLINE)
+        elif len(fut):
             ax.plot(fut[:, 0], fut[:, 1], "-", color="#ffd23f", lw=3, path_effects=OUTLINE)
             ax.annotate("", fut[-1], fut[max(len(fut) - 3, 0)], arrowprops={"arrowstyle": "-|>", "color": "#ffd23f",
                                                                         "lw": 3, "mutation_scale": 22})
@@ -116,13 +147,13 @@ def _clean_orange(path: Path) -> list[np.ndarray]:
 def gif_data(clips: Path, orange: Path | None) -> None:
     parts = [("right", "whole_0206", "Ball from the right", "outcome: through"),
              ("right", "whole_0000", "Ball from the right", "outcome: bounce (blocked)"),
-             ("right", "whole_0007", "Ball from the right", "outcome: hidden (blocked)"),
+             ("right", "whole_0061", "Ball from the right", "outcome: hidden (blocked)"),
              ("left", "whole_0290", "Ball from the left", "outcome: through")]
     frames, dur = [], []
     for side, cid, title, sub in parts:
         v = iio.imread(clips / side / f"{cid}.mp4")
         for i in range(0, len(v), 3):
-            im = Image.fromarray(v[i]).resize((360, 360), Image.LANCZOS)
+            im = _blocker_pil(Image.fromarray(v[i]).resize((360, 360), Image.LANCZOS), 360 / 512)
             frames.append(_caption(im, title, sub))
             dur.append(190)
         dur[-1] = 900
@@ -194,15 +225,6 @@ def fig_rollout(clips: Path, cid: str, side: str, title: str, name: str) -> None
     # row labels sit left of the first image column; free that column for rows 2 and 3
     fig.suptitle(title, fontsize=14, fontweight="bold", y=0.96)
     save(fig, name)
-
-
-def _blocker(ax) -> None:
-    from matplotlib.patches import Polygon
-    import matplotlib.patheffects as pe
-    ax.add_patch(Polygon(BLOCKER, closed=True, fill=False, ec="#ff2d2d", lw=2.2, ls=(0, (4, 2))))
-    ax.text(BLOCKER[:, 0].max() + 10, BLOCKER[:, 1].mean(), "hidden\nblocker", ha="left", va="center",
-            fontsize=10, color="white", fontweight="bold",
-            path_effects=[pe.withStroke(linewidth=2.5, foreground="#b00000")])
 
 
 def gif_rollout(clips: Path, cid: str, side: str, name: str) -> None:
