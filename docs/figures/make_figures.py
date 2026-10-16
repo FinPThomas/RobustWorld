@@ -27,8 +27,8 @@ SCENE = json.loads((REPO / "configs" / "scenes" / "whole.json").read_text())
 PLANK = np.asarray(SCENE["occluder_polygon"], float)
 
 # hidden blocker as placed (Fin, 16 Oct): centred on the seam between the plank's two boards, about half
-# the plank's width, along the plank between its middle and far dark markers
-BLOCKER = np.array([[175, 265], [232, 265], [220, 360], [164, 360]], float)
+# the plank's width, along the plank from the upper dark marker down to the middle one
+BLOCKER = np.array([[190, 142], [247, 142], [232, 265], [175, 265]], float)
 
 PRE, TWO, FINAL = "both-before", "lossmix_both-after", "lossmix_topup-after"
 NAMES = {PRE: "Pretrained V-JEPA 2",
@@ -61,15 +61,16 @@ def _blocker(ax, label: bool = True) -> None:
     from matplotlib.patches import Polygon
     ax.add_patch(Polygon(BLOCKER, closed=True, fill=False, ec="#ff2d2d", lw=2.2, ls=(0, (4, 2))))
     if label:
-        ax.text(BLOCKER[:, 0].min() - 8, BLOCKER[:, 1].mean(), "hidden\nblocker", ha="right", va="center",
+        ax.text(BLOCKER[:, 0].min() - 6, BLOCKER[:, 1].max() + 30, "hidden\nblocker", ha="center", va="center",
                 fontsize=10, color="white", fontweight="bold",
                 path_effects=[pe.withStroke(linewidth=2.5, foreground="#b00000")])
 
 
-def _blocker_pil(im: Image.Image, scale: float) -> Image.Image:
+def _blocker_pil(im: Image.Image, scale, offset=(0, 0)) -> Image.Image:
+    """Dashed blocker outline on a frame cropped at `offset` (x, y) and scaled by `scale` (sx, sy)."""
     from PIL import ImageDraw
     d = ImageDraw.Draw(im)
-    pts = [tuple(q) for q in (BLOCKER * scale)]
+    pts = [tuple(q) for q in ((BLOCKER - offset) * np.broadcast_to(scale, 2))]
     for a, b in zip(pts, pts[1:] + pts[:1]):          # dashed edges
         n = int(np.hypot(b[0] - a[0], b[1] - a[1]) // 6) + 1
         for k in range(0, n, 2):
@@ -140,7 +141,10 @@ def _clean_orange(path: Path) -> list[np.ndarray]:
             m[:, max(k - 1, 0):k + 2] = 255
             m[max(k - 1, 0):k + 2, :] = 255
         f = cv2.inpaint(t, m, 5, cv2.INPAINT_TELEA)[20:470, 30:508]
-        out.append(cv2.resize(f, (360, 360))[..., ::-1])
+        # the orange recording's plank lies where the blue one's does (configs/scenes/other.json on the
+        # orange-ball branch), so the same blocker outline applies after this crop and resize
+        im = Image.fromarray(np.ascontiguousarray(cv2.resize(f, (360, 360))[..., ::-1]))
+        out.append(np.asarray(_blocker_pil(im, (360 / 478, 360 / 450), (30, 20))))
     return out
 
 
