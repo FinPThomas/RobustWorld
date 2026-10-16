@@ -11,7 +11,7 @@ A ball rolls under a plank; a blocker hidden beneath the plank stops some passes
 side, and the table is slightly tilted. The predictor of V-JEPA 2 is post-trained on 337 such passes and read by a
 frozen linear ball probe that never observes outcomes or predictions, so any knowledge of the blocker must reside
 in the world model itself. Through-vs-blocked AUROC rises from **0.44 to 0.97** for passes from the training
-direction (0.66 to 0.87 from the opposite direction), and the table slope is likely, though not conclusively,
+direction (0.66 to 0.87 from the opposite direction, and 0.39 to 0.90 for an unseen orange ball), and the table slope is likely, though not conclusively,
 recovered. A simulated two-finger gripper conditioned on the forecast improves from **−0.08 to +0.69** mean reward
 per real pass (perfect forecast: +1.27), chiefly by declining to chase balls that never emerge.
 
@@ -21,7 +21,7 @@ per real pass (perfect forecast: +1.27), chiefly by declining to chase balls tha
 |---|---|---|
 | Can post-training on home video teach a hidden blocker? | Yes | AUROC 0.44 → 0.97 (training direction), above a tracker fitted on outcomes (0.85) |
 | What made it work? | A loss that penalises hedging, hard-example sampling, a longer schedule, both entry directions | Section 3.2 |
-| Does it generalise? | Across entry directions, yes, once both are seen; to a new object, pending | Section 4 |
+| Does it generalise? | Yes: across entry directions once both are seen, and to an unseen orange ball (AUROC 0.90) | Section 4 |
 | Is the table slope learnt? | Likely, not proven | s = 0.024 (95% CI −0.007 to 0.040) vs 0.014 attainable |
 | Does a robot benefit? | Yes | Gripper reward −0.08 → +0.69 per pass (perfect forecast +1.27) |
 
@@ -346,25 +346,41 @@ reaching 0.89 (two-way model) and 0.87 (final model) on held-out left-entry pass
 
 ### 4.2 A held-out object: the orange ball
 
-The final model, unchanged, is scored on 57 passes with an orange ball that never appears in training, filmed from a
-different camera angle. A model that has learnt the *scene* rather than the training ball should be insensitive to
-the ball's appearance.
-
-> **Results pending (test in progress).** AUROC: _to be added_.
+The two-way post-trained model, unchanged, is scored on 57 passes with a pale orange ping-pong ball that never
+appears in training, filmed from a different camera angle (27 through, 30 blocked, mostly bouncing back). A model
+that has learnt the *scene* rather than the training ball should be insensitive to the ball's appearance. It
+reaches AUROC **0.90** on the orange ball against 0.92 on a matched sample of 40 blue-ball passes, while the
+pretrained model scores 0.39 (Figure 11a). The blockade therefore transfers to an object the model has never seen.
+The final model was not scored on this set, because the test ran with the two-way model's weights only.
 
 ### 4.3 Interpretability: isolating ball appearance
 
-The aim is to identify a latent direction that encodes the ball's appearance (colour), separate from the components
-that encode position, velocity and motion. The direction is estimated from real context tokens only, as the mean
-difference between ball-cell tokens of the orange and blue balls, labelled by which ball is present and never by
-outcomes or predictions. Projecting it out of the context before the predictor tests whether the scene knowledge
-(blockade, slope) is independent of the object's appearance.
+A single latent direction encoding the ball's colour was estimated in the frozen encoder's space, as the mean
+difference between orange and blue ball-cell tokens from **real context frames only**, labelled by which ball is
+shown and never by outcomes or predictions. It separates the two balls almost perfectly on held-out folds (AUROC
+0.997) and is nearly orthogonal to the probe's position readout (cosine −0.04). It is not perfectly pure: for the
+orange ball it also correlates with speed ($r = 0.54$), whereas for the blue ball it barely tracks motion.
 
-> **Results pending (analysis in progress).**
+Two results follow. First, setting this coordinate to the blue-ball level before the predictor *raises* orange-ball
+AUROC from 0.90 to **0.94** and leaves blue unchanged (0.92), so the blockade knowledge does not depend on the ball's
+colour; the cost is the finer distinction between bouncing and stopping passes, which drops from 0.86 to 0.52.
+Second, in the predicted future the post-trained model keeps the ball partly orange, whereas the pretrained model
+loses the ball altogether (Figure 11b), which suggests that post-training also preserves object identity
+through the occlusion.
 
-> **Summary.** The blockade generalises across entry directions once both are observed in training; a single
-> direction is not enough. Cross-object generalisation (Section 4.2) will establish whether the learnt property
-> belongs to the scene rather than to the training ball.
+<p align="center"><img src="docs/figures/orange_ball.png" width="900"></p>
+
+*Figure 11. (a) Through-vs-blocked AUROC for the training (blue) and held-out (orange) ball; "colour removed" sets the
+colour coordinate to the blue level before the predictor (dotted line = chance). (b) Colour coordinate at the ball's
+position, read from real frames and from each model's predicted future (positive = orange).*
+
+These numbers carry two caveats: the probe for this test was fitted on 100 blue clips because GPU time was short,
+and confidence intervals have not yet been computed. The cheapest next check is the reverse colour swap: adding the
+direction to blue clips should leave the forecast unchanged.
+
+> **Summary.** The blockade generalises across entry directions once both are observed in training, and to an
+> unseen ball filmed from a new angle with almost no loss (0.90 vs 0.92). Removing the ball's colour from the input
+> does not harm the blockade prediction, so the learnt property belongs to the scene, not to the training ball.
 
 ## 5. The table slope
 
@@ -566,7 +582,7 @@ The study uses one scene, one blocker position and a single training seed with 5
 left-entry set contains only 3 hidden passes; the predicted ball remains fainter than the real one in the narrow
 gap; the slope interval includes zero; and the gripper is evaluated in simulation on real trajectories rather than
 on hardware. The most informative next steps are a moved-blocker recording to test adaptation, the cross-object test
-of Section 4.2, fine-tuning Octo on the forecast (Section 6.6), and hardware evaluation.
+of Section 4.2 with confidence intervals and the final model, fine-tuning Octo on the forecast (Section 6.6), and hardware evaluation.
 
 ## 8. How to run
 

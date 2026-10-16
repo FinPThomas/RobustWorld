@@ -308,6 +308,41 @@ def fig_pblocked() -> None:
     save(fig, "p_blocked.png")
 
 
+# ---------------------------------------------------------------- held-out orange ball
+def fig_orange() -> None:
+    m = json.loads((REPO / "results" / "other_ball" / "metrics.json").read_text())
+    sc = m["scores"]
+    rows = [("real", "Real frames\n(probe ceiling)"), ("pretrained", "Pretrained\nV-JEPA 2"),
+            ("C", "Two-way\npost-trained"), ("C (colour removed)", "Two-way, colour\nremoved")]
+    blue, orange = "#2c7fb8", "#f28e2b"
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.8), gridspec_kw={"width_ratios": [1.35, 1], "wspace": 0.28})
+    ax = axes[0]
+    x = np.arange(len(rows))
+    for off, side, col, lab in [(-0.2, "old", blue, f"blue ball (training ball, {sc['old']['real']['n']} passes)"),
+                                (0.2, "new", orange, f"orange ball (never seen, {sc['new']['real']['n']} passes)")]:
+        v = [sc[side][k]["outcome_auroc"] for k, _ in rows]
+        ax.bar(x + off, v, 0.38, color=col, label=lab)
+        for xi, vi in zip(x + off, v):
+            ax.text(xi, vi + 0.02, f"{vi:.2f}", ha="center", fontsize=10)
+    ax.axhline(0.5, color="0.5", lw=1, ls=":")
+    ax.set_xticks(x, [l for _, l in rows])
+    ax.set_ylim(0, 1.12)
+    ax.set_ylabel("Through-vs-blocked AUROC")
+    ax.set_title("(a) Blockade prediction for a held-out ball", fontweight="bold")
+    fig.legend(loc="lower center", bbox_to_anchor=(0.5, -0.11), ncol=2, frameon=False)
+    ax = axes[1]
+    labs = [("real", "Real\nframes"), ("pretrained", "Pretrained\nV-JEPA 2"), ("C", "Two-way\npost-trained")]
+    x = np.arange(len(labs))
+    for off, side, col in [(-0.2, "old", blue), (0.2, "new", orange)]:
+        v = [sc[side]["colour_coordinate_at_real_ball_cells"][k] for k, _ in labs]
+        ax.bar(x + off, v, 0.38, color=col)
+    ax.axhline(0, color="0.3", lw=1)
+    ax.set_xticks(x, [l for _, l in labs])
+    ax.set_ylabel("Colour coordinate at the ball")
+    ax.set_title("(b) Ball colour in the predicted future", fontweight="bold")
+    save(fig, "orange_ball.png")
+
+
 # ---------------------------------------------------------------- AUROC summary
 def fig_auroc() -> None:
     overall = [("Real future frames\n(probe ceiling)", 0.998, 0.995, 1.0, COL["real"]),
@@ -527,6 +562,7 @@ def main() -> None:
     gif_rollout(a.clips, "whole_0206", "right", "rollout_through.gif")
     gif_rollout(a.clips, "whole_0007", "right", "rollout_blocked.gif")
     fig_pblocked()
+    fig_orange()
     fig_auroc()
     fig_slope()
     gifs_gripper()
