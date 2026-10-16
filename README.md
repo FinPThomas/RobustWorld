@@ -377,7 +377,7 @@ The two-way post-trained model, unchanged, is scored on 57 passes with a pale or
 appears in training, filmed from a different camera angle (27 through, 30 blocked, mostly bouncing back). A model
 that has learnt the *scene* rather than the training ball should be insensitive to the ball's appearance. It
 reaches AUROC **0.90** on the orange ball against 0.92 on a matched sample of 40 blue-ball passes, while the
-pretrained model scores 0.39 (Figure 11a). The blockade therefore transfers to an object the model has never seen.
+pretrained model scores 0.39 (Figure 9a). The blockade therefore transfers to an object the model has never seen.
 The final model was not scored on this set, because the test ran with the two-way model's weights only.
 
 ### 4.3 Interpretability: isolating ball appearance
@@ -416,7 +416,7 @@ two-way model's five fold predictors.
 a colour mismatch. The cost is the finer distinction between bouncing and stopping passes on the orange ball, which
 drops from 0.86 to 0.52, so some of that information travels with the colour axis. In the predicted future the
 post-trained model keeps the ball partly orange, whereas the pretrained model loses the ball altogether (Figure
-11b), which suggests that post-training also preserves object identity through the occlusion.
+9b), which suggests that post-training also preserves object identity through the occlusion.
 
 <p align="center"><img src="docs/figures/orange_ball.png" width="900"></p>
 
