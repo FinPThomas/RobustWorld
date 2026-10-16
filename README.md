@@ -653,6 +653,21 @@ instruction to these few interpretable parameters, or to a skill embedding learn
 each style, so that intermediate instructions ("fairly careful") interpolate between styles rather than switching
 abruptly.
 
+**Why set risk through language.** The appropriate level of risk depends on context that the world model cannot
+observe and the policy was never trained on: whether the object is fragile, whether people are nearby, whether
+speed or reliability matters more today. Exposing risk as one explicit parameter set by language has four
+consequences. *It transfers across contexts without retraining:* the same trained policy and world model serve "catch
+the egg carefully" and "grab the ball quickly", because only a scalar preference changes, and that preference means
+the same thing in every scene. *It transfers across tasks:* "careful" and "hasty" carry the same meaning for catching,
+pouring or opening a door, so one instruction vocabulary can steer many skills, each of which only has to expose its
+own cost of acting against the cost of waiting. *It separates belief from preference:* the world model says what is
+likely, and the instruction says how much a mistake matters, so a better world model improves every attitude at
+once and a change of attitude never corrupts the forecast. *It is cheap to supervise:* a person can correct
+behaviour in a word ("too hesitant") rather than by collecting new demonstrations, and the correction is auditable
+because it maps to a visible number. The same pattern applies beyond robotics wherever a learnt predictor feeds a
+decision under uncertainty, for example in driving assistance, where the forecast stays fixed while the user's
+chosen caution changes.
+
 **Implications for humanoids.** A humanoid acting in a home faces the same trade-off at larger scale: reaching for
 something that is not there costs time and energy and can be unsafe near people, while hesitating can mean failing the
 task. Keeping the world model's forecast, its uncertainty and the risk attitude as separate, explicit quantities has
@@ -670,7 +685,7 @@ Self-supervised post-training of V-JEPA 2 on a few hundred home-recorded clips t
 (AUROC 0.44 to 0.97), measured through a readout that provably cannot have learnt it. The decisive ingredients were a
 loss that penalises hedging, loss-weighted sampling, a longer schedule and training on both entry directions;
 architectural additions did not improve on them. The knowledge generalises across entry directions once both are
-observed, the narrow gap remains the weakest case, and the table slope is likely recovered. A frozen gripper policy
+observed and to an unseen orange ball (AUROC 0.90), independently of the ball's colour; the narrow gap remains the weakest case, and the table slope is likely recovered. A frozen gripper policy
 converts the forecast into behaviour: mean reward rises from −0.08 to +0.69 per pass, chiefly by not pursuing balls
 that will not emerge, against +1.27 for a perfect forecast.
 
