@@ -356,7 +356,9 @@ def both_manifest() -> Path:
     import generalise
     if not MANIFEST.exists():
         raise Waiting(f"no clips on this machine ({MANIFEST.name})")
-    clips = generalise.included(MANIFEST) + generalise.other_segments(MANIFEST)
+    held = set(generalise.holdout_videos(None))         # the other ball is never trained on
+    clips = [c for c in generalise.included(MANIFEST) + generalise.other_segments(MANIFEST)
+             if generalise.stem(c) not in held]
     if not any(generalise.side_in(c) != generalise.side_in(clips[0]) for c in clips):
         raise Waiting("only one direction of clips on this machine (add the left segment's zip)")
     BOTH.parent.mkdir(parents=True, exist_ok=True)
@@ -537,9 +539,22 @@ def step_lossmix_both_long(args, state, log):
         shutil.rmtree(CKPT / name, ignore_errors=True)
 
 
+def other_ball_ready() -> str | None:
+    import generalise
+    videos = generalise.holdout_videos(None)
+    if not videos:
+        return "the other ball's video isn't listed yet (configs/heldout.json)"
+    found = {generalise.stem(c) for m in MANIFEST.parent.glob("manifest_*.jsonl") for c in generalise.included(m)}
+    missing = [v for v in videos if v not in found]
+    return f"the other ball's clips aren't on this machine ({', '.join(missing)}: add its zip)" if missing else None
+
+
 def step_other_ball(args, state, log):
-    """Other-ball clips, scored without training (scope D). Waits until they are packed and listed."""
-    raise Waiting("the other ball's clips aren't added yet (configs/heldout.json and their clips zip)")
+    """D (Fin, 2026-10-16): the other ball, scored without training (pretrained, C, G when its weights are here),
+    plus its colour direction in the frozen encoder's features and the scores with that direction removed
+    (other_ball.py). Encodes whatever isn't encoded yet first (every clip, each session)."""
+    step_encode(args, state, log)
+    must([PY, HERE / "other_ball.py", "--out", PLAN / "other_ball"], log)
 
 
 def step_generalise(args, state, log):
@@ -614,8 +629,8 @@ STEPS: list[Step] = [
     # Long-run queue (Fin, 2026-10-10: keep going for a long time on the existing footage): C for 30 epochs.
     Step(2, "lossmix_both_e30-after", "F. C trained for 30 epochs (scored at 25 and 30): where does learning stop?",
          step_lossmix_both_long),
-    Step(5, "other-ball", "D. the other ball, scored without training", step_other_ball,
-         lambda: "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"),
+    Step(5, "other-ball", "D. the other ball, scored without training, and its colour direction", step_other_ball,
+         other_ball_ready),
 ]
 
 
@@ -933,6 +948,7 @@ def step_hours(name: str) -> float:
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
                "rescore-aligned": 0.5,            # one scoring pass
+               "other-ball": 0.9,                 # encode every clip (~0.5 h), then a small scoring pass
                "rescore-aligned-C": 0.5,
                "rescore-aligned-E": 0.5,
                "lossmix_topup-after": 2.3,        # 5 epochs from C with the open clips (fold-epoch 3.8 min on T4), two scoring passes
