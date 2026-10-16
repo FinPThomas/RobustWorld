@@ -29,7 +29,8 @@ per real pass (perfect forecast: +1.27), chiefly by declining to chase balls tha
 
 *Figure 1. A pass that emerges on the far side. Left: the real future, read by the ball probe. Centre: the
 pretrained V-JEPA 2 loses the ball under the plank. Right: the final post-trained model predicts it emerging.
-Cyan marks where the probe locates the ball (opacity = probe confidence).*
+Cyan marks where the probe locates the ball (opacity = probe confidence); the red dashed
+outline marks the hidden blocker, which is never visible in the video.*
 
 ## Contents
 
