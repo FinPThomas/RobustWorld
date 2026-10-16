@@ -1,37 +1,34 @@
 # RobustWorld: Learning Hidden Scene Physics from Home Video for Robot Control
 
-> **Branch `final/robustworld-summary`.** Final, self-contained summary of the project. It holds only the
-> code and results needed to reproduce the best world model and the best gripper policy. Exploratory runs
-> remain on their original branches (`claude/colab-two-day-plan-3gn90a`, `claude/project-thread-yzzs6s`).
+> **Branch `final/robustworld-summary`.** Final, self-contained summary of the project, holding only the code and
+> results needed to reproduce the best world model and the best gripper policy.
 
 ## Abstract
 
-Robots operating in homes must act on properties of a scene that cannot be seen: an obstruction behind a
-cover, a surface that is not level, an object that will or will not reappear. This work examines whether a
-pretrained video world model can acquire such a property **purely by self-supervised post-training on a
-small amount of home-recorded video**, and whether a robot policy benefits from the acquired knowledge.
+Robots operating in homes must act on properties of a scene that cannot be seen: an obstruction behind a cover, a
+surface that is not level, an object that will or will not reappear. This work examines whether a pretrained video
+world model can acquire such a property **purely by self-supervised post-training on a small amount of
+home-recorded video**, and whether a robot policy benefits from the acquired knowledge.
 
-- **Scene.** A ball rolls under a plank; a blocker hidden beneath the plank stops some passes, while others
-  emerge on the far side. The table is also slightly tilted.
-- **World model.** The predictor of V-JEPA 2 is post-trained on 337 passes. Its predictions are read by a
-  frozen linear ball probe that never sees outcomes or predictions, so all blockade knowledge must reside
-  in the world model.
-- **Result.** Through-vs-blocked AUROC rises from **0.44 to 0.97** for passes from the training direction
-  (0.66 to 0.87 from the opposite direction). The table slope is likely, but not conclusively, recovered.
-- **Policy.** A simulated two-finger gripper conditioned on the forecast improves from **−0.08 to +0.69**
-  mean reward per real pass (perfect forecast: +1.27), chiefly by declining to chase balls that never emerge.
+A ball rolls under a plank; a blocker hidden beneath the plank stops some passes, while others emerge on the far
+side, and the table is slightly tilted. The predictor of V-JEPA 2 is post-trained on 337 such passes and read by a
+frozen linear ball probe that never observes outcomes or predictions, so any knowledge of the blocker must reside
+in the world model itself. Through-vs-blocked AUROC rises from **0.44 to 0.97** for passes from the training
+direction (0.66 to 0.87 from the opposite direction), and the table slope is likely, though not conclusively,
+recovered. A simulated two-finger gripper conditioned on the forecast improves from **−0.08 to +0.69** mean reward
+per real pass (perfect forecast: +1.27), chiefly by declining to chase balls that never emerge.
 
-![Through pass: real future vs pretrained vs post-trained prediction](docs/figures/rollout_through.gif)
+<p align="center"><img src="docs/figures/rollout_through.gif" width="900"></p>
 
 *Figure 1. A pass that emerges on the far side. Left: the real future, read by the ball probe. Centre: the
-pretrained V-JEPA 2 loses the ball under the plank. Right: the final post-trained model predicts it
-emerging. Cyan marks where the probe locates the ball (opacity = probe confidence).*
+pretrained V-JEPA 2 loses the ball under the plank. Right: the final post-trained model predicts it emerging.
+Cyan marks where the probe locates the ball (opacity = probe confidence).*
 
 ## Contents
 
 1. [Quick start](#quick-start)
 2. [Problem statement and data](#1-problem-statement-and-data)
-3. [Model choice and measurement](#2-model-choice-and-measurement)
+3. [Architecture and measurement](#2-architecture-and-measurement)
 4. [Post-training V-JEPA 2](#3-post-training-v-jepa-2)
 5. [Robustness](#4-robustness)
 6. [The table slope](#5-the-table-slope)
@@ -48,141 +45,205 @@ robustworld data/raw/videos/whole.mp4              # video -> tracked, labelled 
 python -m pytest tests/                            # includes the evaluation-isolation test
 ```
 
-Post-training runs on a GPU (Kaggle, 2x T4) through `notebooks/kaggle_plan.ipynb`; the gripper runs on CPU.
-Full instructions, including the weights of the best run and prediction with V-JEPA 2, are in
-[How to run](#8-how-to-run).
+Post-training runs on a GPU (Kaggle, 2x T4) through `notebooks/kaggle_plan.ipynb`; the gripper runs on CPU. Full
+instructions, including the weights of the best run and prediction with V-JEPA 2, are in [How to run](#8-how-to-run).
 
-**Model names used throughout.**
-
-| name | definition |
+| model name used throughout | definition |
 |---|---|
 | Pretrained V-JEPA 2 | ViT-L V-JEPA 2 as released, no post-training |
-| Two-way post-trained model | predictor post-trained 20 epochs on passes from both entry directions (motion-weighted loss, loss-weighted sampling) |
-| **Final model** | the two-way post-trained model, fine-tuned a further 5 epochs with added open-table rolling clips |
+| Two-way post-trained model | predictor post-trained for 20 epochs on passes from both entry directions (motion-weighted loss with contrast, loss-weighted sampling) |
+| **Final model** | the two-way post-trained model, fine-tuned for 5 further epochs with added open-table rolling clips |
 
 ## 1. Problem statement and data
 
 ### 1.1 Why this scene
 
-The scene is designed so that success is unambiguous and automatically verifiable.
+The scene is designed so that success is unambiguous and can be checked automatically. Whether a pass is blocked
+is a **discrete, unobservable state of the scene**: no single frame reveals the blocker, so it can only be inferred
+from experience of many passes, while the outcome of every pass is plainly visible in the video. The task also
+demands **object permanence**, since the ball must persist in the prediction while fully occluded, and a
+**distribution over outcomes**, since passes near the blocker's edges can go either way. That is precisely the
+regime in which deterministic fine-tuning tends to average the possible futures into a blur. Finally, the slight
+table tilt adds a weaker, continuous effect (the slope) alongside the discrete one, giving two levels of
+difficulty within one scene.
 
-- **Invisible, binary property.** No single frame reveals the blocker; it can only be inferred from
-  experience of many passes. Outcomes are verifiable from the video itself.
-- **Object permanence.** The ball must persist in the model's prediction while fully occluded.
-- **Distribution over outcomes.** Passes near the blocker's edges can go either way, so a useful
-  prediction is a probability, not a single future. This is the regime in which deterministic
-  fine-tuning tends to average futures into a blur.
-- **Graded difficulty.** A slight table tilt adds a weaker, continuous effect (the slope) alongside the
-  binary one (the blockade).
+### 1.2 Data collection and processing
 
-### 1.2 Data collection
+The data are one fixed overhead phone recording of a hand-rolled ball, rolled from both sides of the plank. The
+blocker was not moved during recording; its fitted extent is the same in the first and last 14 minutes (178–320 px
+vs 194–325 px along the plank). This yields **254 passes from the right** (111 through, 77 hidden, 66 bounce), used
+as the training direction, **83 from the left** (32 through, 48 bounce, 3 hidden), and open-table clips in which the
+ball rolls freely. A separate recording with an **orange ball** and a different camera angle (57 passes) is held
+out entirely as an unseen-object test.
 
-- One fixed overhead phone recording of a hand-rolled ball, rolled from both sides of the plank.
-- The blocker was not moved during the recording; its fitted extent is stable between the first and last
-  14 minutes (178–320 px vs 194–325 px along the plank).
-- **Dataset:** 254 passes entering from the right (training direction), 83 from the left, plus open-table
-  clips in which the ball rolls freely (used for the slope).
+The pipeline (`src/robust_world/pipeline.py`; reference in [docs/PIPELINE.md](docs/PIPELINE.md)) needs no manual
+labelling. A colour tracker locates the ball in every frame and a hand detector flags frames containing a hand.
+Each approach to the plank becomes a 3 s clip (48 frames at 16 fps, 512x512) whose first half, the *context*, ends
+immediately before the ball touches the plank; the second half, the *target*, is what the model must predict.
+Outcomes (*through*, *bounce* or *hidden* within 1.5 s) follow from fixed rules on the ball track and are used for
+scoring only. Clips in which a hand touches the ball are excluded.
 
-### 1.3 Autonomous processing
+<p align="center"><img src="docs/figures/data.gif" width="420"></p>
 
-The pipeline (`src/robust_world/pipeline.py`; full reference in [docs/PIPELINE.md](docs/PIPELINE.md))
-requires no manual labelling.
+*Figure 2. Sample clips: the three outcomes from the training direction, a pass from the opposite direction, and
+stills of the held-out orange ball.*
 
-- **Tracking:** a colour tracker locates the ball in every frame; a hand detector flags frames containing a hand.
-- **Pass detection:** each approach to the plank becomes one candidate clip.
-- **Clip format:** 3 s, 48 frames at 16 fps, 512x512. The context (first half) ends immediately before the
-  ball touches the plank; the target (second half) is to be predicted.
-- **Outcome labels:** fixed rules on the ball track (*through*, *bounce* or *hidden* within 1.5 s). Clips in
-  which a hand touches the ball are excluded. Labels are used for scoring only.
+<p align="center"><img src="docs/figures/data_outcomes.png" width="900"></p>
 
-![The three outcomes](docs/figures/data_outcomes.png)
+*Figure 3. The three outcome classes, shown on the last context frame. White: the observed context track (circle
+= start). Yellow: the target track the model must predict. "Bounce" and "hidden" are both blocked passes.*
 
-*Figure 2. The three outcome classes on the last context frame. White: observed context track. Yellow
-dashed: the target track the model must predict. "Bounce" and "Hidden" are both blocked passes.*
-
-## 2. Model choice and measurement
+## 2. Architecture and measurement
 
 ### 2.1 Why a latent world model rather than a generative video model
 
-Generative video models (Wan 2.1, Cosmos, LTX-Video; runners in `models/`) were evaluated zero-shot and
-did not meet the requirements of the problem:
+Generative video models (Wan 2.1, Cosmos, LTX-Video; runners in `models/`) were evaluated zero-shot and did not
+meet the requirements of the problem. Pixel generation spends capacity on texture and lighting that carry no
+information about the blocker; their outputs were frequently blurry or physically implausible and had to be
+re-tracked before they could be scored. Billion-parameter diffusion models are also expensive to adapt on a few
+hundred clips and prone to overfitting at that scale, and iterative denoising is too slow for a robot control loop.
 
-- **Objective mismatch.** Pixel generation spends capacity on texture and lighting that carry no
-  information about the blocker; outputs were frequently blurry or physically implausible, and must be
-  re-tracked before they can be scored.
-- **Adaptation cost.** Billion-parameter diffusion models are expensive to fine-tune on a few hundred clips
-  and prone to overfitting at that scale.
-- **Inference cost.** Iterative denoising is slow; a robot control loop needs predictions at control
-  frequency on embedded hardware.
+V-JEPA 2 [1] instead predicts in a learned latent space (the Joint-Embedding Predictive Architecture [3, 4]). Its
+targets abstract away unpredictable pixel detail, which suits multi-modal outcomes; its predictor can be
+post-trained alone with the encoder frozen, which is cheap and keeps the probe's input fixed; and one forward pass
+produces the forecast. The same architecture already drives zero-shot robot planning (V-JEPA 2-AC [1]), and
+self-supervised video pretraining of this kind yields measurable intuitive-physics understanding [5]. The trade-off
+is that a latent model produces no human-viewable frames; its predictions are only as legible as the readout used
+to decode them, which motivates the measurement design in Section 2.3.
 
-V-JEPA 2 [1] predicts in a learned latent space (the Joint-Embedding Predictive Architecture [3, 4]):
+### 2.2 Architecture and what is trained
 
-- prediction targets abstract away unpredictable pixel detail, which suits multi-modal outcomes;
-- the predictor can be post-trained alone with the encoder frozen, which is cheap and preserves the
-  features read by the probe;
-- a single forward pass produces the forecast, and the same architecture has already been used for
-  zero-shot robot planning (V-JEPA 2-AC [1]). Self-supervised video pretraining of this kind has also
-  been shown to yield intuitive-physics understanding [5].
+Each 1.5 s half-clip is resized to 256x256 and split into 2x16x16 tubelets, giving a 12x16x16 grid of
+$N = 3072$ tokens per half.
 
-**Trade-off.** A latent model gives no human-viewable frames; its predictions are only as legible as the
-readout used to decode them. This motivates the measurement design below.
+- **Encoder** $E_\theta$: ViT-L (24 layers, width 1024, about 300 M parameters). It maps the context frames to tokens
+  $z_c = E_\theta(x_{1:24}) \in \mathbb{R}^{N \times 1024}$, encoded on their own so that nothing leaks from the
+  future. **Frozen throughout.**
+- **Predictor** $P_\phi$: a narrower transformer (12 layers, width 384). A linear map projects $z_c$ to width 384,
+  learned mask tokens with positional embeddings mark the target positions, and a linear map projects the outputs
+  back to 1024, giving the predicted target tokens $\hat z_t = P_\phi(z_c) \in \mathbb{R}^{N \times 1024}$.
+  **All predictor weights $\phi$ are updated**: input and output projections, mask tokens and every transformer block.
 
-### 2.2 A ball probe that cannot learn the blockade
+Post-training is therefore not an extra matrix bolted on after the model. It is a full update of the predictor
+that maps observed scene tokens to future scene tokens, with the representation $E_\theta$ held fixed. The
+prediction target is the layer-normalised encoder output of the real target half, $\bar z_t = \mathrm{LN}(z_t)$,
+as in V-JEPA 2's pretraining.
 
-- A linear probe (`models/vjepa2/eval_decoder.py`) maps each V-JEPA token to the probability that the ball
-  is in that patch. On real frames it locates the ball almost perfectly (cell AUROC ≈ 1.00; median error
-  14–20 px on a 512 px frame).
-- **Decoupling.** Any readout trained on predictions or outcomes could itself learn the blockade, and the
-  experiment would then measure the readout rather than the world model. The probe is therefore fitted
-  once, on real context-half features only, with ball positions from the same frame, and is identical
-  before and after post-training.
-- These rules are stated in [CLAUDE.md](CLAUDE.md) and enforced bit-for-bit by
-  `tests/test_eval_isolation.py`. Ground-truth outcomes are used only to score, never to fit.
+**Objective.** The final configuration minimises a motion-weighted latent L1 loss plus a contrastive term:
+
+$$
+\mathcal{L}(\phi) = \underbrace{\frac{\sum_i w_i \,\lVert \hat z_{t,i} - \bar z_{t,i} \rVert_1}{D \sum_i w_i}}_{\text{motion-weighted L1}}
+\;+\; \lambda \underbrace{\left(-\log \frac{\exp(-d(\hat z_t, \bar z_t)/\tau)}{\sum_{c \in \mathcal{C}} \exp(-d(\hat z_t, \bar z_c)/\tau)}\right)}_{\text{InfoNCE over other clips' futures}}
+$$
+
+$$
+w_i = 1 + \alpha\, \frac{m_i}{\overline{m}}, \qquad m_i = \max\big(\lVert \Delta \bar z_{t,i} \rVert_1,\ \lVert \Delta \hat z_{t,i} \rVert_1\big)\ \text{(no gradient)}
+$$
+
+Here $i$ indexes tokens, $D = 1024$, $\Delta$ is the change from the previous time step, and $d$ is the same
+weighted L1 distance. The candidate set $\mathcal{C}$ holds the clip's own real future plus the other clips in the
+batch and 8 stored futures of other training clips. Settings: $\alpha = 4$, $\lambda = 0.1$, $\tau = 0.02$; AdamW
+with learning rate $3 \times 10^{-5}$ and weight decay 0.04; effective batch 8 (2 clips x 4 accumulation steps);
+cosine schedule with 10% warm-up; fp16 with gradient checkpointing on a T4. Clips are drawn each epoch with
+probability $p_k \propto \max(\ell_k, 0.25\,\bar\ell)$, where $\ell_k$ is clip $k$'s loss in the previous epoch.
+The open-table fine-tune continues from these weights with the same loss for 5 epochs.
+
+### 2.3 A probe that cannot learn the blockade
+
+The ball is read out of any set of tokens, real or predicted, by a linear probe
+(`models/vjepa2/eval_decoder.py`):
+
+$$
+P(\text{ball in cell } j) = \sigma\big(w^\top \mathrm{LN}(z_j) + b\big), \qquad w \in \mathbb{R}^{1024}
+$$
+
+It is fitted once, by logistic regression, on **real context-half tokens only**, labelled with the tracker's ball
+position in the same frame. On real frames it locates the ball almost perfectly (cell AUROC ≈ 1.00; median error
+14–20 px on a 512 px frame) and reads the real outcome from real future frames at AUROC 0.998.
+
+The reason for this design is that a readout trained on predictions or on outcomes could itself learn where the
+blocker is, and the experiment would then measure the readout instead of the world model. Five properties rule
+that out. The probe's training data contain no outcomes, no target-half frames and no predictions; because the
+context half ends before the ball reaches the plank, it has never seen a ball under or beyond the plank, or a
+blocked ball. It is linear, so it can only report what is already linearly present in the tokens. It sits on the
+frozen encoder's feature space and is identical for the pretrained, two-way and final models, so every difference
+between them comes from the predictor. The function that builds its training data (`examples_from`) accepts only a
+context encoding and same-frame labels and has no parameter through which anything else could be passed. Finally,
+`tests/test_eval_isolation.py` checks that the fitted probe stays **bit-for-bit identical** when outcomes,
+target-half labels or predicted features are scrambled, and that no other readout is trained on V-JEPA features.
+Outcomes are used only to *score* the probe's readings, never to fit anything between the model and the score.
 
 ## 3. Post-training V-JEPA 2
 
-### 3.1 Method
+### 3.1 The core difficulty: multi-modal futures
 
-- **Frozen encoder, trained predictor.** The predictor learns to forecast target-half latents from the
-  context (L1 loss in layer-normalised latent space). 5-fold cross-validation with fixed splits
-  (`cv_folds`, seed 0), so every model is scored on identical held-out clips.
-- **Trade-off of freezing the encoder.** It keeps the probe valid and training cheap (about 6 GPU-hours on
-  free Kaggle T4s), at the cost of limiting learning to how the predictor uses existing features.
-  Full or LoRA encoder fine-tuning would change the features the probe reads and invalidate the
-  before/after comparison.
+A plain regression loss is minimised by the *mean* future. The ball occupies about 1.5% of the tokens, so the loss
+is dominated by the static table and plank, and where a pass could go either way the cheapest prediction is a
+faint, smeared ball or, more often, no ball at all. The pretrained model shows the extreme case: it almost never
+predicts the ball beyond the plank and so effectively predicts "blocked" for every pass (Figure 1, centre).
+Every technique evaluated below targets this hedging in a different way.
 
-### 3.2 The core difficulty: multi-modal futures
+### 3.2 Techniques evaluated
 
-- A plain regression loss is minimised by the *mean* future. Where a pass could go either way, the
-  prediction hedges: the ball fades into a faint, spatially smeared trace, or the model defaults to the
-  most frequent outcome for every pass.
-- The pretrained model exhibits the extreme of this behaviour: it almost never predicts the ball beyond
-  the plank (Figure 1, centre).
+All variants were trained with identical folds, data and budget (10 epochs, passes from the right) and scored
+through the same frozen probe, so their results are directly comparable; the best was then carried forward.
 
-### 3.3 Techniques that produce committed, realistic predictions
+<p align="center"><img src="docs/figures/variants.png" width="900"></p>
 
-- **Motion-weighted objective.** The latent loss is weighted towards tokens that change between frames,
-  with a contrastive term, so the predictor commits to a distinct ball rather than a background-dominated
-  average.
-- **Loss-weighted sampling.** Each epoch, clips are drawn in proportion to their previous-epoch loss
-  (with a floor). Hard passes near the blocker's edges receive more updates, without using any outcome label.
-- **Longer schedule and both directions.** 20 epochs with a cosine schedule, on passes from both entry
-  directions; learning plateaus at about epoch 15.
-- **Open-table fine-tune (final model).** Five further epochs with free-rolling clips keep the predicted
-  ball visible for longer on open table (87% of clips at 1.5 s, against 57% before this stage).
-- **Multi-step rollout scoring.** Predictions are scored frame by frame up to 1.5 s ahead, not only at
-  the final step.
+*Figure 4. (a) Through-vs-blocked AUROC for each objective after 10 epochs (passes from the right; dotted line =
+chance). (b) Effect of the training schedule on the best objective. (c) Learning curve of the two-way model,
+scored at saved epochs on both entry directions.*
 
-Alternative objectives and architectures (discrete codebook targets, a copy-last-frame gate,
-multi-hypothesis heads) were also evaluated; the configuration above performed best.
+**Plain latent L1 (V-JEPA 2's own objective), AUROC 0.88.** Post-training with the original loss already raises
+AUROC far above the pretrained 0.42, confirming that the predictor can absorb the blockade. However, the gain comes
+from small ranking shifts: the predicted P(blocked) stays near 1 for almost every pass, because the loss still
+rewards hedging.
 
-### 3.4 Results
+**Motion-weighted L1 with contrast ("commit"), AUROC 0.93, carried forward.** Up-weighting tokens that change
+makes a missed ball, or a phantom one, as costly as the whole static background, and the contrastive term makes an
+average of "through" and "hidden" equally far from both, so hedging is penalised. This produced the first clearly
+visible predicted balls beyond the plank. At 10 epochs it learnt only the wider of the two gaps under the plank.
 
-![AUROC summary](docs/figures/auroc.png)
+**Discrete codes (grouping latents), AUROC 0.91.** Target tokens were grouped by k-means into 256 codes and the
+predictor trained to classify each token's code, so it must choose between "ball" and "no ball" rather than
+average them. It gave the sharpest predictions in the wide gap (0.85 predicted vs 0.95 real) but lagged in the
+narrow gap (0.49 vs 0.91), because snapping to a fixed codebook discards the fine detail that distinguishes a
+partly visible ball. It was not carried forward.
 
-*Figure 3. Through-vs-blocked AUROC on held-out folds, from how much ball the predicted future places beyond
-the plank (95% bootstrap intervals; dotted line = chance). (a) All 337 passes. The reference fits its
-blockade range on outcomes and is shown for comparison only. (b) By entry direction.*
+**Copy gate, AUROC 0.89 (no gain).** A learned per-token gate that copies the last context frame was intended to
+free the predictor from reconstructing the static background. It changed nothing (0.885 vs 0.884): the background
+was already predicted well, so capacity was not the bottleneck.
+
+**Multiple hypotheses with winner-takes-all, AUROC 0.42 (failed).** Several predicted futures with a learned picker
+should, in principle, represent "through" and "hidden" separately. In practice training collapsed onto a single
+"no ball" future, with early best epochs and one fold overfitting; winner-takes-all is known to need careful
+balancing to avoid hypothesis collapse, and with 254 clips there was too little signal to separate the modes.
+
+**Autoregressive rollout.** Predicting one step at a time and feeding each prediction back was evaluated on the
+pretrained predictor, where it gave no gain over one-pass prediction (0.415 vs 0.422). Because it multiplies the
+cost of every training step by the number of steps, it was not carried forward; one-pass prediction over the full
+1.5 s, as in V-JEPA 2, was kept.
+
+**Loss-weighted sampling and a longer schedule, AUROC 0.95 and 0.96, carried forward.** Drawing clips in
+proportion to their previous-epoch loss concentrates updates on the rare, hard passes near the blocker's edges
+without using any outcome label. Together with 20 epochs it raised the predicted ball in the narrow gap from 0.44 to
+0.79 (real frames 0.91), so both gaps were learnt. Most of the gain came from the second 10 epochs, and learning
+plateaus at about epoch 15 (Figure 4c). Doubling the training length gained more than any architectural change.
+
+**Both entry directions, carried forward.** Training on passes from both sides was required for the blocker to
+transfer across directions (Section 4.1) and cost nothing on the training direction (0.961 vs 0.964).
+
+**Open-table fine-tune, carried forward.** Five further epochs with free-rolling clips keep the predicted ball
+visible on open table in 87% of clips at 1.5 s, against 57% before, which made the slope measurable (Section 5),
+while the blockade scores were unchanged within their intervals.
+
+### 3.3 Results
+
+<p align="center"><img src="docs/figures/auroc.png" width="900"></p>
+
+*Figure 5. Through-vs-blocked AUROC on held-out folds, from how much ball the predicted future places beyond the
+plank (95% bootstrap intervals; dotted line = chance). (a) All 337 passes; the tracker reference fits its blockade
+range on outcomes and is shown for comparison only. (b) By entry direction.*
 
 | model | AUROC, all passes | from the right | from the left |
 |---|---|---|---|
@@ -192,66 +253,67 @@ blockade range on outcomes and is shown for comparison only. (b) By entry direct
 | Two-way post-trained model | 0.91 | 0.96 | 0.89 |
 | **Final model** | **0.93** | **0.97** | **0.87** |
 
-![P(blocked) along the plank](docs/figures/p_blocked.png)
+The post-trained models exceed the hand-built tracker reference even though that reference is fitted directly on
+outcomes, and the left-side change between the two-way and final models (−0.02) is well inside its interval.
 
-*Figure 4. Probability that a pass is blocked, binned by where the ball reaches the plank (all 337 passes;
-mean and 95% bootstrap interval per bin). The pretrained model predicts "blocked" everywhere; the final
-model recovers both gaps, with the narrow lower gap learnt less sharply than the wide one.*
+<p align="center"><img src="docs/figures/p_blocked.png" width="900"></p>
 
-![Blocked pass rollout](docs/figures/rollout_blocked.png)
+*Figure 6. Probability that a pass is blocked, binned by where the ball reaches the plank (all 337 passes; mean and
+95% bootstrap interval per bin). The pretrained model predicts "blocked" everywhere; the final model recovers both
+gaps, the narrow lower gap less sharply than the wide one.*
 
-*Figure 5. A blocked pass, predicted 0.25–1.5 s ahead. The final model holds the ball at the plank's edge,
-matching the real outcome, rather than predicting it through. Prediction panels are drawn on the empty scene.*
+<p align="center"><img src="docs/figures/rollout_blocked.png" width="900"></p>
+
+*Figure 7. A blocked pass, predicted 0.25–1.5 s ahead. The final model holds the ball at the plank's edge, matching
+the real outcome, rather than predicting it through. Prediction panels are drawn on the empty scene.*
 
 ## 4. Robustness
 
 ### 4.1 The opposite entry direction
 
-- **Observation.** A model post-trained only on passes from the right becomes *worse* on passes from the
-  left (AUROC 0.64 to 0.36), and mirroring the left clips does not recover performance.
-- **Interpretation.** The single-direction model learns an image-space outcome map ("at these heights the
-  ball ends up on the left") rather than a direction-independent representation of a solid object.
-- **Resolution.** Post-training on both directions jointly yields 0.89 (two-way model) and 0.87 (final
-  model) on held-out left-entry passes, with no loss on the right (Figure 3b).
+A model post-trained only on passes from the right becomes *worse* on passes from the left (AUROC 0.64 to 0.36),
+and mirroring the left clips does not recover it. The single-direction model learns an image-space outcome map ("at
+these heights the ball ends up on the left") rather than a direction-independent representation of a solid object;
+applied to balls from the left, that map is exactly inverted. Post-training on both directions jointly resolves
+this, reaching 0.89 (two-way model) and 0.87 (final model) on held-out left-entry passes with no loss on the right
+(Figure 5b).
 
 ### 4.2 A held-out object: the orange ball
 
-- **Test.** The final model, unchanged, is scored on passes with an orange ball that never appears in
-  training. A model that has learnt the *scene* should be insensitive to the ball's appearance.
+The final model, unchanged, is scored on 57 passes with an orange ball that never appears in training, filmed from a
+different camera angle. A model that has learnt the *scene* rather than the training ball should be insensitive to
+the ball's appearance.
 
-> **Results pending (test in progress).** AUROC from the right / left: _to be added_.
+> **Results pending (test in progress).** AUROC: _to be added_.
 
 ### 4.3 Interpretability: isolating ball appearance
 
-- **Aim.** Identify a latent direction that encodes ball appearance (colour), separate from the
-  components encoding position, velocity and motion, so that the scene knowledge (blockade, slope) can be
-  shown to be independent of the object's appearance and the appearance component can be suppressed.
+The aim is to identify a latent direction that encodes the ball's appearance (colour), separate from the components
+that encode position, velocity and motion. The direction is estimated from real context tokens only, as the mean
+difference between ball-cell tokens of the orange and blue balls, labelled by which ball is present and never by
+outcomes or predictions. Projecting it out of the context before the predictor tests whether the scene knowledge
+(blockade, slope) is independent of the object's appearance.
 
 > **Results pending (analysis in progress).**
 
 ### 4.4 Summary
 
-- The blockade generalises across entry directions once both are observed in training.
-- Cross-object generalisation (Section 4.2) will establish whether the learnt property belongs to the scene
-  rather than to the training ball.
+The blockade generalises across entry directions once both are observed in training. Cross-object generalisation
+(Section 4.2) will establish whether the learnt property belongs to the scene rather than to the training ball.
 
 ## 5. The table slope
 
-### 5.1 Measurement
+The table slopes slightly downhill to the left. The slope is measured label-free on each predicted track as
+**s = (downhill − uphill acceleration) / 2** at matched speed, which cancels rolling friction. The frozen probe
+recovers only about half of the real pull even from real frames (0.014 vs 0.025), so a model that has learnt the
+slope should approach the probe-on-real value rather than the tracker value.
 
-- The table slopes slightly downhill to the left. The slope is measured label-free on each predicted track:
-  **s = (downhill − uphill acceleration) / 2** at matched speed, which cancels rolling friction.
-- **Probe resolution sets the attainable value.** The frozen probe recovers only about half of the real
-  pull even from real frames (0.014 vs 0.025). A model that has learnt the slope should therefore approach
-  the probe-on-real value, not the tracker value.
+<p align="center"><img src="docs/figures/slope_map.png" width="900"></p>
 
-### 5.2 Result
-
-![Slope map](docs/figures/slope_map.png)
-
-*Figure 6. Left-right acceleration from the table, by region, after removing friction (red = downhill to the
-left; arrows = pull; n = number of track stretches; neighbouring cells pooled, weighted by stretches).
-The pretrained model is omitted: its predicted ball is never visible on open table, so no stretches exist.*
+*Figure 8. Left-right acceleration from the table after removing friction (red = downhill, to the left; arrows =
+pull). Per-cell fits are smoothed with the same stretch-weighted Gaussian kernel (σ = 130 px) in every panel, and
+regions with too few track stretches are left blank. The pretrained model is omitted: its predicted ball is never
+visible on open table, so no stretches exist.*
 
 | track | s (ball diameters / step²) | 95% interval |
 |---|---|---|
@@ -260,70 +322,64 @@ The pretrained model is omitted: its predicted ball is never visible on open tab
 | Two-way post-trained model | 0.019 | −0.018 to 0.051 |
 | **Final model** | **0.024** | **−0.007 to 0.040** |
 
-### 5.3 Interpretation
-
-- The final model pulls the predicted ball downhill at or above the probe's attainable level, and the
-  open-table fine-tune nearly doubles the number of measurable stretches.
-- The interval still includes zero, so the slope is **likely learnt but not proven**.
-- A conclusive result requires more open-table rolling or a steeper tilt: the slope is data-limited, not
-  model-limited.
+The final model pulls the predicted ball downhill at or above the probe's attainable level over most of the table,
+and the open-table fine-tune nearly doubles the number of measurable stretches. The upper-right region, where most
+balls enter at speed, shows little pull, and the interval still includes zero, so the slope is **likely learnt but
+not proven**. A conclusive result requires more open-table rolling or a steeper tilt: the slope is limited by data,
+not by the model.
 
 ## 6. From forecast to gripper policy
 
 ### 6.1 Interface between world model and policy
 
-The policy receives a compact forecast extracted from the world model's predicted future through the frozen probe:
-
-- **whether** the ball emerges (P(comes out));
-- **where** along the plank edge, **when**, and **how fast**;
-- **how uncertain** the forecast is.
-
-This interface is independent of the robot's embodiment and of the world model's internals.
+The policy receives a compact forecast extracted from the predicted future through the frozen probe: **whether**
+the ball emerges, **where** along the plank edge, **when**, **how fast**, and **how uncertain** each of these is.
+The uncertainty $u$ comes from how spread out and how weak the predicted ball is; $u = 1$ means no information.
+This interface does not depend on the robot's embodiment or on the world model's internals.
 
 ### 6.2 Problem design
 
-The task is constructed so that a better forecast must translate into better behaviour.
+The task is constructed so that a better forecast must translate into better behaviour. The gripper must commit
+before the ball is visible: its fingers close at most 0.15 m/s and open at most 9 cm for a 4 cm ball, so it cannot
+simply react to every ball once it appears. Earlier, less constrained configurations (a wider, faster gripper) were
+tested and let the policy react after the ball appeared, so even a good forecast carried no value; the constraints
+above are what make the forecast matter.
 
-- **The gripper must commit before the ball is visible:** fingers close at most 0.15 m/s and open at most
-  9 cm for a 4 cm ball, so it cannot react to every ball after it appears.
-- **Grasp reward (simulation):**
-  - lifted and held: +1, plus a bonus of up to +0.5 for an early pick-up, minus up to 0.3 for a wide opening;
-  - miss: −1.
-- **Decision reward (real passes):**
-  - pick-up: +3, plus up to +0.5 for an early pick-up;
-  - attempted and missed: −0.5;
-  - ball emerges but the gripper stayed: −1;
-  - wasted trip for a blocked ball: −1;
-  - correctly holding back on a blocked ball: +0.5.
-- **Decision rule:** the gripper sets off when the expected value of going (forecast probability times the
-  simulated catch rate at that uncertainty) exceeds that of staying.
+Two reward levels are used.
 
-### 6.3 Simulation environment and training
+- **Grasp reward (simulation, trains the policy):** lifted and held earns +1, plus up to +0.5 for an early pick-up
+  and minus up to 0.3 for a wide opening; a miss costs −1.
+- **Decision reward (real passes, scores the system):** a pick-up earns +3 plus up to +0.5 for an early one; an
+  attempt that misses costs −0.5; staying put when the ball emerges costs −1; a wasted trip for a blocked ball costs
+  −1; correctly holding back on a blocked ball earns +0.5.
 
-- **PyBullet** two-finger gripper (`models/gripper/`), trained with **PPO** (Stable-Baselines3) on CPU,
-  5 folds of 2.5 M steps.
-- **Choice of simulator.** Only the grasp of a single rolling ball is modelled, so a lightweight
-  rigid-body simulator gives fast, reproducible training on a laptop CPU. Heavier robotics stacks
-  (Isaac Sim, MuJoCo with a full arm) add fidelity the task does not require.
-- **Trained on synthetic forecasts, frozen, then evaluated on real ones.** During training, forecasts are
-  the true exit plus noise of a stated magnitude. The policy is then frozen and scored on real passes with
-  each world model's forecast. It never sees a world model's real forecast against a real outcome.
-- **Trade-off.** A policy trained on synthetic noise must be calibrated to the uncertainty the world model
-  actually reports. In exchange, one policy serves every world model, and the comparison between world
-  models is not confounded by policy training.
+The gripper sets off when the expected value of going, the forecast probability times the simulated catch rate at
+that uncertainty, exceeds that of staying.
 
-### 6.4 Transferable components
+### 6.3 Simulation and training
 
-The design separates what is specific to this robot from what transfers to other systems:
+The gripper is simulated in **PyBullet** (`models/gripper/`) and trained with **PPO** (Stable-Baselines3) on CPU,
+5 folds of 2.5 M steps. Only the grasp of a single rolling ball is modelled, so a lightweight rigid-body simulator
+gives fast, reproducible training on a laptop CPU; heavier robotics stacks add fidelity this task does not need.
+During training the forecasts are the true exit plus noise of a stated magnitude; the policy is then **frozen** and
+evaluated on real passes with each world model's forecast. It never sees a world model's real forecast paired with
+a real outcome. The trade-off is that the policy must be calibrated to the uncertainty the world model actually
+reports; in exchange, one policy serves every world model and the comparison between world models is not
+confounded by policy training.
 
-- **Transferable:** the post-trained world model, the probe, and the forecast interface (*arrive, where,
-  when, how fast, how sure*). None depends on the gripper.
-- **Embodiment-specific:** only the low-level policy that maps the forecast to motor commands, trained
-  cheaply in simulation.
-- **Integration with generalist policies.** The same forecast can condition an open-source pretrained
-  manipulation policy (Octo [6], OpenVLA [7], π0 [8]) as an extra observation, so that scene-specific
-  knowledge learnt from home video reaches any embodiment those policies support without retraining
-  the world model.
+### 6.4 How uncertainty drives behaviour
+
+<p align="center"><img src="docs/figures/gripper_uncertainty.png" width="900"></p>
+
+*Figure 9. Top: the frame before the ball appears, for four forecasts. The orange disc is the forecast exit
+region; its radius is the forecast's position uncertainty, and the gripper lines up on its centre. Below about 2 cm
+the disc is hidden by the fingers. Bottom: simulated pick-up rate of the frozen policy against forecast uncertainty
+u, with the four forecasts marked.*
+
+The pretrained model's forecast carries no information ($u = 1$, a 12 cm exit region), so the policy can only guess
+and picks up 42% of balls in simulation. The post-trained model reports its own confidence: on an uncertain pass
+the region is 6 cm wide, on a confident pass under 2 cm, and the pick-up rate rises accordingly towards the 71%
+achieved with a perfect forecast.
 
 ### 6.5 Results
 
@@ -335,74 +391,90 @@ Mean reward per pass over all 335 real passes (141 emerge, 194 blocked):
 | **two-way post-trained model** | **72% / 4%** | 60% of attempts | **+0.69** |
 | perfect forecast (tracker) | 100% / 0% | 73% | +1.27 |
 
-| scenario | no post-training | post-trained | perfect forecast |
+| | no post-training | post-trained | perfect forecast |
 |---|---|---|---|
-| **Blocked pass** | ![](docs/figures/gripper/blocked_no_posttraining.gif) | ![](docs/figures/gripper/blocked_posttrained.gif) | ![](docs/figures/gripper/blocked_perfect.gif) |
-| **Emerges, uncertain forecast** | ![](docs/figures/gripper/uncertain_no_posttraining.gif) | ![](docs/figures/gripper/uncertain_posttrained.gif) | ![](docs/figures/gripper/uncertain_perfect.gif) |
-| **Emerges, confident forecast** | ![](docs/figures/gripper/confident_no_posttraining.gif) | ![](docs/figures/gripper/confident_posttrained.gif) | ![](docs/figures/gripper/confident_perfect.gif) |
+| **Blocked pass** | <img src="docs/figures/gripper/blocked_no_posttraining.gif" width="280"> | <img src="docs/figures/gripper/blocked_posttrained.gif" width="280"> | <img src="docs/figures/gripper/blocked_perfect.gif" width="280"> |
+| **Emerges, uncertain forecast** | <img src="docs/figures/gripper/uncertain_no_posttraining.gif" width="280"> | <img src="docs/figures/gripper/uncertain_posttrained.gif" width="280"> | <img src="docs/figures/gripper/uncertain_perfect.gif" width="280"> |
+| **Emerges, confident forecast** | <img src="docs/figures/gripper/confident_no_posttraining.gif" width="280"> | <img src="docs/figures/gripper/confident_posttrained.gif" width="280"> | <img src="docs/figures/gripper/confident_perfect.gif" width="280"> |
 
-*Figure 7. The same frozen policy driven by three forecast sources on three real passes. The header of each
-panel shows P(comes out), the decision threshold and the decision. Without post-training the gripper sets
-off for every ball, including blocked ones; with the post-trained forecast it holds back on the blocked pass
-and lines up on the emerging ones.*
+*Figure 10. The same frozen policy driven by three forecast sources on three real passes. Each header shows P(comes
+out), the decision threshold and the decision. Without post-training the gripper sets off for every ball,
+including blocked ones; with the post-trained forecast it holds back on the blocked pass and lines up on the
+emerging ones.* Interactive version: [Gripper Uncertainty Response](https://claude.ai/artifact/1pygtzGBW2LqB9bt6HPB9d).
 
-Interactive version: [Gripper Uncertainty Response](https://claude.ai/artifact/1pygtzGBW2LqB9bt6HPB9d).
+### 6.6 What transfers to other robots, and what does not
+
+The system splits into three layers with different reach. **The scene model transfers to any robot that observes
+the scene from the same viewpoint.** The post-trained predictor, the probe and the forecast interface (*arrive,
+where, when, how fast, how sure*) contain no gripper-specific information, so a different arm or a humanoid can
+consume the same forecast without retraining the world model. **The forecast's coordinates transfer with a
+calibration step.** Positions are read in image pixels, so another robot needs the camera-to-robot transform to
+express them in its own frame; a moving camera would additionally require a world-fixed readout. **The low-level
+policy does not transfer.** The PPO policy is tied to this gripper's action space (four continuous commands), its
+finger speed and opening limits, its observation layout and a reward tuned to its catch geometry; the go/stay
+threshold is computed from this gripper's own catch-rate curve (Figure 9). A different robot needs its own
+low-level controller, which is the cheapest part to obtain because it is trained in simulation.
+
+**A concrete route for a generalist policy: Octo.** Octo [6] is an open-source transformer policy whose inputs are
+tokenised modality by modality, and which was explicitly designed to be fine-tuned to **new observation inputs and
+new action spaces** with a new lightweight tokenizer and head while keeping the pretrained backbone. The forecast
+vector would enter as an additional low-dimensional observation token next to the camera tokens, and Octo would be
+fine-tuned on demonstrations generated in simulation by the PPO policy above, which provides unlimited, perfectly
+labelled trajectories for any embodiment that can be simulated. Octo is preferred here because its tokenised inputs
+accept a new sensor-like signal without changing the architecture and because it fine-tunes on a single GPU from a
+few hundred demonstrations. π0 [8] is a viable alternative through its proprioceptive state input, at higher
+compute cost. OpenVLA [7] conditions only on an image and a language instruction, so the forecast would have to be
+rendered into the image or the prompt, which discards its numerical precision. This fine-tune has not been run; it
+is the natural next step for carrying the result to a general-purpose manipulator.
 
 ## 7. Conclusion, impact and outlook
 
 ### 7.1 Conclusion
 
-- Self-supervised post-training of V-JEPA 2 on a few hundred home-recorded clips teaches it an invisible
-  blockade (AUROC 0.44 to 0.97), measured through a readout that provably cannot have learnt it.
-- The knowledge generalises across entry directions once both are observed, and the table slope is likely
-  recovered.
-- A frozen gripper policy converts the forecast into behaviour: mean reward rises from −0.08 to +0.69 per
-  pass, chiefly by not pursuing balls that will not emerge; a perfect forecast reaches +1.27.
+Self-supervised post-training of V-JEPA 2 on a few hundred home-recorded clips teaches it an invisible blockade
+(AUROC 0.44 to 0.97), measured through a readout that provably cannot have learnt it. The decisive ingredients
+were a loss that penalises hedging, loss-weighted sampling, a longer schedule and training on both entry
+directions; architectural additions (copy gate, multiple hypotheses, discrete codes) did not improve on them. The
+knowledge generalises across entry directions once both are observed, and the table slope is likely recovered. A
+frozen gripper policy converts the forecast into behaviour: mean reward rises from −0.08 to +0.69 per pass, chiefly
+by not pursuing balls that will not emerge, against +1.27 for a perfect forecast.
 
 ### 7.2 Impact and applications
 
-- **Home and humanoid robotics.** Homes contain hidden, persistent state: a drawer that sticks, an object
-  behind another, an uneven floor, a door that swings back. A robot that post-trains its world model on its
-  own observations of one home can learn such properties without labels and plan around them.
-- **Trend in the field.** World models are becoming the planning layer of robot foundation models: latent
-  predictive models for planning [1, 2], generative world models for humanoids [9, 10], and surveys
-  framing world models as the route to physical reasoning in manipulation [11, 12]. This work contributes a
-  verifiable test of the property those systems rely on: that scene-specific physics can be acquired from
-  passive video and measured independently of the readout.
-- **Efficiency.** Latent prediction needs one forward pass per forecast, which suits on-board inference on
-  power-limited humanoid hardware better than iterative video generation.
+Homes contain hidden, persistent state: a drawer that sticks, an object behind another, an uneven floor, a door
+that swings back. A robot that post-trains its world model on its own observations of one home can learn such
+properties without labels and plan around them. World models are becoming the planning layer of robot foundation
+models, through latent predictive models for planning [1, 2], generative world models for humanoids [9, 10], and
+surveys framing world models as the route to physical reasoning in manipulation [11, 12]. This work contributes a
+verifiable test of the property those systems rely on: that scene-specific physics can be acquired from passive
+video and measured independently of the readout. Latent prediction also needs only one forward pass per forecast,
+which suits on-board inference on power-limited humanoid hardware better than iterative video generation.
 
 ### 7.3 Handheld and egocentric video
 
-- Large egocentric datasets (Ego4D [13]) and handheld robot-data collection tools (UMI [14]) show that
-  human-held cameras are the scalable source of home video.
-- Handheld video introduces camera motion. Latent models are better placed than pixel generators to
-  absorb it, but the probe and the slope measurement would need to operate in a camera-stabilised or
-  world-fixed frame.
+Large egocentric datasets (Ego4D [13]) and handheld data-collection tools (UMI [14]) show that human-held cameras
+are the scalable source of home video. Handheld video introduces camera motion; latent models are better placed than
+pixel generators to absorb it, but the probe and the slope measurement would need to operate in a camera-stabilised
+or world-fixed frame.
 
-### 7.4 Implications and limitations
+### 7.4 Limitations and next steps
 
-- **Implication.** Scene-specific physical knowledge can be acquired by post-training on passive video
-  and verified separately from the readout; a robot can benefit from it through a small, transferable
-  forecast interface.
-- **Limitations.** One scene and one blocker position; the predicted ball remains fainter than the real one
-  in the narrow gap; the slope interval includes zero; the gripper is evaluated in simulation on real
-  trajectories rather than on hardware.
-- **Next steps.** A moved-blocker recording to test adaptation; cross-object testing (Section 4.2);
-  conditioning an open-source generalist policy on the forecast; hardware evaluation.
+The study uses one scene and one blocker position; the predicted ball remains fainter than the real one in the
+narrow gap; the slope interval includes zero; and the gripper is evaluated in simulation on real trajectories rather
+than on hardware. The most informative next steps are a moved-blocker recording to test adaptation, the cross-object
+test of Section 4.2, fine-tuning Octo on the forecast (Section 6.6), and hardware evaluation.
 
 ## 8. How to run
 
 ### 8.1 Clips
 
-- Place the videos in `data/raw/videos/` and run `robustworld data/raw/videos/` (see
-  [docs/PIPELINE.md](docs/PIPELINE.md)).
-- `scripts/cut_open_clips.py` cuts the open-table clips; `scripts/pack_clips.py` packages the clips for Kaggle.
+Place the videos in `data/raw/videos/` and run `robustworld data/raw/videos/` (see [docs/PIPELINE.md](docs/PIPELINE.md)).
+`scripts/cut_open_clips.py` cuts the open-table clips and `scripts/pack_clips.py` packages the clips for Kaggle.
 
 ### 8.2 Post-training the final model on Kaggle
 
-1. Open `notebooks/kaggle_plan.ipynb` (GPU 2x T4; attach the `GITHUB_TOKEN` secret and the clips dataset).
-2. Save & Run All. The notebook runs `models/vjepa2/plan.py`; to repeat only the best runs:
+Open `notebooks/kaggle_plan.ipynb` (GPU 2x T4; attach the `GITHUB_TOKEN` secret and the clips dataset) and Save &
+Run All. The notebook runs `models/vjepa2/plan.py`; to repeat only the best runs:
 
 ```bash
 python models/vjepa2/plan.py run --only lossmix_both-after --redo     # two-way post-trained model (~5.6 h)
@@ -411,10 +483,9 @@ python models/vjepa2/plan.py run --only lossmix_topup-after --redo    # final mo
 
 ### 8.3 Weights
 
-- Fold weights (`fold0.pt`–`fold4.pt`) exceed GitHub's file limits and are kept in the Kaggle notebook
-  outputs: `weights/lossmix_both-after/` (two-way model) and `weights/lossmix_topup-after/` (final model).
-- Attach that output, or a Kaggle dataset named after the run (e.g. `lossmix-both-after`), as a notebook
-  input; `plan.py` locates it automatically.
+Fold weights (`fold0.pt`–`fold4.pt`) exceed GitHub's file limits and are kept in the Kaggle notebook outputs:
+`weights/lossmix_both-after/` (two-way model) and `weights/lossmix_topup-after/` (final model). Attach that output,
+or a Kaggle dataset named after the run (e.g. `lossmix-both-after`), as a notebook input; `plan.py` locates it.
 
 ### 8.4 Predicting with V-JEPA 2
 
@@ -423,12 +494,10 @@ python models/vjepa2/ball_probe_cv.py --predictor-run <path>/weights/lossmix_top
     --manifest data/processed/clips/manifest_right.jsonl --out outputs/vjepa2/final
 ```
 
-- Writes `per_clip.json` (predicted ball position and visibility per step, through-vs-blocked score) and
-  `maps.npz` (probe maps per step).
-- Saved scores for the pretrained, two-way and final models are in
-  `results/2026-10-04_2110_twoday/vjepa2/plan/scores/` (`both-before`, `lossmix_both-after`,
-  `lossmix_topup-after`).
-- `python docs/figures/make_figures.py --clips data/processed/clips/whole` redraws every figure in this README.
+This writes `per_clip.json` (predicted ball position and visibility per step, and the through-vs-blocked score) and
+`maps.npz` (probe maps per step). Saved scores for the pretrained, two-way and final models are in
+`results/2026-10-04_2110_twoday/vjepa2/plan/scores/` (`both-before`, `lossmix_both-after`, `lossmix_topup-after`).
+`python docs/figures/make_figures.py --clips data/processed/clips/whole` redraws every figure in this README.
 
 ### 8.5 Gripper (CPU)
 

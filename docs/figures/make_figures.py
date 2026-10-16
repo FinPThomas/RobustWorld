@@ -44,24 +44,92 @@ def save(fig, name: str) -> None:
     print("wrote", name)
 
 
-# ---------------------------------------------------------------- data: the three outcomes
+# ---------------------------------------------------------------- data: the three outcomes, and a data GIF
+from matplotlib import patheffects as pe  # noqa: E402
+
+FONT = str(Path(matplotlib.__file__).parent / "mpl-data" / "fonts" / "ttf" / "DejaVuSans.ttf")
+OUTLINE = [pe.Stroke(linewidth=5, foreground="black", alpha=0.55), pe.Normal()]
+
+
 def fig_outcomes(clips: Path) -> None:
     rows = {r["clip_id"]: r for r in json.loads((PLAN / "scores" / PRE / "per_clip.json").read_text())}
-    picks = [("whole_0206", "Through"), ("whole_0000", "Bounce"), ("whole_0007", "Hidden (blocked)")]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 4.8))
-    for ax, (cid, title) in zip(axes, picks):
+    picks = [("whole_0206", "Through", "the ball emerges on the far side"),
+             ("whole_0000", "Bounce", "the ball rebounds off the hidden blocker"),
+             ("whole_0007", "Hidden", "the ball stops under the plank")]
+    fig, axes = plt.subplots(1, 3, figsize=(13, 5.0), gridspec_kw={"wspace": 0.04})
+    for ax, (cid, title, sub) in zip(axes, picks):
         frames = iio.imread(clips / "right" / f"{cid}.mp4")
         r = rows[cid]
-        ax.imshow(frames[23])
-        ctx = np.array([p for p in r["true_pos_context"] if p], float)
-        fut = np.array([p for p in r["true_pos"] if p], float)
-        ax.plot(ctx[:, 0], ctx[:, 1], "-", color="white", lw=2.5, label="context (seen)")
+        ax.imshow(frames[23][40:470, 60:512], extent=(60, 512, 470, 40))
+        ctx = np.array([q for q in r["true_pos_context"] if q], float)
+        fut = np.array([q for q in r["true_pos"] if q], float)
+        ax.plot(ctx[:, 0], ctx[:, 1], "-", color="white", lw=3, path_effects=OUTLINE)
+        ax.plot(*ctx[0], "o", color="white", ms=8, path_effects=OUTLINE)
         if len(fut):
-            ax.plot(fut[:, 0], fut[:, 1], "--", color="#ffd23f", lw=2.5, label="target (to predict)")
-        ax.set_title(title, fontweight="bold")
+            ax.plot(fut[:, 0], fut[:, 1], "-", color="#ffd23f", lw=3, path_effects=OUTLINE)
+            ax.annotate("", fut[-1], fut[max(len(fut) - 3, 0)], arrowprops={"arrowstyle": "-|>", "color": "#ffd23f",
+                                                                        "lw": 3, "mutation_scale": 22})
+        ax.set_xlim(60, 512)
+        ax.set_ylim(470, 40)
+        ax.set_title(title, fontweight="bold", fontsize=15)
+        ax.text(0.5, -0.04, sub, transform=ax.transAxes, ha="center", va="top", fontsize=12)
         ax.axis("off")
-    axes[0].legend(loc="lower left", framealpha=0.85)
+    handles = [plt.Line2D([], [], color="white", lw=3, path_effects=OUTLINE, label="context: observed (first 1.5 s)"),
+               plt.Line2D([], [], color="#ffd23f", lw=3, path_effects=OUTLINE, label="target: to be predicted (next 1.5 s)")]
+    fig.legend(handles=handles, loc="lower center", ncol=2, frameon=False, bbox_to_anchor=(0.5, -0.07), fontsize=12)
     save(fig, "data_outcomes.png")
+
+
+def _caption(img: Image.Image, text: str, sub: str = "", h: int = 58) -> Image.Image:
+    from PIL import ImageDraw, ImageFont
+    out = Image.new("RGB", (img.width, img.height + h), (24, 28, 34))
+    out.paste(img, (0, h))
+    d = ImageDraw.Draw(out)
+    d.text((12, 7), text, fill=(255, 255, 255), font=ImageFont.truetype(FONT, 21))
+    if sub:
+        d.text((12, 33), sub, fill=(255, 210, 63), font=ImageFont.truetype(FONT, 16))
+    return out
+
+
+def _clean_orange(path: Path) -> list[np.ndarray]:
+    """Four ball-only stills of the orange-ball recording from its check sheet, with the sheet's grid and
+    labels painted out."""
+    import cv2
+    sheet = cv2.imread(str(path))
+    out = []
+    for idx in (0, 3, 4, 7):
+        r, c = divmod(idx, 4)
+        t = sheet[r * 512:(r + 1) * 512, c * 512:(c + 1) * 512].copy()
+        m = np.zeros(t.shape[:2], np.uint8)
+        for k in range(0, 513, 32):
+            m[:, max(k - 1, 0):k + 2] = 255
+            m[max(k - 1, 0):k + 2, :] = 255
+        f = cv2.inpaint(t, m, 5, cv2.INPAINT_TELEA)[20:470, 30:508]
+        out.append(cv2.resize(f, (360, 360))[..., ::-1])
+    return out
+
+
+def gif_data(clips: Path, orange: Path | None) -> None:
+    parts = [("right", "whole_0206", "Ball from the right", "outcome: through"),
+             ("right", "whole_0000", "Ball from the right", "outcome: bounce (blocked)"),
+             ("right", "whole_0007", "Ball from the right", "outcome: hidden (blocked)"),
+             ("left", "whole_0290", "Ball from the left", "outcome: through")]
+    frames, dur = [], []
+    for side, cid, title, sub in parts:
+        v = iio.imread(clips / side / f"{cid}.mp4")
+        for i in range(0, len(v), 3):
+            im = Image.fromarray(v[i]).resize((360, 360), Image.LANCZOS)
+            frames.append(_caption(im, title, sub))
+            dur.append(190)
+        dur[-1] = 900
+    if orange is not None and orange.exists():
+        for im in _clean_orange(orange):
+            frames.append(_caption(Image.fromarray(im), "Orange ball (held out)",
+                                   "never seen in training; stills"))
+            dur.append(700)
+    frames = [f.quantize(colors=160, method=Image.Quantize.MEDIANCUT) for f in frames]
+    frames[0].save(HERE / "data.gif", save_all=True, append_images=frames[1:], duration=dur, loop=0, optimize=True)
+    print("wrote data.gif")
 
 
 # ---------------------------------------------------------------- rollouts: real vs imagined
@@ -174,7 +242,7 @@ def fig_pblocked() -> None:
     length = runs[FINAL]["plank_length_px"]
     edges = np.linspace(60, 440, 12)
     rng = np.random.default_rng(0)
-    fig, ax = plt.subplots(figsize=(9, 4.6))
+    fig, ax = plt.subplots(figsize=(13, 5.2))
     for a, b in GAPS:
         ax.axvspan(a, b, color="#2ca25f", alpha=0.10, lw=0)
     ax.text(np.mean(GAPS[0]), 1.06, "gap", ha="center", color="#2ca25f", fontsize=11)
@@ -237,59 +305,54 @@ def fig_auroc() -> None:
     save(fig, "auroc.png")
 
 
-# ---------------------------------------------------------------- slope map, pooled regions
-REGIONS = {"left of plank": lambda cx, cy: cx <= 1,
-           "right, upper": lambda cx, cy: cx >= 3 and cy <= 1,
-           "right, middle": lambda cx, cy: cx >= 3 and 2 <= cy <= 3,
-           "right, lower": lambda cx, cy: cx >= 3 and cy >= 4}
-BOXES = {"left of plank": (0, 0, 192, 192), "right, upper": (288, 0, 192, 192),
-         "right, middle": (288, 192, 192, 192), "right, lower": (288, 384, 192, 128)}
+# ---------------------------------------------------------------- slope map, kernel-smoothed
+CELL = 96          # slope_map.py cell size (px)
+SIGMA = 130        # smoothing kernel (px); the same for every panel
 
 
-def _pool(cells: dict) -> dict:
-    out = {}
-    for name, inside in REGIONS.items():
-        g, n = np.zeros(2), 0
-        for key, v in cells.items():
-            cx, cy = map(int, key.split(","))
-            if inside(cx, cy):
-                g += v["n"] * np.asarray(v["g"])
-                n += v["n"]
-        if n >= 12:
-            out[name] = (g / n, n)
-    return out
+def _smooth(cells: dict, grid: np.ndarray):
+    """Stretch-weighted Gaussian smoothing of the per-cell pulls: g(p) = sum n_i K(p, c_i) g_i / sum n_i K(p, c_i).
+    Returns the smoothed x-pull and the effective number of stretches behind each point."""
+    c = np.array([[(int(k.split(",")[0]) + 0.5) * CELL, (int(k.split(",")[1]) + 0.5) * CELL] for k in cells])
+    n = np.array([v["n"] for v in cells.values()], float)
+    g = np.array([v["g"][0] for v in cells.values()], float)
+    k = np.exp(-((grid[..., None, :] - c) ** 2).sum(-1) / (2 * SIGMA ** 2)) * n
+    w = k.sum(-1)
+    return (k * g).sum(-1) / np.maximum(w, 1e-9), w
 
 
 def fig_slope() -> None:
+    from matplotlib.colors import TwoSlopeNorm
+    from matplotlib.path import Path as MPath
     d = json.loads((PLAN / "slope_map" / "slope_map.json").read_text())
     same = d["same_steps"]
-    panels = [("Real ball\n(tracker)", "real ball (tracker)", same["probe on real frames (sharp)"]["s_real"],
-               same["probe on real frames (sharp)"]["s_real_ci"]),
-              ("Probe on real frames\n(measurement ceiling)", "probe on real frames (sharp)",
-               same["probe on real frames (sharp)"]["s_track"], same["probe on real frames (sharp)"]["s_track_ci"])]
+    real = same["probe on real frames (sharp)"]
     g_key = next(k for k in d if k.startswith("imagined, after (G"))
     gs = next(v for k, v in same.items() if k.startswith("imagined, after (G"))
-    panels.append(("Imagined ball\n(post-trained, final model)", g_key, gs["s_track"], gs["s_track_ci"]))
-    from matplotlib.colors import TwoSlopeNorm
+    panels = [("Real ball (tracker)", "real ball (tracker)", real["s_real"], real["s_real_ci"]),
+              ("Probe on real frames", "probe on real frames (sharp)", real["s_track"], real["s_track_ci"]),
+              ("Predicted ball (final model)", g_key, gs["s_track"], gs["s_track_ci"])]
+    xs = np.linspace(0, 512, 129)
+    grid = np.stack(np.meshgrid(xs, xs), -1)
+    plank = MPath(PLANK).contains_points(grid.reshape(-1, 2), radius=-8).reshape(grid.shape[:2])
     norm = TwoSlopeNorm(vcenter=0, vmin=-0.05, vmax=0.05)
-    fig, axes = plt.subplots(1, 3, figsize=(14, 5.2), gridspec_kw={"wspace": 0.06})
+    fig, axes = plt.subplots(1, 3, figsize=(13, 4.9), gridspec_kw={"wspace": 0.05})
     for ax, (title, key, s, ci) in zip(axes, panels):
+        gx, w = _smooth(d[key]["cells"], grid)
+        img = np.ma.masked_where((w < 20) | plank, gx)
+        ax.imshow(img, cmap="RdBu", norm=norm, extent=(0, 512, 512, 0), interpolation="bilinear")
+        ax.fill(PLANK[:, 0], PLANK[:, 1], color="#b9a27f", zorder=2)
+        ax.text(PLANK[:, 0].mean() + 10, 495, "plank", ha="center", fontsize=11, color="0.3")
+        ag = np.stack(np.meshgrid(np.arange(48, 512, 80), np.arange(48, 512, 80)), -1).astype(float)
+        ax_, aw = _smooth(d[key]["cells"], ag)
+        inside = MPath(PLANK).contains_points(ag.reshape(-1, 2), radius=12).reshape(ag.shape[:2])
+        ok = (aw >= 40) & ~inside
+        ax.quiver(ag[..., 0][ok], ag[..., 1][ok], np.clip(ax_[ok], -0.05, 0.05), np.zeros(ok.sum()),
+                  angles="xy", scale_units="xy", scale=1 / 900, width=0.008, color="k", zorder=3)
         ax.set_xlim(0, 512)
         ax.set_ylim(512, 0)
         ax.set_aspect("equal")
-        ax.fill(PLANK[:, 0], PLANK[:, 1], color="#b9a27f", zorder=1)
-        ax.text(PLANK[:, 0].mean() + 10, 490, "plank", ha="center", fontsize=11, color="0.3")
-        for name, (g, n) in _pool(d[key]["cells"]).items():
-            x0, y0, w, h = BOXES[name]
-            ax.add_patch(plt.Rectangle((x0 + 3, y0 + 3), w - 6, h - 6, color=plt.cm.RdBu(norm(g[0])), alpha=0.85,
-                                       zorder=0, lw=0))
-            cx, cy = x0 + w / 2, y0 + h / 2
-            sc = 1800
-            gx = np.clip(g[0], -0.045, 0.045)
-            ax.annotate("", (cx + sc * gx, cy), (cx, cy), zorder=3,
-                        arrowprops={"arrowstyle": "-|>", "lw": 2.2, "color": "k", "mutation_scale": 18})
-            ax.text(x0 + 10, y0 + h - 12, f"n = {n}", fontsize=10, color="0.15", zorder=2)
-        ax.set_title(f"{title}\ns = {s:.3f}  [{ci[0]:+.3f}, {ci[1]:+.3f}]", fontsize=12)
+        ax.set_title(f"{title}\ns = {s:.3f}  (95% CI {ci[0]:+.3f} to {ci[1]:+.3f})", fontsize=12)
         ax.set_xticks([])
         ax.set_yticks([])
         for sp in ax.spines.values():
@@ -297,13 +360,99 @@ def fig_slope() -> None:
             sp.set_color("0.6")
     sm = plt.cm.ScalarMappable(norm=norm, cmap="RdBu")
     cb = fig.colorbar(sm, ax=axes, fraction=0.018, pad=0.015)
-    cb.set_label("left-right pull (ball diameters / step²)\nred = downhill to the left", fontsize=11)
-    fig.suptitle("Table slope recovered from rolling: real ball vs the model's imagined ball", fontsize=14,
-                 fontweight="bold", y=1.02)
+    cb.set_label("left-right pull (ball diameters / step²)\nred = downhill, to the left", fontsize=11)
     save(fig, "slope_map.png")
 
 
+# ---------------------------------------------------------------- post-training variants
+def fig_variants() -> None:
+    fig, (a, b, c) = plt.subplots(1, 3, figsize=(13, 4.6), gridspec_kw={"width_ratios": [1.25, 0.8, 1.1],
+                                                                         "wspace": 0.55})
+    v = [("Pretrained", 0.422, COL[PRE]), ("Multi-hypothesis", 0.423, "#bdbdbd"), ("Latent L1", 0.884, "#9ecae1"),
+         ("Copy gate", 0.885, "#9ecae1"), ("Discrete codes", 0.911, "#6baed6"), ("Motion-weighted\n+ contrast", 0.934,
+                                                                                "#2171b5")]
+    y = np.arange(len(v))[::-1]
+    a.barh(y, [x[1] for x in v], color=[x[2] for x in v], height=0.65)
+    for yi, (_, val, _) in zip(y, v):
+        a.text(val + 0.015, yi, f"{val:.2f}", va="center", fontsize=11)
+    a.set_yticks(y, [x[0] for x in v])
+    a.set_xlim(0, 1.1)
+    a.axvline(0.5, color="0.5", ls=":", lw=1.2)
+    a.set_xlabel("AUROC (10 epochs, right-entry)")
+    a.set_title("(a) Objective", loc="left")
+    sch = [("10\nepochs", 0.934), ("+ loss-\nweighted\nsampling", 0.949), ("+ 20\nepochs", 0.964)]
+    b.bar(range(3), [x[1] for x in sch], color=["#6baed6", "#3182bd", "#08519c"], width=0.65)
+    for i, (_, val) in enumerate(sch):
+        b.text(i, val + 0.004, f"{val:.3f}", ha="center", fontsize=11)
+    b.set_xticks(range(3), [x[0] for x in sch], fontsize=10)
+    b.set_ylim(0.9, 0.98)
+    b.set_ylabel("AUROC (right-entry)")
+    b.set_title("(b) Schedule", loc="left")
+    ep = [0, 1, 2, 4, 7, 10, 15, 20]
+    c.plot(ep, [0.437, 0.401, 0.603, 0.796, 0.888, 0.914, 0.962, 0.961], "-o", color=COL[TWO], lw=2.2,
+           label="ball from the right")
+    c.plot(ep, [0.660, 0.523, 0.526, 0.593, 0.731, 0.850, 0.891, 0.893], "--s", color=COL[TWO], lw=2.2,
+           label="ball from the left", alpha=0.75)
+    c.axhline(0.5, color="0.5", ls=":", lw=1.2)
+    c.set_xlabel("epoch")
+    c.set_ylabel("AUROC")
+    c.set_ylim(0.35, 1.0)
+    c.legend(frameon=False, loc="lower right")
+    c.set_title("(c) Learning curve, both directions", loc="left")
+    save(fig, "variants.png")
+
+
+# ---------------------------------------------------------------- gripper: what uncertainty looks like
+def fig_uncertainty() -> None:
+    vid = PLAN / "gripper" / "pb_narrow_fs" / "page" / "vid"
+    data = json.loads((vid.parent / "src" / "data.json").read_text())
+    unc, conf = iio.imread(vid / "uncertain.mp4")[0], iio.imread(vid / "confident.mp4")[0]
+    w = (unc.shape[1] - 8) // 3
+    crop = lambda f, i: f[95:250, i * (w + 4) + 150:i * (w + 4) + w - 90]   # noqa: E731
+    sc = {s["name"]: s["sources"] for s in data["scenarios"]}
+    panels = [(crop(unc, 0), "No post-training", sc["uncertain"]["before"]),
+              (crop(unc, 1), "Post-trained, uncertain pass", sc["uncertain"]["after (C)"]),
+              (crop(conf, 1), "Post-trained, confident pass", sc["confident"]["after (C)"]),
+              (crop(unc, 2), "Perfect forecast", sc["uncertain"]["perfect"])]
+    fig = plt.figure(figsize=(13, 7.0))
+    gs_ = fig.add_gridspec(2, 4, height_ratios=[1, 1.3], hspace=0.42, wspace=0.05)
+    for i, (im, title, src) in enumerate(panels):
+        ax = fig.add_subplot(gs_[0, i])
+        ax.imshow(im)
+        ax.axis("off")
+        ax.set_title(f"{title}\nP(emerges) {src['p']:.2f}, u = {src['u']:.2f}", fontsize=11.5)
+        sig = src["forecast"].get("sig_s", 0.0) if src["u"] > 0 else 0.0
+        ax.text(0.5, -0.06, f"exit radius {100 * sig:.1f} cm\ntiming ±{src['forecast'].get('sig_t', 0) if src['u'] > 0 else 0:.2f} s",
+                transform=ax.transAxes, ha="center", va="top", fontsize=11)
+    ax = fig.add_subplot(gs_[1, 1:3])
+    us = sorted(float(k) for k in data["sim_pickup_by_u"])
+    ax.plot(us, [data["sim_pickup_by_u"][str(u) if str(u) in data["sim_pickup_by_u"] else f"{u:.1f}"] for u in us],
+            "-o", color="#e08a2c", lw=2.4, label="frozen policy in simulation")
+    for title, src, col in [("no post-training", sc["uncertain"]["before"], COL[PRE]),
+                            ("post-trained, uncertain", sc["uncertain"]["after (C)"], COL[TWO]),
+                            ("post-trained, confident", sc["confident"]["after (C)"], COL[FINAL]),
+                            ("perfect", sc["uncertain"]["perfect"], COL["real"])]:
+        ax.axvline(src["u"], color=col, ls="--", lw=1.6, label=f"{title} (u = {src['u']:.2f})")
+    ax.set_xlabel("forecast uncertainty u (0 = exact, 1 = no information)")
+    ax.set_ylabel("simulated pick-up rate")
+    ax.set_ylim(0.35, 0.78)
+    ax.set_title("Pick-up rate falls as the forecast becomes less certain", fontsize=12)
+    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=False, fontsize=10.5)
+    save(fig, "gripper_uncertainty.png")
+
+
 # ---------------------------------------------------------------- gripper GIFs (3 forecasts x 3 scenarios)
+def _footer(img: Image.Image) -> Image.Image:
+    from PIL import ImageDraw, ImageFont
+    out = Image.new("RGB", (img.width, img.height + 30), (24, 28, 34))
+    out.paste(img, (0, 0))
+    d = ImageDraw.Draw(out)
+    d.ellipse((10, img.height + 8, 24, img.height + 22), fill=(255, 140, 0))
+    d.text((32, img.height + 6), "forecast exit region (larger = less certain)", fill=(230, 230, 230),
+           font=ImageFont.truetype(FONT, 15))
+    return out
+
+
 def gifs_gripper() -> None:
     vid = PLAN / "gripper" / "pb_narrow_fs" / "page" / "vid"
     out = HERE / "gripper"
@@ -313,7 +462,7 @@ def gifs_gripper() -> None:
         w = (frames.shape[2] - 8) // 3
         for i, src in enumerate(("no_posttraining", "posttrained", "perfect")):
             x0 = i * (w + 4)
-            ims = [Image.fromarray(f[:, x0:x0 + w]).quantize(colors=128) for f in frames]
+            ims = [_footer(Image.fromarray(f[:, x0:x0 + w])).quantize(colors=128) for f in frames]
             dur = [125] * (len(ims) - 1) + [1500]
             ims[0].save(out / f"{scen}_{src}.gif", save_all=True, append_images=ims[1:], duration=dur, loop=0,
                         optimize=True)
@@ -323,8 +472,13 @@ def gifs_gripper() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--clips", type=Path, default=REPO / "data" / "processed" / "clips" / "whole")
+    ap.add_argument("--orange", type=Path, default=None,
+                    help="frames.jpg check sheet of the orange-ball recording (results/other_ball_check/)")
     a = ap.parse_args()
     fig_outcomes(a.clips)
+    gif_data(a.clips, a.orange)
+    fig_variants()
+    fig_uncertainty()
     fig_rollout(a.clips, "whole_0206", "right", "Through pass: the post-trained model predicts the ball emerging",
                 "rollout_through.png")
     fig_rollout(a.clips, "whole_0007", "right", "Blocked pass: the post-trained model keeps the ball hidden",
