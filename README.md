@@ -293,16 +293,29 @@ intervals.
 <p align="center"><img src="docs/figures/auroc.png" width="900"></p>
 
 *Figure 5. Through-vs-blocked AUROC on held-out folds (95% bootstrap intervals over clips; dotted line = chance). (a)
-All 337 passes; the tracker reference fits its blockade range on outcomes and is shown for comparison only. (b) By
+All 337 passes, except the tracker reference, which was scored on the 254 right-entry passes and fits its blockade
+range on outcomes, so it is shown for comparison only. (b) By
 entry direction.*
 
 | model | AUROC, all passes | from the right | from the left |
 |---|---|---|---|
 | Real future frames through the probe (ceiling) | 0.998 | – | – |
 | Pretrained V-JEPA 2 | 0.45 | 0.44 | 0.66 |
-| Ball tracker + blockade fitted on outcomes (reference) | 0.85 | – | – |
+| Point tracker + straight line, no blocker (reference) | – | 0.54 | – |
+| Point tracker + blocker fitted on outcomes (reference) | – | 0.85 | – |
 | Two-way post-trained model | 0.91 | 0.96 | 0.89 |
 | **Final model** | **0.93** | **0.97** | **0.87** |
+
+**Comparison with a tracker that is given the blocker.** As a hand-engineered reference, the TAPNext point tracker
+(BootsTAPNext, `models/tapnext_rule/`) follows five points on the ball through the context half and extends the
+ball's path in a straight line at constant velocity. With no blocker this scores 0.54, since it predicts every ball
+emerging. A blockade rule is then added: if the line crosses the plank inside a range fitted on each fold's training
+outcomes, the ball stops there. The fitted range is the same on every fold (about 183–332 px along the plank), so
+the tracker effectively knows where the blocker is, and it reaches 0.85. It stays well below the post-trained models
+(0.96–0.97 on the same right-entry passes) because knowing the blocker is not enough: a straight line misses balls
+that curve or slow near the edges (41 blocked passes are predicted through), and the rule cannot represent how the
+ball interacts with the blocker, so it never tells a bounce from a stop. The world model learns those dynamics from
+video, without being told where the blocker is.
 
 The post-trained models exceed the tracker reference even though that reference is fitted directly on outcomes. A
 paired bootstrap of the gain over the pretrained model on the same clips excludes zero for every successful run, and
@@ -355,18 +368,41 @@ The final model was not scored on this set, because the test ran with the two-wa
 
 ### 4.3 Interpretability: isolating ball appearance
 
-A single latent direction encoding the ball's colour was estimated in the frozen encoder's space, as the mean
-difference between orange and blue ball-cell tokens from **real context frames only**, labelled by which ball is
-shown and never by outcomes or predictions. It separates the two balls almost perfectly on held-out folds (AUROC
-0.997) and is nearly orthogonal to the probe's position readout (cosine −0.04). It is not perfectly pure: for the
-orange ball it also correlates with speed ($r = 0.54$), whereas for the blue ball it barely tracks motion.
+The orange-ball result raises a mechanistic question: does the forecast depend on what the ball looks like, or only
+on where it is and how it moves? This was tested by finding the direction in the frozen encoder's feature space
+that encodes the ball's colour, and then removing it.
 
-Two results follow. First, setting this coordinate to the blue-ball level before the predictor *raises* orange-ball
-AUROC from 0.90 to **0.94** and leaves blue unchanged (0.92), so the blockade knowledge does not depend on the ball's
-colour; the cost is the finer distinction between bouncing and stopping passes, which drops from 0.86 to 0.52.
-Second, in the predicted future the post-trained model keeps the ball partly orange, whereas the pretrained model
-loses the ball altogether (Figure 11b), which suggests that post-training also preserves object identity
-through the occlusion.
+**Finding the direction.** For each real context frame with the ball in view, the layer-normalised tokens at the
+ball's cells are averaged, and the colour direction is the normalised difference of the two balls' means,
+
+$$
+d = \frac{\mu_{\text{orange}} - \mu_{\text{blue}}}{\lVert \mu_{\text{orange}} - \mu_{\text{blue}} \rVert},
+\qquad \mu_b = \operatorname{mean}\big\{\mathrm{LN}(z_j) : j \text{ a ball cell, ball } b,\ \text{real context frame}\big\}.
+$$
+
+Its only label is which ball is in the video: no outcomes, target halves or predictions are used, and because the
+encoder is frozen the direction is the same before and after post-training. It is a difference of means rather than a
+trained classifier, so it cannot pick up anything beyond the average difference between the two balls.
+
+**Checking that it is colour and nothing else.** The direction was fitted on four folds of clips and tested on the
+fifth. Three checks follow. *Purity:* the projection $d^\top \mathrm{LN}(z)$ separates the two balls on held-out
+clips at AUROC 0.997. *Independence from position:* its cosine with the probe's position readout $w$ is −0.04, so
+moving along $d$ barely changes where the probe sees the ball. *Independence from motion:* within each ball, the
+projection is correlated with the ball's position and speed; for the blue ball the correlations are weak
+($|r| \le 0.27$), but for the orange ball they are moderate (speed $r = 0.54$), so the direction is not perfectly
+clean for the new ball, plausibly because the orange ball was filmed from a different angle.
+
+**Removing it.** Before the predictor runs, every context token's coordinate along $d$ is set to the average value
+over the blue-ball clips, $z \leftarrow z - \big(d^\top z - \bar c_{\text{blue}}\big)\,d$, so the predictor sees an
+orange ball that looks, along this axis, like the blue one. The unchanged probe then scores the forecast, using the
+two-way model's five fold predictors.
+
+**Results.** Removing colour *raises* orange-ball AUROC from 0.90 to **0.94** and leaves the blue ball unchanged
+(0.92), so the blockade knowledge does not need the ball's colour, and the remaining gap for the new ball was partly
+a colour mismatch. The cost is the finer distinction between bouncing and stopping passes on the orange ball, which
+drops from 0.86 to 0.52, so some of that information travels with the colour axis. In the predicted future the
+post-trained model keeps the ball partly orange, whereas the pretrained model loses the ball altogether (Figure
+11b), which suggests that post-training also preserves object identity through the occlusion.
 
 <p align="center"><img src="docs/figures/orange_ball.png" width="900"></p>
 
