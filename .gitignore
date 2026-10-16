@@ -36,3 +36,4 @@ data/processed/frames/*
 # --- External code cloned at runtime ---
 third_party/*
 !third_party/.gitkeep
+models/gripper/runs/*/fold*/ckpt_*

@@ -1,0 +1,48 @@
+<div class="wrap">
+<header>
+  <span class="label">RobustWorld · gripper · best set-up only</span>
+  <h1>How the gripper responds to what the world model knows</h1>
+  <p>The ball rolls under the plank. Some balls come out the far side and some are stopped by the hidden blocker. The gripper can't react in time once it sees the ball, so before the ball could appear it decides from the forecast alone: set off, or stay. Shown for the three forecasts: the world model before post-training, after post-training, and a perfect forecast taken from the real ball.</p>
+  <div class="setup">
+    <span>set-up <b>pb_narrow_fs</b> (PyBullet; fingers open at most 9 cm for the 4 cm ball and close at most 0.15 m/s, so it cannot snap shut and has to be lined up on its guess)</span>
+    <span>passes <b>335 real</b> (141 come out, 194 blocked)</span>
+    <span>scored <b>15 Oct 2026, 23:25 UTC</b>, models/gripper/blockade_eval.py --v2</span>
+  </div>
+</header>
+
+<section>
+  <h2>Over every real pass</h2>
+  <div class="sum" id="sum"></div>
+</section>
+
+<section>
+  <h2>The uncertainty response</h2>
+  <div class="panel rule">
+    <div style="display:grid;gap:10px;min-width:0">
+      <p>Two kinds of uncertainty change what the gripper does. The big one is <b>whether the ball comes out at all</b>: the gripper sets off only when the forecast's chance of the ball coming out clears a bar. The second is <b>where and when</b> the ball comes out: a vaguer forecast lowers the chance of a pick-up, which raises the bar.</p>
+      <div class="formula">set off if &nbsp;P(comes out) &gt; 1.5 / (3.5 × c − 0.5 × (1 − c) + 2.5), &nbsp;c = pick-up rate<br>pick-up rate: <span id="crange"></span> as the forecast goes from sharp to vague<br>so the bar rises from <span id="brange"></span></div>
+      <p class="note">The pick-up rate comes from the policy's own simulation runs, and nothing here is fitted to real outcomes. Rewards: picked up +3 plus up to +1 for an early catch, set off and missed −0.5, ball let go −1, wasted trip −1, held back on a blocked ball +0.5.</p>
+    </div>
+    <div class="chart" style="min-width:0"><svg id="barchart" viewBox="0 0 360 200" role="img" aria-label="Bar to set off against forecast vagueness"></svg></div>
+  </div>
+  <div class="panel" style="display:grid;gap:8px">
+    <span class="label">After post-training: every real pass, by how sure the model was the ball would come out</span>
+    <div class="chart"><svg id="strip" viewBox="0 0 900 190" role="img" aria-label="Chance the ball comes out for every real pass"></svg></div>
+    <p class="note">Before post-training the model never imagines the ball coming out (the same near-0 score for every pass), so that score carries no information and is treated as no forecast: the gripper falls back to the base rate (42% of balls come out), which clears the bar, so it sets off for every ball. Filled dots are passes where the post-trained gripper set off.</p>
+  </div>
+</section>
+
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap">
+    <h2>Three real passes</h2>
+    <div class="controls"><button id="play" type="button">Replay the passes</button><span class="mono muted" id="clock">t = end</span></div>
+  </div>
+  <p class="note">Top-down view of the catch zone past the plank (3 ball diameters deep). The shaded band on the plank edge is where the forecast says the ball comes out, ± its uncertainty. The orange dashes show the real ball's path, and the coloured line shows the gripper's path.</p>
+  <div id="scens" style="display:grid;gap:26px"></div>
+</section>
+
+<footer>
+  <span>Data: results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/ (blockade_v2.json, blockade_v2_clips.json); episodes replayed with the frozen fold policies.</span>
+  <span>Post-trained model: lossmix_both (C). Before: the pretrained V-JEPA 2 predictor. Ground truth is used only to score.</span>
+</footer>
+</div>

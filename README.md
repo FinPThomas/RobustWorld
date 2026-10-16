@@ -1,175 +1,282 @@
-# RobustWorld
+# RobustWorld: learning an invisible blockade from home video
 
-Turns overhead videos of a ball rolling under an occluder into short clips for
-world-model training and evaluation (Wan 2.2, V-JEPA 2). Each clip is split in
-half: the model sees the **context** (ball rolling in) and must predict the
-**target** (ball comes through, bounces back, or stays hidden behind a blockade).
+> **Branch `final/robustworld-summary`.** The clean, final summary of the project: only the code and
+> results needed to run and reproduce the best world model (**G**) and the best gripper policy
+> (**pb_narrow_fs**). Weaker runs stay on their original branches (`claude/colab-two-day-plan-3gn90a`,
+> `claude/project-thread-yzzs6s`).
 
-## Setup
+## Introduction
+
+A robot that acts in a home has to predict things it cannot see. This project asks whether a world model
+can learn a **hidden physical property of one scene purely by post-training on ordinary video**, and
+whether a robot policy then gains from that knowledge.
+
+The test scene is deliberately easy to verify. A ball rolls under a plank. A blocker hidden under the
+plank stops some passes ("blocked"), while others come out the far side ("through"). Nothing in any
+single frame shows where the blocker is, so the only way to know it is to have learnt it from watching
+many passes. The table is also slightly tilted, which gives a second, subtler property to learn
+(the slope).
+
+We post-train the predictor of **V-JEPA 2** on these passes, read its imagined future through a frozen
+ball probe, and feed that forecast to a **simulated two-finger gripper** that must pick the ball up once
+it crosses a line.
+
+**Sneak peek.** For a pass that goes through, the pretrained model loses the ball under the plank (middle
+row). After post-training, the model imagines it coming out on the far side (bottom row), as it really
+does (top row). Through-vs-blocked AUROC goes from **0.42 to 0.97**.
+
+![Real vs imagined ball, through pass](results/2026-10-04_2110_twoday/vjepa2/plan/track_viz/frames_plank_whole_0206.png)
+
+### Contents
+
+1. [Quick start](#quick-start)
+2. [Problem and data](#1-problem-and-data)
+3. [The world model and the ball probe](#2-the-world-model-and-the-ball-probe)
+4. [Post-training V-JEPA 2 on the blockade](#3-post-training-v-jepa-2-on-the-blockade)
+5. [Robustness: the other side and the other ball](#4-robustness-the-other-side-and-the-other-ball)
+6. [The table slope](#5-the-table-slope)
+7. [From forecast to gripper policy](#6-from-forecast-to-gripper-policy)
+8. [Conclusion and impact](#7-conclusion-and-impact)
+9. [How to run](#8-how-to-run)
+
+## Quick start
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e .
+pip install -e .                                   # clip pipeline + evaluation tools
+robustworld data/raw/videos/whole.mp4              # video -> tracked, labelled 3 s clips
+python -m pytest tests/                            # includes the evaluation-isolation test
 ```
 
-ffmpeg comes bundled with `imageio-ffmpeg`, so no system install is needed.
+Post-training and scoring run on a GPU (Kaggle T4 x2) through `notebooks/kaggle_plan.ipynb`; the gripper
+runs on CPU. Full steps, the best weights and how to predict with them are in [How to run](#8-how-to-run).
 
-## Processing videos
+## 1. Problem and data
 
-```bash
-.venv/bin/robustworld data/raw/videos/              # every .mp4 in the folder
-.venv/bin/robustworld data/raw/videos/start.mp4     # one video
-.venv/bin/robustworld start.mp4 --from track        # force a rerun from a stage
-```
+**Why this scene.** The blockade is binary and invisible, so a model either learns it from experience
+or it can't predict it. Outcomes can be checked automatically against the real video. It also tests
+**object permanence** (the ball must persist while hidden) and calls for an **output distribution**
+rather than one answer, because passes near the blocker's edges can go either way. The slope adds a
+continuous, weaker effect, so there are several levels of difficulty in one scene.
 
-Stages are cached: each one reruns only if its inputs changed (new video, edited
-scene file) or `--from` forces it.
+**Data.** One fixed overhead phone recording of a ball rolled by hand under a plank, from both sides
+(no further video could be recorded). The pipeline (`src/robust_world/pipeline.py`, details in
+[docs/PIPELINE.md](docs/PIPELINE.md)) runs with no hand labelling:
 
-| Stage      | Output                                                        |
-|------------|---------------------------------------------------------------|
-| `downsize` | `data/interim/<name>/<name>_512.mp4`: 512x512, source fps, no audio |
-| `track`    | `data/interim/<name>/track.csv`: ball position and hand signal for every frame; `backgrounds.npz` |
-| `passes`   | `data/interim/<name>/passes.json`: one record per approach to the occluder |
-| `clips`    | `data/processed/clips/<name>/<segment>/`: clips, `hand/`, `manifest.jsonl`, `sheets/`, `review.jpg` |
+- **Track:** a colour tracker finds the ball in every frame and a hand detector flags frames with a hand.
+- **Passes:** every approach to the plank becomes one pass.
+- **Clips:** 3 s (48 frames, 16 fps, 512x512). The first half (context) ends just before the ball
+  touches the plank; the second half (target) is what the model must predict.
+- **Outcomes** come from fixed rules on the ball track (through / bounce / hidden within 1.5 s).
+  Clips where a hand touches the ball are excluded.
 
-Each segment's manifests are merged across videos into
-`data/processed/clips/manifest_<segment>.jsonl`. Segments are never merged with each
-other, and the tools default to `manifest_right.jsonl`.
+Result: **254 clips rolled in from the right** (training direction) and **83 from the left**, plus
+open-table clips (ball rolling freely, used for the slope).
 
-Tracking (about 40 min for a 36 min video) reruns only when a setting it uses changes:
-the occluder, ball colours, `ignore_regions` or `background_breaks_s` (recorded in
-`data/interim/<name>/track_scene.json`). Editing `segments` or `hand_min_px` only
-re-cuts the clips.
+## 2. The world model and the ball probe
 
-### Adding a new video
+**Why V-JEPA 2 and not a generative video model.** We first tried zero-shot video generators (Wan 2.1,
+Cosmos, LTX; `models/`). They produce blurry, unrealistic futures, are expensive to fine-tune on a
+small dataset, and their pixels must be tracked again before they can be scored. V-JEPA 2 predicts in
+latent space, so it spends no capacity on pixel detail, it is cheap to post-train (encoder frozen, only
+the predictor trained) and its features can be read directly.
 
-1. Put the `.mp4` in `data/raw/videos/` and run `robustworld` on it.
-2. The first run downsizes the video, then stops and writes:
-   - `data/interim/<name>/calibration.png`: the first frame with a pixel grid
-   - `configs/scenes/<name>.json`: a template scene file
-3. In the scene file, set `occluder_polygon` to the occluder's outline in (x, y)
-   pixels, then delete the `"TODO"` line. Optionally add `ignore_regions` for
-   clutter such as furniture that shifts during the recording. See
-   `configs/scenes/start.json`.
-4. Set `blocker_polygon` to the outline of the hidden blocker under the occluder, in the
-   same pixel coordinates (lift the plank and read it off `calibration.png`), or `"none"`
-   for a session with no blocker. Leaving it `null` means "not recorded". It is a label
-   only: the clips are unchanged and no model or evaluation readout is fitted on it. It goes
-   into every clip's manifest record, for splitting and for the blocker figures. Record each
-   blocker position as its own video, since a scene file has one blocker.
-5. Run it again.
+**The ball probe.** A linear probe (`models/vjepa2/eval_decoder.py`) maps each V-JEPA token to "is the
+ball here". It finds the ball on real frames almost perfectly (cell AUROC about 1.00, median error
+14 to 20 px on a 512 px frame), so the readout is not the bottleneck.
 
-The defaults assume a fixed camera and a **blue** ball. A different ball colour
-needs `ball_hsv_lo`/`ball_hsv_hi` set in the scene file (OpenCV HSV, H 0–179).
-For a striped ball, also set `ball_stripe_hsv_lo`/`_hi`. The ball is then the blue
-core plus its stripes, so its labelled centre and radius cover the whole ball (see
-`configs/scenes/whole.json`).
+![Probe quality by layer](docs/figures/probe_layers.png)
 
-`segments` splits a recording into time ranges, each with the side the ball is rolled
-in from (`R`/`L` of the occluder). Each segment gets its own folder and manifest, and a
-clip's whole window must lie inside one segment, so segments share no frames. In
-`whole.json`, `right` (0–1708 s, rolled in from the right) is for training and eval now,
-and `left` (1708 s to the end) is held out for testing later. Without `segments`, the
-whole video is one segment called `all`.
-Moments where the scene changes for good (a prop nudged, the chair moved) are
-detected automatically. To override them, set `background_breaks_s`.
+**Why the probe is decoupled from learning.** If any readout were trained on the model's predictions
+or on outcomes, the readout itself could learn the blockade and we would be measuring the probe, not
+the world model. So the probe is fitted once, on real context frames only, with ball positions from
+the same frame, and is identical before and after post-training (rules in [CLAUDE.md](CLAUDE.md),
+enforced bit-for-bit by `tests/test_eval_isolation.py`). All blockade knowledge has to come from
+post-training.
 
-## Clip format
+## 3. Post-training V-JEPA 2 on the blockade
 
-- 48 frames, 16 fps (3 s), 512x512, H.264.
-- **Frames 0–23: context.** Frame 23 is the last frame before the ball's
-  outline touches the occluder.
-- **Frames 24–47: target.**
-- For V-JEPA 2, context and target are 24 frames each. For Wan (frame
-  counts of 4n+1), condition on the context and generate 25 frames starting
-  from frame 23.
+**How.** Encoder frozen; the predictor is trained to predict the target-half latents from the context
+(L1 in layer-normalised latent space), 5-fold cross-validation (`cv_folds`, seed 0), on Kaggle.
+Freezing the encoder keeps the probe valid and makes training cheap, at the cost of only reshaping
+what the predictor does with features it already has.
 
-Every outcome is kept. The outcome is what the ball does by itself within 1.5 s of
-reaching the plank:
-- `through`: comes out on the far side.
-- `bounce`: rolls clear again on the entry side. It either never fully vanishes
-  (`touch_only`) or goes under briefly first.
-- `hidden`: blocked. The ball stays under the plank, or rests against its edge with a
-  sliver showing, until it is picked up.
+**What is hard about it.** A plain latent loss averages over the possible futures. When a pass could
+go either way the predictor hedges: the imagined ball fades into a blurry, low-probability smear, or
+it picks the most common future ("blocked") for every pass. Before post-training the model almost
+never imagines the ball past the plank at all.
 
-If the ball doesn't reappear within the clip, `outcome` is `hidden`.
+![Pretrained: imagined ball beyond the plank, by outcome](docs/figures/pt_outcome_pretrained.png)
 
-Each clip goes into one `set`:
-- `main` (`include: true`): usable as is.
-- `hand`: usable except that a hand is in shot somewhere in the 3 s. These clips are set
-  aside in `<segment>/hand/` with `<clip>_hand.npz` (`masks`: bool `[48, 512, 512]`),
-  for masking or inpainting later.
-- `excluded`, for any of these reasons:
-  - the window runs off the video or its segment
-  - another ball is in the context
-  - the ball didn't roll in from the frame edge, or came from the wrong side for its
-    segment
-  - a hand touches the ball after the throw (it must roll untouched for the last 0.5 s
-    of context and the whole target)
+**What fixed it** (best run, `models/vjepa2/posttrain.py`):
 
-Main `manifest.jsonl` fields: `clip_id`, `segment`, `set`, `side_in`, `path`,
-`include`, `reasons`, `outcome` (`through` / `bounce` / `hidden` within the clip),
-`touch_only`, `ball_at_start`,
-`entry_frame`, `occlusion_start_frame`, `hidden_frame`, `reappear_frame`,
-`exit_frame` (clip frame indices, or null when outside the clip),
-`hand_mask_path`, `hand_in_context`, `hand_in_target`, `blocker_polygon`, `source_video`,
-`source_frames`.
+- **commit loss:** the L1 is weighted towards moving tokens, with a contrast term, so the predictor
+  commits to a visible ball rather than a blur.
+- **Loss-weighted sampling:** each epoch, clips are drawn in proportion to their previous loss (no
+  outcome labels), so hard passes near the blocker's edges get more training.
+- **20 epochs, both directions** (run **C**), then **G** = C plus 5 epochs that add the open-table clips.
+- **Multi-step rollouts** score the imagined future frame by frame, 1.5 s ahead.
 
-To review the clips, open `review.jpg`, which has one row per clip. Hand masks
-are shown in magenta, and a red bar marks the context/target split.
+Variants that did not help: a copy-last-frame gate (no change) and a multi-hypothesis head (collapsed
+to "no ball").
 
-## Evaluating world models
+**Results** (through vs blocked, from how much ball the imagined future puts past the plank):
 
-`data/eval/sample5/` holds 5 committed clips (3 through, 2 hidden). It is drawn at
-random within each outcome, so the blocked case is always included. Every model lives
-in its own folder with its own requirements and Colab notebook, and models never
-depend on each other:
+| model | AUROC, ball from right | ball from left |
+|---|---|---|
+| real future frames through the probe (ceiling) | 0.998 | – |
+| V-JEPA 2 pretrained | 0.42 | 0.66 |
+| tracker + blockade fitted on outcomes (reference) | 0.85 | – |
+| C (commit + loss-weighted, both sides, 20 epochs) | 0.961 | 0.893 |
+| **G (C + 5 epochs with open-table clips)** | **0.971** | **0.873** |
 
-| Model | Code | Colab | GPU |
+![G: where V-JEPA expects the ball to be blocked](results/2026-10-04_2110_twoday/vjepa2/plan/blocker/lossmix_topup-after/blocked_vs_crossing.png)
+*Black: the true blocked rate along the plank. Red: G's imagined rate. Both through gaps are learnt.*
+
+![G on a blocked pass](results/2026-10-04_2110_twoday/vjepa2/plan/track_viz/frames_plank_whole_0007.png)
+*A blocked pass: G keeps the ball under the plank instead of imagining it through.*
+
+## 4. Robustness: the other side and the other ball
+
+**The other side.** A model trained only on balls from the right gets *worse* on balls from the left
+(0.64 to 0.36), and mirroring the clips doesn't rescue it. It learnt an image-space map ("at these
+heights the ball ends up on the left") rather than "a solid object at a place". Training on both
+directions at once fixes this: C and G score 0.89 / 0.87 on left-entry passes they never saw.
+
+![Generalisation](docs/figures/generalisation.svg)
+
+**The other ball (orange).** A held-out object test: score G, unchanged, on passes with an orange
+ball it never saw in training. A model that learnt the scene should not care about the ball's colour.
+
+> **Placeholder: orange-ball results pending** (run in progress). AUROC from right / left: _TBD_.
+
+**Interpretability: a ball-colour direction.** The aim is to separate the latent direction that encodes
+the ball's appearance (colour) from the parts that encode its position, speed and motion, so the world
+model's scene knowledge (blockade, slope) can be shown to be independent of what the ball looks like.
+
+> **Placeholder: colour-direction results pending.**
+
+**Robustness so far.** The blockade transfers across entry directions once both are seen in training;
+the object test above will show whether it also transfers across balls.
+
+## 5. The table slope
+
+The table tilts slightly downhill to the left. We measure it label-free on the imagined track:
+**s = (downhill minus uphill acceleration) / 2** at matched speed, so friction cancels. Positions
+come from the frozen probe, which itself reads only about half of the real pull from real frames, so a
+model that has learnt the slope should land near the probe-on-real value.
+
+| track | s (ball diameters / step²) | 95% range |
+|---|---|---|
+| real ball (tracker) | 0.025 | 0.021 to 0.031 |
+| probe on real frames (target) | 0.014 | 0.006 to 0.025 |
+| imagined, pretrained | – (ball never visible) | – |
+| imagined, C | 0.019 | −0.018 to 0.051 |
+| **imagined, G** | **0.024** | **−0.007 to 0.040** |
+
+![G slope map](docs/figures/slope_map_G.png)
+
+![How long the imagined ball stays visible](results/2026-10-04_2110_twoday/vjepa2/plan/track_viz/visibility.png)
+*Adding open-table clips (G) keeps the imagined ball visible on open table in 87% of clips at 1.5 s,
+against 57% for C, which gives far more stretches to measure.*
+
+**Reading.** G pulls the ball downhill at or above the probe's level: the slope is **likely learnt but
+not proven**, because the range still just reaches 0. Proving it needs more open-table rolling or a
+steeper tilt, i.e. more data.
+
+## 6. From forecast to gripper policy
+
+**How the forecast feeds the policy.** From G/C's imagined future, read through the frozen probe, we take
+*whether*, *where*, *when* and *how fast* the ball comes out, and *how uncertain* that is. These few
+numbers are the policy's only knowledge of the ball before it appears.
+
+**Setting up the problem so the learning shows.** The gripper must commit before the ball is visible:
+the fingers close at a limited speed (0.15 m/s) and open at most 9 cm for a 4 cm ball, so it cannot
+simply react to every ball. Rewards: a pick-up earns +3 (more if early); a wasted trip for a blocked
+ball costs −1; holding back on a blocked ball earns +0.5. A forecast that knows the blockade is worth
+a lot; one that doesn't is not.
+
+**Simulation and training.** PyBullet two-finger gripper (`models/gripper/`), trained with PPO from
+scratch on CPU. A simple, fast physics sim was chosen over a heavy robotics stack because only the
+grasp of one ball matters. The policy trains in simulation only, with forecasts that are the true
+exit plus noise of a stated size, then is **frozen**. It never sees a world model's real forecasts
+against real outcomes. A pretrained open-source policy was not used: none takes this forecast as
+input, and training from scratch kept the comparison clean.
+
+**Results** on all 335 real passes (141 come out, 194 blocked), mean reward per pass:
+
+| forecast given to the frozen policy | sets off (comes out / blocked) | picks up | mean reward |
 |---|---|---|---|
-| Wan 2.1 VACE 1.3B | `models/wan21/` | `notebooks/colab_wan21.ipynb` | T4+ |
-| Cosmos-Predict2 2B Video2World | `models/cosmos_predict2/` | `notebooks/colab_cosmos_predict2.ipynb` | A100 |
-| LTX-Video 2B distilled (fast) | `models/ltx_video/` | `notebooks/colab_ltx_video.ipynb` | T4+ |
-| V-JEPA 2 ViT-L (scored, no pixels) | `models/vjepa2/` | runs locally (MPS/CPU) | any |
+| none, or V-JEPA 2 before post-training | 100% / 100% | 43% | −0.08 |
+| **post-trained (C)** | **72% / 4%** | 60% when it sets off | **+0.69** |
+| perfect forecast (tracker) | 100% / 0% | 73% | +1.27 |
 
-Each model writes the same prediction format (see `src/robust_world/eval/io.py`):
-- `<clip>.mp4`: the predicted target frames (24)
-- `<clip>_input.mp4`: the frames the model was given
-- `<clip>.json`: settings
+| blocked | uncertain, comes out | certain, comes out |
+|---|---|---|
+| [![blocked](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/blocked.jpg)](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/blocked.mp4) | [![uncertain](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/uncertain.jpg)](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/uncertain.mp4) | [![confident](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/confident.jpg)](results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/page/vid/confident.mp4) |
+| stays put | lines up, opens wider | lines up early, grips tight |
 
-That shared format lets one comparison tool handle any set of models:
+Interactive page: [Gripper Uncertainty Response](https://claude.ai/artifact/1pygtzGBW2LqB9bt6HPB9d).
+
+**Applying it to any robot.** The policy only needs a small interface: *will it arrive, where, when,
+how fast, how sure*. Any robot whose controller can be trained in simulation on that interface can
+use a post-trained world model the same way, without retraining the world model.
+
+## 7. Conclusion and impact
+
+- Post-training V-JEPA 2 on a few hundred home clips teaches it an **invisible blockade** (AUROC 0.42 to
+  0.97), measured through a probe that cannot have learnt it.
+- It generalises across entry directions once both are seen, and **probably** learns the table slope.
+- A frozen gripper policy turns that knowledge into behaviour: from −0.08 to **+0.69** reward per pass
+  (perfect forecast +1.27), mostly by not chasing balls that will never arrive.
+
+**Impact.** Homes are full of hidden state: a drawer that sticks, a step that isn't visible, objects
+behind others. A humanoid that post-trains its world model on its own experience of one home can
+learn such properties without labels and plan around them. **Handheld or head-mounted video** is the
+natural data source; it adds camera motion, which latent-space models like V-JEPA 2 handle better than
+pixel generators, but it would need camera-relative probes. The main implication: scene-specific
+physics can be learnt from passive video alone, and the learning can be verified separately from the
+readout.
+
+## 8. How to run
+
+**Clips.** Put the videos in `data/raw/videos/` and run `robustworld data/raw/videos/` (see
+[docs/PIPELINE.md](docs/PIPELINE.md)). `scripts/cut_open_clips.py` cuts the open-table clips;
+`scripts/pack_clips.py` zips the clips for Kaggle (the "DataBall" dataset).
+
+**Post-training the best model (G) on Kaggle.** Open `notebooks/kaggle_plan.ipynb` (GPU T4 x2,
+`GITHUB_TOKEN` secret attached), add the clips dataset, then Save & Run All. It runs
+`models/vjepa2/plan.py`; to redo just the best runs:
 
 ```bash
-robustworld-eval sample --name sample5 --n 5 --seed 0      # draw a sample
-robustworld-eval baseline                                  # hold-last-frame baseline, no GPU needed
-robustworld-eval grid --models cosmos_predict2 wan21       # ground truth + models
+python models/vjepa2/plan.py run --only lossmix_both-after --redo          # C, about 5.6 h
+python models/vjepa2/plan.py run --only lossmix_topup-after --redo         # G = C + 5 epochs, needs C's weights
 ```
 
-The grid has one column for the ground truth plus one per model, and two rows:
-- **Input:** what each source was given. Frames a model didn't see are dimmed.
-- **Output:** the ground-truth target or the model's prediction.
+**Weights.** Fold weights (`fold0.pt` to `fold4.pt`) are too large for git. They are in the Kaggle
+notebook outputs under `weights/lossmix_both-after/` (C) and `weights/lossmix_topup-after/` (G); add
+that output (or a dataset named after the run, e.g. `lossmix-both-after`) as a notebook input and
+`plan.py` finds it.
 
-The context plays first, then the predictions. The tool writes one video per clip, an
-`all.mp4` with every clip stacked, and an `index.html`. Adding a model only adds a column.
+**Predicting with V-JEPA 2.** Score imagined futures through the frozen probe:
 
-## Large files
+```bash
+python models/vjepa2/ball_probe_cv.py --predictor-run <weights/lossmix_topup-after> \
+    --manifest data/processed/clips/manifest_right.jsonl --out outputs/vjepa2/G
+```
 
-GitHub rejects any file over 100 MB, so raw videos are not committed (Git LFS
-isn't installed yet). `data/interim/` and `data/processed/` are regenerable and
-ignored. Copy the raw video to wherever the pipeline runs and rerun it there.
+This writes `per_clip.json` (imagined ball per step, through-vs-blocked score) and the figures above.
+Saved scores for the pretrained model, C and G are in `results/2026-10-04_2110_twoday/vjepa2/plan/scores/`.
 
-## Layout
+**Gripper (CPU).** The approved policies are committed in `models/gripper/runs/pb_narrow_fs/`.
 
-| Path                   | Purpose                              | Tracked? |
-|------------------------|--------------------------------------|----------|
-| `data/raw/videos/`     | Source videos                        | yes (if < 100 MB) |
-| `data/interim/`        | Per-video intermediates              | no       |
-| `data/processed/`      | Clips and manifests                  | no       |
-| `src/robust_world/`    | Pipeline package                     | yes      |
-| `configs/scenes/`      | Per-video scene calibration          | yes      |
-| `data/eval/`           | Small committed eval samples         | yes      |
-| `models/`              | One folder per world model           | yes      |
-| `tests/`               | Tests                                | yes      |
-| `checkpoints/`         | Model weights                        | no       |
-| `outputs/`             | Renders, results                     | no       |
-| `notebooks/`           | Exploration                          | yes      |
+```bash
+pip install pybullet gymnasium stable-baselines3
+cd models/gripper
+export GRIPPER_ENV=pybullet GRIPPER_PARAMS='{"GAP_MAX": 0.09, "FINGER_SPEED": 0.15}'
+PLAN=../../results/2026-10-04_2110_twoday/vjepa2/plan
+python blockade_eval.py --plan $PLAN --tag pb_narrow_fs --v2                       # the table in section 6
+python videos.py --plan $PLAN --policy runs/pb_narrow_fs --tag pb_narrow_fs --gui  # watch it in PyBullet
+```
+
+See [models/gripper/README.md](models/gripper/README.md) for training (`train.py`) and
+`results/.../gripper/pb_narrow_fs/` for the saved results.

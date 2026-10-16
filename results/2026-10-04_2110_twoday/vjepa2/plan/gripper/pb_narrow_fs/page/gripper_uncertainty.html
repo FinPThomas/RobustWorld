@@ -1,0 +1,281 @@
+<title>Gripper Uncertainty Response</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column; summary strip, decision rule + every-pass strip chart, then three situations each split into three forecast columns */
+:root{
+  --bg:#f5f7f8; --panel:#ffffff; --ink:#18202a; --muted:#5b6774; --line:#d9e0e6;
+  --none:#8b96a3; --post:#0f7f7a; --perfect:#b07a12; --bad:#b4442f; --good:#2f7d3e;
+  --plank:#c9b79a; --zone:#eef3f2; --ball:#d0553a;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1a2129; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2d3743;
+  --none:#7d8894; --post:#3cc0b6; --perfect:#e0aa3e; --bad:#e2725c; --good:#6cc27c;
+  --plank:#6b5d48; --zone:#1f2a2b; --ball:#ee7a5e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1a2129; --ink:#e6ebf0; --muted:#9aa6b2; --line:#2d3743;
+  --none:#7d8894; --post:#3cc0b6; --perfect:#e0aa3e; --bad:#e2725c; --good:#6cc27c;
+  --plank:#6b5d48; --zone:#1f2a2b; --ball:#ee7a5e; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:2.4rem} h2{font-size:1.6rem} h3{font-size:1.2rem}
+p{margin:0;max-width:68ch}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:.82rem;font-variant-numeric:tabular-nums}
+.label{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:grid;gap:10px}
+.setup{display:flex;flex-wrap:wrap;gap:8px 18px}
+.setup span{font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.setup b{color:var(--ink);font-weight:600}
+.k-none{color:var(--none)} .k-post{color:var(--post)} .k-perfect{color:var(--perfect)}
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sum .col{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:6px;border-top:4px solid var(--c)}
+.sum .big{font-family:var(--f-display);font-size:2.2rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.sum dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-size:.9rem}
+.sum dt{color:var(--muted)} .sum dd{margin:0;font-family:var(--f-mono);font-size:.85rem;text-align:right}
+section{display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.chart{overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:520px}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+.rule{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+.formula{font-family:var(--f-mono);font-size:.86rem;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;line-height:1.7}
+.scen{display:grid;gap:12px}
+.scen-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.tag{font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:8px;align-content:start;min-width:0}
+.card h3{color:var(--c)}
+.meter{height:10px;border-radius:5px;background:var(--line);position:relative;overflow:visible}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--c)}
+.meter b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:.88rem}
+.row span:first-child{color:var(--muted)}
+.decision{font-family:var(--f-display);font-size:1.25rem;font-weight:600}
+.go{color:var(--post)} .stay{color:var(--muted)}
+.out{font-size:.9rem}
+.out.good{color:var(--good)} .out.bad{color:var(--bad)}
+.td svg{display:block;width:100%;height:auto}
+.td .plank{fill:var(--plank)} .td .zone{fill:var(--zone)}
+.td .fband{fill:var(--c);opacity:.18} .td .fline{stroke:var(--c);stroke-width:1.5;stroke-dasharray:3 3}
+.td .trail{fill:none;stroke:var(--c);stroke-width:1.5;opacity:.7}
+.td .btrail{fill:none;stroke:var(--ball);stroke-width:1.2;stroke-dasharray:2 3;opacity:.8}
+.td .finger{fill:var(--c)} .td .ballc{fill:var(--ball)}
+.td text{fill:var(--muted);font-family:var(--f-mono);font-size:9px}
+.td .park{fill:none;stroke:var(--muted);stroke-dasharray:3 3}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font-family:var(--f-mono);font-size:.8rem;background:var(--panel);color:var(--ink);border:1px solid var(--ink);border-radius:4px;padding:6px 12px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--post);outline-offset:2px}
+.note{font-size:.9rem;color:var(--muted);max-width:75ch}
+.vwrap{display:grid;gap:6px}.vwrap video{width:100%;height:auto;max-width:100%;border-radius:6px;border:1px solid var(--line);background:var(--panel);display:block}
+footer{font-size:.82rem;color:var(--muted);display:grid;gap:4px}
+@media (max-width:760px){.trio,.sum{grid-template-columns:1fr}.rule{grid-template-columns:1fr}h1{font-size:2rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="wrap">
+<header>
+  <span class="label">RobustWorld · gripper · best set-up only</span>
+  <h1>How the gripper responds to what the world model knows</h1>
+  <p>The ball rolls under the plank. Some balls come out the far side and some are stopped by the hidden blocker. The gripper can't react in time once it sees the ball, so before the ball could appear it decides from the forecast alone: set off, or stay. Shown for the three forecasts: the world model before post-training, after post-training, and a perfect forecast taken from the real ball.</p>
+  <div class="setup">
+    <span>set-up <b>pb_narrow_fs</b> (PyBullet; fingers open at most 9 cm for the 4 cm ball and close at most 0.15 m/s, so it cannot snap shut and has to be lined up on its guess)</span>
+    <span>passes <b>335 real</b> (141 come out, 194 blocked)</span>
+    <span>scored <b>15 Oct 2026, 23:25 UTC</b>, models/gripper/blockade_eval.py --v2</span>
+  </div>
+</header>
+
+<section>
+  <h2>Over every real pass</h2>
+  <div class="sum" id="sum"></div>
+</section>
+
+<section>
+  <h2>The uncertainty response</h2>
+  <div class="panel rule">
+    <div style="display:grid;gap:10px;min-width:0">
+      <p>Two kinds of uncertainty change what the gripper does. The big one is <b>whether the ball comes out at all</b>: the gripper sets off only when the forecast's chance of the ball coming out clears a bar. The second is <b>where and when</b> the ball comes out: a vaguer forecast lowers the chance of a pick-up, which raises the bar.</p>
+      <div class="formula">set off if &nbsp;P(comes out) &gt; 1.5 / (3.5 × c − 0.5 × (1 − c) + 2.5), &nbsp;c = pick-up rate<br>pick-up rate: <span id="crange"></span> as the forecast goes from sharp to vague<br>so the bar rises from <span id="brange"></span></div>
+      <p class="note">The pick-up rate comes from the policy's own simulation runs, and nothing here is fitted to real outcomes. Rewards: picked up +3 plus up to +1 for an early catch, set off and missed −0.5, ball let go −1, wasted trip −1, held back on a blocked ball +0.5.</p>
+    </div>
+    <div class="chart" style="min-width:0"><svg id="barchart" viewBox="0 0 360 200" role="img" aria-label="Bar to set off against forecast vagueness"></svg></div>
+  </div>
+  <div class="panel" style="display:grid;gap:8px">
+    <span class="label">After post-training: every real pass, by how sure the model was the ball would come out</span>
+    <div class="chart"><svg id="strip" viewBox="0 0 900 190" role="img" aria-label="Chance the ball comes out for every real pass"></svg></div>
+    <p class="note">Before post-training the model never imagines the ball coming out (the same near-0 score for every pass), so that score carries no information and is treated as no forecast: the gripper falls back to the base rate (42% of balls come out), which clears the bar, so it sets off for every ball. Filled dots are passes where the post-trained gripper set off.</p>
+  </div>
+</section>
+
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap">
+    <h2>Three real passes</h2>
+    <div class="controls"><button id="play" type="button">Replay the passes</button><span class="mono muted" id="clock">t = end</span></div>
+  </div>
+  <p class="note">Top-down view of the catch zone past the plank (3 ball diameters deep). The shaded band on the plank edge is where the forecast says the ball comes out, ± its uncertainty. The orange dashes show the real ball's path, and the coloured line shows the gripper's path.</p>
+  <div id="scens" style="display:grid;gap:26px"></div>
+</section>
+
+<footer>
+  <span>Data: results/2026-10-04_2110_twoday/vjepa2/plan/gripper/pb_narrow_fs/ (blockade_v2.json, blockade_v2_clips.json); episodes replayed with the frozen fold policies.</span>
+  <span>Post-trained model: lossmix_both (C). Before: the pretrained V-JEPA 2 predictor. Ground truth is used only to score.</span>
+</footer>
+</div>
+<script>window.__DATA__={"tag":"pb_narrow_fs","sim_pickup_by_u":{"0.0":0.707,"0.1":0.73,"0.2":0.687,"0.3":0.667,"0.5":0.53,"0.7":0.513,"1.0":0.423},"summary":{"no forecast":{"passes":335,"through":141,"blocked":194,"set_off_through":1.0,"set_off_blocked":1.0,"picked_up":0.433,"mean_reward":-0.08},"before":{"passes":335,"through":141,"blocked":194,"set_off_through":1.0,"set_off_blocked":1.0,"picked_up":0.433,"mean_reward":-0.08},"after (C)":{"passes":335,"through":141,"blocked":194,"set_off_through":0.723,"set_off_blocked":0.041,"picked_up":0.433,"mean_reward":0.695},"perfect":{"passes":335,"through":141,"blocked":194,"set_off_through":1.0,"set_off_blocked":0.0,"picked_up":0.73,"mean_reward":1.273}},"settings":{"ZONE":0.12,"GAP_MIN":0.045,"GAP_MAX":0.09,"BALL_R":0.02,"DT":0.0625,"EARLY":0.5},"scenarios":[{"name":"blocked","clip":"whole_0277","blocked":true,"true_exit":null,"sources":{"before":{"p":0.42,"u":1.0,"c":0.423,"go_value":-0.124,"stay_value":-0.13,"threshold":0.418,"set_off":true,"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3},"reward":-1.0},"after (C)":{"p":0.009,"u":1.0,"c":0.423,"go_value":-0.981,"stay_value":0.487,"threshold":0.418,"set_off":false,"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3},"reward":0.5},"perfect":{"p":0.0,"u":1.0,"c":0.423,"go_value":-1.0,"stay_value":0.5,"threshold":0.418,"set_off":false,"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3},"reward":0.5}}},{"name":"uncertain","clip":"whole_0320","blocked":false,"true_exit":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343},"sources":{"before":{"p":0.42,"u":1.0,"c":0.423,"go_value":-0.124,"stay_value":-0.13,"threshold":0.418,"set_off":true,"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3},"episode":{"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3,"u":1.0},"true":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343},"result":{"caught":true,"why":"held","depth":0.164,"opening":0.985,"t":1.039,"travel":0.027,"out":true,"committed":false,"reward":1.109},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1242,0.0545,0.0706,-0.0,-0.3008,0.0199,0],[0.125,0.1232,0.0508,0.0817,-0.0,-0.3042,0.0193,0],[0.188,0.1263,0.049,0.0864,0.1154,0.0031,0.02,0],[0.25,0.1294,0.048,0.0885,0.1163,0.0115,0.02,0],[1.039,0.1316,0.047,0.04,0.1333,0.0392,0.0984,0]]},"reward":3.418},"after (C)":{"p":0.51,"u":0.49,"c":0.537,"go_value":0.282,"stay_value":-0.265,"threshold":0.374,"set_off":true,"forecast":{"x":0.1185,"t":0.4062,"vx":0.0283,"vy":0.1629,"sig_s":0.0588,"sig_t":0.147},"episode":{"forecast":{"x":0.1185,"t":0.4062,"vx":0.0283,"vy":0.1629,"sig_s":0.0588,"sig_t":0.147,"u":0.49},"true":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343},"result":{"caught":true,"why":"held","depth":0.164,"opening":0.985,"t":1.039,"travel":0.018,"out":true,"committed":false,"reward":1.114},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1311,0.063,0.0706,-0.0,-0.3008,0.0199,0],[0.125,0.1275,0.0617,0.0817,-0.0,-0.3042,0.0193,0],[0.188,0.1262,0.0593,0.0864,0.1154,0.0031,0.02,0],[0.25,0.1259,0.0569,0.0885,0.1163,0.0115,0.02,0],[1.039,0.1257,0.0546,0.04,0.1273,0.0408,0.0984,0]]},"reward":3.418},"perfect":{"p":1.0,"u":0.0,"c":0.707,"go_value":2.151,"stay_value":-1.0,"threshold":0.322,"set_off":true,"forecast":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343,"sig_s":0.0,"sig_t":0.0},"episode":{"forecast":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343,"sig_s":0.0,"sig_t":0.0,"u":0.0},"true":{"x":0.1151,"t":0.16,"vx":0.0147,"vy":0.1343},"result":{"caught":true,"why":"held","depth":0.164,"opening":0.985,"t":1.039,"travel":0.017,"out":true,"committed":false,"reward":1.114},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1369,0.0651,0.0706,-0.0,-0.3008,0.0199,0],[0.125,0.1367,0.0643,0.0817,-0.0,-0.3042,0.0193,0],[0.188,0.1349,0.0616,0.0864,0.1154,0.0031,0.02,0],[0.25,0.1326,0.0583,0.0885,0.1163,0.0115,0.02,0],[1.039,0.1305,0.0548,0.04,0.1322,0.0376,0.0984,0]]},"reward":3.418}}},{"name":"confident","clip":"whole_0014","blocked":false,"true_exit":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915},"sources":{"before":{"p":0.42,"u":1.0,"c":0.423,"go_value":-0.124,"stay_value":-0.13,"threshold":0.418,"set_off":true,"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3},"episode":{"forecast":{"x":0.1366,"t":0.41,"vx":0.0283,"vy":0.1629,"sig_s":0.12,"sig_t":0.3,"u":1.0},"true":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915},"result":{"caught":false,"why":"knocked the ball","depth":null,"opening":null,"t":0.5,"travel":0.031,"out":true,"committed":false,"reward":-1.015},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1242,0.0545,0.0706,-0.0,-0.3008,0.0199,0],[0.125,0.1232,0.0508,0.0817,-0.0,-0.3042,0.0193,0],[0.188,0.1263,0.049,0.0864,-0.0,-0.3136,0.0142,0],[0.25,0.1294,0.048,0.0885,-0.0,-0.3272,-0.0159,0],[0.312,0.1316,0.047,0.0893,-0.0,-0.3407,-0.0841,0],[0.375,0.133,0.0461,0.0897,-0.0,-0.3542,-0.19,0],[0.438,0.1337,0.045,0.0899,0.1019,0.0045,0.02,0],[0.5,0.1341,0.0439,0.0899,0.1044,0.0122,0.02,0]]},"reward":-0.5},"after (C)":{"p":0.938,"u":0.115,"c":0.724,"go_value":2.014,"stay_value":-0.907,"threshold":0.318,"set_off":true,"forecast":{"x":0.1105,"t":0.2812,"vx":0.0124,"vy":0.0568,"sig_s":0.0138,"sig_t":0.0345},"episode":{"forecast":{"x":0.1105,"t":0.2812,"vx":0.0124,"vy":0.0568,"sig_s":0.0138,"sig_t":0.0345,"u":0.115},"true":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915},"result":{"caught":true,"why":"held","depth":0.234,"opening":0.998,"t":1.289,"travel":0.037,"out":true,"committed":false,"reward":1.065},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1334,0.0549,0.0571,-0.0,-0.3008,0.0199,0],[0.125,0.131,0.0506,0.0668,-0.0,-0.3042,0.0193,0],[0.188,0.1288,0.0469,0.0752,-0.0,-0.3136,0.0142,0],[0.25,0.1264,0.0432,0.0825,-0.0,-0.3272,-0.0159,0],[0.312,0.124,0.0396,0.0868,-0.0,-0.3407,-0.0841,0],[0.375,0.1223,0.0361,0.0886,-0.0,-0.3542,-0.19,0],[0.438,0.1213,0.0327,0.0894,0.1019,0.0045,0.02,0],[0.5,0.121,0.0297,0.0897,0.1019,0.0163,0.02,0],[1.289,0.1212,0.0268,0.0357,0.1208,0.055,0.0964,0]]},"reward":3.383},"perfect":{"p":1.0,"u":0.0,"c":0.707,"go_value":2.151,"stay_value":-1.0,"threshold":0.322,"set_off":true,"forecast":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915,"sig_s":0.0,"sig_t":0.0},"episode":{"forecast":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915,"sig_s":0.0,"sig_t":0.0,"u":0.0},"true":{"x":0.102,"t":0.41,"vx":-0.0006,"vy":0.1915},"result":{"caught":true,"why":"held","depth":0.234,"opening":0.999,"t":1.289,"travel":0.044,"out":true,"committed":false,"reward":1.061},"steps":[[0.0,0.1366,0.06,0.045,0.0,-0.3,0.02,0],[0.062,0.1325,0.0736,0.0706,-0.0,-0.3008,0.0199,0],[0.125,0.1289,0.0782,0.0817,-0.0,-0.3042,0.0193,0],[0.188,0.1261,0.0776,0.0864,-0.0,-0.3136,0.0142,0],[0.25,0.1237,0.0753,0.0885,-0.0,-0.3272,-0.0159,0],[0.312,0.1218,0.0724,0.0893,-0.0,-0.3407,-0.0841,0],[0.375,0.12,0.0693,0.0897,-0.0,-0.3542,-0.19,0],[0.438,0.1184,0.0661,0.0899,0.1019,0.0045,0.02,0],[0.5,0.1169,0.0629,0.0899,0.1019,0.0163,0.02,0],[1.289,0.1155,0.0596,0.04,0.1169,0.0562,0.0984,0]]},"reward":3.383}}}],"strip":[[0.005,1,0],[0.007,1,0],[0.957,0,1],[0.006,1,0],[0.006,1,0],[0.687,0,1],[0.982,0,1],[0.005,1,0],[0.7,1,1],[0.869,0,1],[0.819,0,1],[0.01,1,0],[0.918,0,1],[0.01,1,0],[0.938,0,1],[0.005,1,0],[0.003,1,0],[0.389,0,0],[0.793,0,1],[0.004,1,0],[0.639,0,1],[0.213,0,0],[0.791,0,1],[0.012,1,0],[0.003,1,0],[0.006,1,0],[0.968,0,1],[0.006,1,0],[0.017,1,0],[0.849,0,1],[0.005,1,0],[0.009,1,0],[0.028,1,0],[0.003,1,0],[0.009,1,0],[0.014,1,0],[0.009,1,0],[0.007,1,0],[0.973,0,1],[0.576,0,1],[0.934,0,1],[0.005,1,0],[0.006,1,0],[0.014,1,0],[0.014,1,0],[0.979,0,1],[0.749,0,1],[0.038,0,0],[0.931,0,1],[0.952,0,1],[0.955,0,1],[0.008,1,0],[0.011,1,0],[0.012,0,0],[0.012,0,0],[0.011,1,0],[0.004,1,0],[0.889,0,1],[0.003,1,0],[0.003,1,0],[0.008,1,0],[0.007,0,0],[0.061,0,0],[0.052,0,0],[0.011,0,0],[0.559,0,1],[0.121,0,0],[0.005,1,0],[0.007,1,0],[0.005,0,0],[0.003,1,0],[0.006,1,0],[0.935,0,1],[0.007,1,0],[0.161,0,0],[0.003,1,0],[0.006,1,0],[0.752,0,1],[0.964,0,1],[0.006,1,0],[0.003,1,0],[0.009,1,0],[0.009,0,0],[0.003,1,0],[0.416,0,1],[0.025,1,0],[0.006,1,0],[0.02,0,0],[0.002,1,0],[0.004,1,0],[0.007,1,0],[0.009,1,0],[0.016,1,0],[0.005,1,0],[0.005,1,0],[0.852,0,1],[0.066,0,0],[0.016,1,0],[0.005,1,0],[0.916,0,1],[0.006,1,0],[0.006,1,0],[0.005,1,0],[0.012,1,0],[0.005,1,0],[0.005,1,0],[0.901,0,1],[0.003,0,0],[0.004,1,0],[0.578,0,1],[0.609,0,1],[0.058,0,0],[0.007,1,0],[0.609,0,1],[0.002,0,0],[0.011,1,0],[0.007,1,0],[0.008,1,0],[0.722,0,1],[0.888,0,1],[0.007,1,0],[0.011,1,0],[0.006,1,0],[0.009,1,0],[0.003,1,0],[0.011,1,0],[0.019,1,0],[0.005,1,0],[0.242,0,0],[0.672,0,1],[0.767,0,1],[0.948,0,1],[0.937,0,1],[0.008,1,0],[0.838,0,1],[0.008,1,0],[0.004,1,0],[0.005,1,0],[0.734,0,1],[0.007,1,0],[0.742,0,1],[0.009,1,0],[0.294,0,0],[0.007,1,0],[0.005,0,0],[0.004,1,0],[0.01,1,0],[0.017,1,0],[0.01,1,0],[0.012,1,0],[0.853,0,1],[0.289,0,0],[0.059,0,0],[0.716,0,1],[0.004,1,0],[0.861,0,1],[0.949,0,1],[0.855,0,1],[0.922,0,1],[0.979,0,1],[0.006,1,0],[0.992,0,1],[0.66,0,1],[0.952,0,1],[0.373,1,0],[0.796,0,1],[0.747,1,1],[0.013,1,0],[0.24,1,0],[0.908,0,1],[0.01,1,0],[0.955,0,1],[0.009,1,0],[0.009,0,0],[0.597,0,1],[0.019,1,0],[0.011,1,0],[0.013,1,0],[0.009,0,0],[0.157,0,0],[0.011,1,0],[0.007,1,0],[0.007,0,0],[0.019,1,0],[0.987,0,1],[0.643,0,1],[0.862,0,1],[0.839,0,1],[0.024,1,0],[0.008,1,0],[0.008,1,0],[0.004,1,0],[0.966,0,1],[0.353,1,0],[0.035,0,0],[0.965,0,1],[0.013,1,0],[0.009,1,0],[0.024,1,0],[0.013,1,0],[0.018,1,0],[0.762,0,1],[0.008,1,0],[0.009,1,0],[0.017,1,0],[0.019,1,0],[0.017,1,0],[0.915,0,1],[0.417,1,1],[0.011,1,0],[0.983,0,1],[0.805,1,1],[0.016,0,0],[0.005,1,0],[0.052,1,0],[0.898,0,1],[0.702,0,1],[0.695,0,1],[0.921,0,1],[0.015,1,0],[0.026,1,0],[0.02,1,0],[0.016,1,0],[0.008,1,0],[0.987,0,1],[0.019,1,0],[0.008,1,0],[0.004,0,0],[0.011,1,0],[0.98,0,1],[0.02,1,0],[0.057,1,0],[0.004,1,0],[0.003,1,0],[0.015,1,0],[0.011,1,0],[0.918,0,1],[0.976,0,1],[0.012,1,0],[0.976,0,1],[0.999,0,1],[0.864,0,1],[0.012,1,0],[0.538,1,1],[0.028,1,0],[0.077,0,0],[0.666,0,1],[0.414,0,1],[0.032,1,0],[0.053,1,0],[0.024,1,0],[0.891,0,1],[0.011,1,0],[0.402,1,0],[0.027,0,0],[0.612,0,1],[0.751,0,1],[0.173,1,0],[0.015,1,0],[0.007,1,0],[0.009,1,0],[0.739,0,1],[0.023,1,0],[0.814,0,1],[0.008,1,0],[0.006,1,0],[0.004,1,0],[0.896,0,1],[0.942,0,1],[0.688,0,1],[0.011,1,0],[0.991,0,1],[0.013,0,0],[0.004,1,0],[0.005,1,0],[0.055,1,0],[0.99,0,1],[0.012,1,0],[0.002,1,0],[0.025,1,0],[0.006,1,0],[0.009,1,0],[0.019,1,0],[0.968,1,1],[0.908,0,1],[0.094,1,0],[0.818,0,1],[0.979,0,1],[0.51,0,1],[0.005,0,0],[0.064,0,0],[0.519,0,1],[0.533,0,1],[0.106,0,0],[0.846,0,1],[0.111,1,0],[0.196,0,0],[0.893,1,1],[0.028,1,0],[0.007,1,0],[0.044,1,0],[0.009,1,0],[0.014,1,0],[0.003,1,0],[0.006,1,0],[0.147,1,0],[0.019,1,0],[0.027,1,0],[0.086,1,0],[0.007,1,0],[0.653,0,1],[0.181,1,0],[0.015,1,0],[0.461,0,1],[0.918,0,1],[0.866,1,1],[0.049,1,0],[0.007,1,0],[0.011,1,0],[0.008,1,0],[0.004,1,0],[0.017,1,0],[0.006,1,0],[0.031,1,0],[0.03,0,0],[0.003,1,0],[0.439,0,1],[0.045,1,0],[0.968,0,1],[0.004,0,0],[0.605,0,1],[0.011,1,0],[0.104,1,0],[0.974,0,1],[0.829,0,1]],"pick":3.0};</script>
+<script>
+const D = window.__DATA__;
+const SRC = [["before","No post-training","none"],["after (C)","Post-trained","post"],["perfect","Perfect forecast","perfect"]];
+const NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const pct = v => Math.round(v * 100) + "%";
+const sgn = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+const cvar = k => `var(--${k})`;
+
+// summary
+const sum = document.getElementById("sum");
+for (const [k, name, c] of SRC) {
+  const m = D.summary[k];
+  const d = document.createElement("div"); d.className = "col"; d.style.setProperty("--c", cvar(c));
+  d.innerHTML = `<span class="label k-${c}">${name}</span><span class="big">${sgn(m.mean_reward)}</span><span class="muted" style="font-size:.85rem">mean reward per pass</span>
+  <dl><dt>sets off when the ball comes out</dt><dd>${pct(m.set_off_through)}</dd><dt>sets off when it's blocked</dt><dd>${pct(m.set_off_blocked)}</dd><dt>picks up, when it sets off for a ball that comes out</dt><dd>${pct(m.picked_up / m.set_off_through)}</dd><dt>picks up (of all balls that come out)</dt><dd>${pct(m.picked_up)}</dd></dl>`;
+  sum.appendChild(d);
+}
+
+// bar vs vagueness
+const us = Object.keys(D.sim_pickup_by_u).map(Number).sort((a, b) => a - b);
+const cs = us.map(u => D.sim_pickup_by_u[u.toFixed(1)] ?? D.sim_pickup_by_u[String(u)]);
+const bars = cs.map(c => 1.5 / (c * (D.pick + D.settings.EARLY / 2) - (1 - c) * 0.5 + 2.5));
+document.getElementById("crange").textContent = `${pct(cs[0])} → ${pct(cs[cs.length - 1])}`;
+document.getElementById("brange").textContent = `${bars[0].toFixed(2)} to ${bars[bars.length - 1].toFixed(2)}`;
+{
+  const s = document.getElementById("barchart"), L = 46, R = 340, T = 16, B = 160;
+  const y0 = 0.28, y1 = 0.40, X = u => L + u * (R - L), Y = v => B - (v - y0) / (y1 - y0) * (B - T);
+  for (let v = 0.28; v <= 0.4001; v += 0.02) { el("line", { x1: L, x2: R, y1: Y(v), y2: Y(v), stroke: "var(--line)" }, s); el("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end" }, s).textContent = v.toFixed(2); }
+  for (const u of [0, 0.5, 1]) el("text", { x: X(u), y: B + 16, "text-anchor": "middle" }, s).textContent = u;
+  el("text", { x: (L + R) / 2, y: B + 32, "text-anchor": "middle" }, s).textContent = "forecast vagueness u (0 sharp, 1 no idea)";
+  el("text", { x: L, y: 10 }, s).textContent = "bar on P(comes out) to set off";
+  el("path", { d: us.map((u, i) => `${i ? "L" : "M"}${X(u)},${Y(bars[i])}`).join(""), fill: "none", stroke: "var(--post)", "stroke-width": 2 }, s);
+  us.forEach((u, i) => el("circle", { cx: X(u), cy: Y(bars[i]), r: 3, fill: "var(--post)" }, s));
+}
+
+// strip chart
+{
+  const s = document.getElementById("strip"), L = 110, R = 880, X = p => L + p * (R - L);
+  const rowsY = { 0: 50, 1: 120 };
+  const lo = Math.min(...bars), hi = Math.max(...bars);
+  el("rect", { x: X(lo), y: 18, width: X(hi) - X(lo), height: 140, fill: "var(--post)", opacity: 0.14 }, s);
+  el("line", { x1: X(lo), x2: X(lo), y1: 18, y2: 158, stroke: "var(--post)", "stroke-dasharray": "3 3" }, s);
+  el("text", { x: X(hi) + 6, y: 28 }, s).textContent = `bar ${lo.toFixed(2)}–${hi.toFixed(2)}`;
+  for (const p of [0, 0.25, 0.5, 0.75, 1]) { el("line", { x1: X(p), x2: X(p), y1: 158, y2: 163, stroke: "var(--muted)" }, s); el("text", { x: X(p), y: 177, "text-anchor": "middle" }, s).textContent = p; }
+  el("line", { x1: L, x2: R, y1: 158, y2: 158, stroke: "var(--line)" }, s);
+  const cnt = { 0: [0, 0], 1: [0, 0] };
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (const [p, b, go] of D.strip) {
+    cnt[b][0]++; cnt[b][1] += go;
+    el("circle", { cx: X(p), cy: rowsY[b] + (rnd() - 0.5) * 34, r: 3.2, fill: go ? (b ? "var(--bad)" : "var(--post)") : "none", stroke: b ? "var(--bad)" : "var(--post)", "stroke-width": 1, opacity: 0.85 }, s);
+  }
+  el("text", { x: L - 10, y: rowsY[0] - 4, "text-anchor": "end" }, s).textContent = "comes out";
+  el("text", { x: L - 10, y: rowsY[0] + 10, "text-anchor": "end" }, s).textContent = `${cnt[0][1]} of ${cnt[0][0]} go`;
+  el("text", { x: L - 10, y: rowsY[1] - 4, "text-anchor": "end" }, s).textContent = "blocked";
+  el("text", { x: L - 10, y: rowsY[1] + 10, "text-anchor": "end" }, s).textContent = `${cnt[1][1]} of ${cnt[1][0]} go`;
+}
+
+// scenarios
+const Z = D.settings.ZONE, FW = 0.012, FL = 0.04, BR = D.settings.BALL_R;
+const XD = [0.03, 0.25], YD = [-0.035, Z + 0.015], W = 260, H = W * (YD[1] - YD[0]) / (XD[1] - XD[0]);
+const px = x => (x - XD[0]) / (XD[1] - XD[0]) * W, py = y => (y - YD[0]) / (YD[1] - YD[0]) * H;
+const TEXT = {
+  blocked: ["A blocked ball", "This ball is stopped by the hidden blocker and never comes out. The right move is to stay."],
+  uncertain: ["An uncertain ball", "This ball comes out, but the post-trained model is only about half sure it will (51%), and vague on where."],
+  confident: ["A ball the model is sure about", "This ball comes out, and the post-trained model is sure it will and gives a sharp exit."]
+};
+const views = [];
+function truePath(te) { const pts = []; for (let t = 0; t <= 2.5; t += 0.02) { const y = te.vy * (t - te.t); if (y < 0) continue; if (y > Z - BR) break; pts.push([t, te.x + te.vx * (t - te.t), y]); } return pts; }
+function drawTD(card, sc, v, c) {
+  const box = document.createElement("div"); box.className = "td"; card.appendChild(box);
+  const s = el("svg", { viewBox: `0 0 ${W} ${H.toFixed(1)}`, role: "img", "aria-label": "top-down view of the catch" }, box);
+  el("rect", { x: 0, y: 0, width: W, height: py(0), class: "plank" }, s);
+  el("rect", { x: 0, y: py(0), width: W, height: py(Z) - py(0), class: "zone" }, s);
+  el("text", { x: 4, y: 11 }, s).textContent = "plank";
+  el("text", { x: 4, y: py(Z) - 4 }, s).textContent = "edge of catch zone";
+  const f = v.forecast, showF = v.p > 0.05 && !(sc.blocked && v.p === 0);
+  if (showF && !sc.blocked) {
+    const sg = Math.max(f.sig_s || 0, 0.002);
+    el("rect", { x: px(f.x - sg), y: py(0) - 5, width: Math.max(px(f.x + sg) - px(f.x - sg), 2), height: 10, class: "fband" }, s);
+    el("line", { x1: px(f.x), x2: px(f.x), y1: py(0) - 7, y2: py(0) + 7, class: "fline" }, s);
+  }
+  const ep = v.episode, parts = { trail: el("path", { class: "trail" }, s), btrail: el("path", { class: "btrail" }, s) };
+  let ballPts = [];
+  if (ep) ballPts = ep.steps.filter(st => st[5] >= -0.02).map(st => [st[0], st[4], st[5]]);
+  else if (!sc.blocked) ballPts = truePath(sc.true_exit);
+  parts.f1 = el("rect", { width: px(FW + XD[0]), height: py(FL + YD[0]) - py(YD[0]), class: "finger", rx: 1 }, s);
+  parts.f2 = el("rect", { width: px(FW + XD[0]), height: py(FL + YD[0]) - py(YD[0]), class: "finger", rx: 1 }, s);
+  parts.ball = el("circle", { r: px(BR + XD[0]), class: "ballc" }, s);
+  const start = [0, 0.1366, 0.06, 0.045];
+  const gSteps = ep ? ep.steps.map(st => [st[0], st[1], st[2], st[3]]) : [start];
+  if (!ep) el("text", { x: px(start[1]), y: py(start[2] + FL / 2) + 14, "text-anchor": "middle" }, s).textContent = "stays put";
+  const tEnd = Math.max(ep ? ep.steps[ep.steps.length - 1][0] : 0, ballPts.length ? ballPts[ballPts.length - 1][0] : 0);
+  views.push({ parts, gSteps, ballPts, tEnd, render(t) {
+    const g = gSteps.filter(st => st[0] <= t + 1e-9); const cur = g.length ? g[g.length - 1] : gSteps[0];
+    parts.trail.setAttribute("d", g.length > 1 ? g.map((st, i) => `${i ? "L" : "M"}${px(st[1])},${py(st[2])}`).join("") : "");
+    const hw = cur[3] / 2;
+    parts.f1.setAttribute("x", px(cur[1] - hw - FW)); parts.f2.setAttribute("x", px(cur[1] + hw));
+    for (const f of [parts.f1, parts.f2]) f.setAttribute("y", py(cur[2] - FL / 2));
+    const b = ballPts.filter(p => p[0] <= t + 1e-9);
+    parts.btrail.setAttribute("d", b.length > 1 ? b.map((p, i) => `${i ? "L" : "M"}${px(p[1])},${py(p[2])}`).join("") : "");
+    if (b.length) { const q = b[b.length - 1]; parts.ball.setAttribute("cx", px(q[1])); parts.ball.setAttribute("cy", py(q[2])); parts.ball.removeAttribute("visibility"); }
+    else parts.ball.setAttribute("visibility", "hidden");
+  } });
+}
+const host = document.getElementById("scens");
+for (const sc of D.scenarios) {
+  const [title, blurb] = TEXT[sc.name];
+  const wrap = document.createElement("div"); wrap.className = "scen";
+  wrap.innerHTML = `<div class="scen-head"><h2 style="font-size:1.35rem">${title}</h2><span class="tag">${sc.clip} · ${sc.blocked ? "blocked" : "comes out"}</span></div><p class="note">${blurb}</p>`;
+  const vid = document.createElement("video");
+  Object.assign(vid, { src: `vid/${sc.name}.mp4`, poster: `vid/${sc.name}.jpg`, muted: true, loop: true, autoplay: !matchMedia("(prefers-reduced-motion: reduce)").matches, controls: true, playsInline: true });
+  vid.className = "sim"; vid.setAttribute("aria-label", `PyBullet replay of ${sc.clip}`);
+  const vwrap = document.createElement("div"); vwrap.className = "vwrap"; vwrap.appendChild(vid);
+  const cap = document.createElement("span"); cap.className = "mono muted"; cap.textContent = "PyBullet replay, half speed. Left to right: no post-training, post-trained, perfect forecast. The orange disc is the forecast exit, ± its uncertainty."; vwrap.appendChild(cap);
+  wrap.appendChild(vwrap);
+  const trio = document.createElement("div"); trio.className = "trio"; wrap.appendChild(trio);
+  for (const [k, name, c] of SRC) {
+    const v = sc.sources[k];
+    const card = document.createElement("div"); card.className = "card"; card.style.setProperty("--c", cvar(c));
+    const u = v.u >= 0.999 ? "no idea (falls back to the average exit)" : v.u < 0.01 ? "sharp" : `vague (u ${v.u.toFixed(2)})`;
+    let out, cls;
+    if (sc.blocked) { out = v.set_off ? "Wasted trip" : "Correctly held back"; cls = v.set_off ? "bad" : "good"; }
+    else if (!v.set_off) { out = "Ball let go"; cls = "bad"; }
+    else if (v.episode && v.episode.result.caught) { out = `Picked up ${Math.round(v.episode.result.depth * 100)}% of the way into the zone`; cls = "good"; }
+    else { out = "Set off but missed"; cls = "bad"; }
+    card.innerHTML = `<h3>${name}</h3>
+      <div class="row"><span>P(ball comes out)</span><span class="mono">${v.p.toFixed(2)}</span></div>
+      <div class="meter"><i style="width:${Math.max(v.p * 100, 1)}%"></i><b style="left:${v.threshold * 100}%" title="bar ${v.threshold}"></b></div>
+      <div class="row"><span>bar to set off</span><span class="mono">${v.threshold.toFixed(2)}</span></div>
+      <div class="row"><span>where and when</span><span class="mono" style="text-align:right">${u}</span></div>
+      <div class="decision ${v.set_off ? "go" : "stay"}" style="color:${v.set_off ? "var(--c)" : ""}">${v.set_off ? "Sets off" : "Stays"}</div>`;
+    drawTD(card, sc, v, c);
+    const o = document.createElement("div"); o.className = `out ${cls}`; o.innerHTML = `${out} <span class="mono">(${sgn(v.reward)})</span>`; card.appendChild(o);
+    trio.appendChild(card);
+  }
+  host.appendChild(wrap);
+}
+const notes = document.createElement("p"); notes.className = "note";
+notes.textContent = "With a narrow grip and slow-closing fingers the gripper has to guess: it lines up on the forecast before the ball appears and cannot snap onto a ball that comes out somewhere else. Without post-training it sets off for every ball on the average guess, wastes every blocked trip and picks up 43% of the balls that come out. The post-trained forecast places the exit about 3 times closer, so when it sets off it picks up 60% (perfect: 73%), and it stays for 96% of blocked balls. In the sure pass above, the average guess knocks the ball away while the post-trained gripper is in place.";
+host.appendChild(notes);
+
+const tMax = Math.max(...views.map(v => v.tEnd));
+const clock = document.getElementById("clock");
+views.forEach(v => v.render(tMax));
+let raf = null;
+document.getElementById("play").addEventListener("click", () => {
+  if (raf) cancelAnimationFrame(raf);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, dur = reduce ? 1 : (tMax * 1500), t0 = performance.now();
+  const step = now => { const t = Math.min((now - t0) / dur, 1) * tMax; views.forEach(v => v.render(t)); clock.textContent = `t = ${t.toFixed(2)} s`; if (t < tMax) raf = requestAnimationFrame(step); else { raf = null; clock.textContent = "t = end"; } };
+  raf = requestAnimationFrame(step);
+});
+</script>
