@@ -8,11 +8,14 @@ world model can acquire such a property **purely by self-supervised post-trainin
 home-recorded video**, and whether a robot policy benefits from the acquired knowledge.
 
 A ball rolls under a plank; a blocker hidden beneath the plank stops some passes, while others emerge on the far
-side, and the table is slightly tilted. The predictor of V-JEPA 2 is post-trained on 337 such passes and read by a
+side, and the table is slightly tilted. **The task is pure prediction: the model is shown only the first 1.5 s of
+each pass, ending just before the ball reaches the plank, and must predict the whole of the next 1.5 s in a single
+pass with no further input**: no later frames, no actions, no labels and no information about the blocker. The
+predictor of V-JEPA 2 is post-trained on 337 such passes and read by a
 frozen linear ball probe that never observes outcomes or predictions, so any knowledge of the blocker must reside
 in the world model itself. Through-vs-blocked AUROC rises from **0.44 to 0.97** for passes from the training
 direction (0.66 to 0.87 from the opposite direction, and 0.39 to 0.90 for an unseen orange ball), and the table slope is likely, though not conclusively,
-recovered. A simulated two-finger gripper conditioned on the forecast improves from **−0.08 to +0.69** mean reward
+recovered. A simulated two-finger gripper that must commit before the ball reappears, using only this forecast, improves from **−0.08 to +0.69** mean reward
 per real pass (perfect forecast: +1.27), chiefly by declining to chase balls that never emerge.
 
 **Key findings**
@@ -24,6 +27,9 @@ per real pass (perfect forecast: +1.27), chiefly by declining to chase balls tha
 | Does it generalise? | Yes: across entry directions once both are seen, and to an unseen orange ball (AUROC 0.90) | Section 4 |
 | Is the table slope learnt? | Likely, not proven | s = 0.024 (95% CI −0.007 to 0.040) vs 0.014 attainable |
 | Does a robot benefit? | Yes | Gripper reward −0.08 → +0.69 per pass (perfect forecast +1.27) |
+
+**The setting in one sentence.** Given 1.5 s of video, predict the next 1.5 s, including whether a ball that
+disappears under a plank comes out, where and when, so that a gripper can be in place before it does.
 
 <p align="center"><img src="docs/figures/rollout_through.gif" width="900"></p>
 
@@ -493,6 +499,14 @@ visible on open table, so no stretches exist.*
 ## 6. From forecast to gripper policy
 
 ### 6.1 Interface between world model and policy
+
+**What the gripper knows, and when.** Each episode starts at the moment the context half ends, as the ball reaches
+the plank. At that instant the world model makes **one** forecast from the 1.5 s it has seen, and that forecast is
+all the gripper is given about the future: it is not updated during the episode, and the world model receives no
+further frames. The gripper then has to decide whether to set off and where to wait while the ball is hidden. Only
+once the ball actually emerges does the gripper also see it directly, with a delay of two frames, and by then it is
+usually too late to start moving, because the fingers close slowly. A blocked ball never appears, so the gripper
+can only avoid a wasted trip if the forecast said so.
 
 The policy receives a compact forecast extracted from the predicted future through the frozen probe: **whether** the
 ball emerges ($p$, the through-vs-blocked score), **where** along the plank edge, **when**, **how fast**, and **how
