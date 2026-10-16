@@ -1,9 +1,9 @@
 # 2026-10-04_2110_twoday
 
 - Name: twoday
-- Saved: 2026-10-15 14:37 UTC
-- Code commit: `cd5d046`
-- Note: two-day plan, 27 steps done
+- Saved: 2026-10-16 15:41 UTC
+- Code commit: `ae9a012`
+- Note: two-day plan, 28 steps done
 
 ## Figures
 
@@ -43,6 +43,7 @@
 - [vjepa2/plan/generalise/plain/height.png](vjepa2/plan/generalise/plain/height.png)
 - [vjepa2/plan/interpret/plain-after/change_map.png](vjepa2/plan/interpret/plain-after/change_map.png)
 - [vjepa2/plan/interpret/plain-after/layer_patching.png](vjepa2/plan/interpret/plain-after/layer_patching.png)
+- [vjepa2/plan/other_ball/colour.png](vjepa2/plan/other_ball/colour.png)
 - [vjepa2/plan/scope/height_profile.png](vjepa2/plan/scope/height_profile.png)
 - [vjepa2/plan/scores/both-before/curves.png](vjepa2/plan/scores/both-before/curves.png)
 - [vjepa2/plan/scores/both-before/outcome.png](vjepa2/plan/scores/both-before/outcome.png)

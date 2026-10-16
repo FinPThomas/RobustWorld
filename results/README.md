@@ -8,4 +8,5 @@ the Colab notebook does this at the end. This index is rebuilt from the folders.
 
 | run | headline |
 |---|---|
+| [other_ball_check](other_ball_check/README.md) |  |
 | [2026-10-04_2110_twoday](2026-10-04_2110_twoday/README.md) | best after: lossmix_topup P(correct, one ball) 0.57, most likely cell within 48 px None |

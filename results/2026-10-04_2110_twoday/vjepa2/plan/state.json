@@ -164,12 +164,11 @@
    "finished": "2026-10-10 07:20"
   },
   "other-ball": {
-   "state": "waiting",
-   "started": "2026-10-10 19:09",
-   "code": "a70bd48",
-   "minutes": 0.0,
-   "finished": "2026-10-10 19:09",
-   "error": "the other ball's clips aren't added yet (configs/heldout.json and their clips zip)"
+   "state": "done",
+   "started": "2026-10-16 15:20",
+   "code": "ae9a012",
+   "minutes": 20.4,
+   "finished": "2026-10-16 15:40"
   },
   "lossmix_both-after": {
    "state": "done",
@@ -234,6 +233,12 @@
     "through": 32,
     "hidden": 3,
     "bounce": 48
+   },
+   "new ball (other)": {
+    "n": 57,
+    "through": 27,
+    "hidden": 1,
+    "bounce": 29
    }
   }
  },

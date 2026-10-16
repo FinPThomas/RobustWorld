@@ -230,7 +230,7 @@ nothing unless that push succeeds.
 Rewritten by the notebook after every step. Don't edit between the markers.
 
 <!-- status:start -->
-_Last update: 2026-10-15 14:37 UTC from Kaggle (Tesla T4), code `cd5d046`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
+_Last update: 2026-10-16 15:41 UTC from Kaggle (Tesla T4), code `ae9a012`. Results: [results/2026-10-04_2110_twoday](../results/2026-10-04_2110_twoday/README.md)._
 
 | stage | step | state | minutes | finished (UTC) |
 |---|---|---|---|---|
@@ -262,7 +262,7 @@ _Last update: 2026-10-15 14:37 UTC from Kaggle (Tesla T4), code `cd5d046`. Resul
 | 2 | rescore-aligned-E: E scored on the aligned open-table clips (slope), with probe maps | waiting (lossmix_open-after's weights aren't here: add the Kaggle output of session #8 (2026-10-11 evening) (it holds weights/lossmix_open-after) as an input) | 0.0 | 2026-10-14 23:52 |
 | 2 | lossmix_open-after: E. C plus the open-table clips in training (slope from free rolling), 20 epochs, scored at 10 and 20 | done | 424.6 | 2026-10-11 22:15 |
 | 2 | lossmix_both_e30-after: F. C trained for 30 epochs (scored at 25 and 30): where does learning stop? | to do |  |  |
-| 5 | other-ball: D. the other ball, scored without training | waiting (the other ball's clips aren't added yet (configs/heldout.json and their clips zip)) | 0.0 | 2026-10-10 19:09 |
+| 5 | other-ball: D. the other ball, scored without training, and its colour direction | done | 20.4 | 2026-10-16 15:40 |
 
 | method | phase | outcome_auroc | auroc_ci | delta_vs_before_ci | p_no_gain |
 |---|---|---|---|---|---|

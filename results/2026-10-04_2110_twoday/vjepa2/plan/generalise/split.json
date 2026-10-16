@@ -7,6 +7,12 @@
    "through": 32,
    "hidden": 3,
    "bounce": 48
+  },
+  "new ball (other)": {
+   "n": 57,
+   "through": 27,
+   "hidden": 1,
+   "bounce": 29
   }
  }
 }

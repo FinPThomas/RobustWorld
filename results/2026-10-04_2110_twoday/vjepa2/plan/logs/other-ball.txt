@@ -1,0 +1,316 @@
+...                                                                      [100%]
+=============================== warnings summary ===============================
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+  /usr/local/lib/python3.13/dist-packages/matplotlib/_fontconfig_pattern.py:64: PyparsingDeprecationWarning: 'oneOf' deprecated - use 'one_of'
+    prop = Group((name + Suppress("=") + comma_separated(value)) | oneOf(_CONSTANTS))
+
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+  /usr/local/lib/python3.13/dist-packages/matplotlib/_fontconfig_pattern.py:85: PyparsingDeprecationWarning: 'parseString' deprecated - use 'parse_string'
+    parse = parser.parseString(pattern)
+
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+  /usr/local/lib/python3.13/dist-packages/matplotlib/_fontconfig_pattern.py:89: PyparsingDeprecationWarning: 'resetCache' deprecated - use 'reset_cache'
+    parser.resetCache()
+
+tests/test_other_ball.py::test_scores_colour_direction_and_removal
+  /usr/local/lib/python3.13/dist-packages/matplotlib/_mathtext.py:45: PyparsingDeprecationWarning: 'enablePackrat' deprecated - use 'enable_packrat'
+    ParserElement.enablePackrat()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 14 warnings in 34.77s
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  47%|████▋     | 277/587 [00:00<00:00, 2765.16it/s]
+Loading weights:  95%|█████████▌| 560/587 [00:00<00:00, 2799.20it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2808.64it/s]
+
+  1/100 clips (1 newly encoded, 5s)
+  2/100 clips (2 newly encoded, 8s)
+  3/100 clips (3 newly encoded, 12s)
+  4/100 clips (4 newly encoded, 16s)
+  5/100 clips (5 newly encoded, 20s)
+  6/100 clips (6 newly encoded, 24s)
+  7/100 clips (7 newly encoded, 27s)
+  8/100 clips (8 newly encoded, 31s)
+  9/100 clips (9 newly encoded, 35s)
+  10/100 clips (10 newly encoded, 39s)
+  11/100 clips (11 newly encoded, 43s)
+  12/100 clips (12 newly encoded, 47s)
+  13/100 clips (13 newly encoded, 51s)
+  14/100 clips (14 newly encoded, 55s)
+  15/100 clips (15 newly encoded, 59s)
+  16/100 clips (16 newly encoded, 63s)
+  17/100 clips (17 newly encoded, 67s)
+  18/100 clips (18 newly encoded, 71s)
+  19/100 clips (19 newly encoded, 75s)
+  20/100 clips (20 newly encoded, 79s)
+  21/100 clips (21 newly encoded, 83s)
+  22/100 clips (22 newly encoded, 87s)
+  23/100 clips (23 newly encoded, 91s)
+  24/100 clips (24 newly encoded, 95s)
+  25/100 clips (25 newly encoded, 100s)
+  26/100 clips (26 newly encoded, 104s)
+  27/100 clips (27 newly encoded, 108s)
+  28/100 clips (28 newly encoded, 112s)
+  29/100 clips (29 newly encoded, 117s)
+  30/100 clips (30 newly encoded, 121s)
+  31/100 clips (31 newly encoded, 125s)
+  32/100 clips (32 newly encoded, 130s)
+  33/100 clips (33 newly encoded, 134s)
+  34/100 clips (34 newly encoded, 138s)
+  35/100 clips (35 newly encoded, 143s)
+  36/100 clips (36 newly encoded, 147s)
+  37/100 clips (37 newly encoded, 151s)
+  38/100 clips (38 newly encoded, 156s)
+  39/100 clips (39 newly encoded, 160s)
+  40/100 clips (40 newly encoded, 164s)
+  41/100 clips (41 newly encoded, 168s)
+  42/100 clips (42 newly encoded, 173s)
+  43/100 clips (43 newly encoded, 177s)
+  44/100 clips (44 newly encoded, 181s)
+  45/100 clips (45 newly encoded, 185s)
+  46/100 clips (46 newly encoded, 189s)
+  47/100 clips (47 newly encoded, 194s)
+  48/100 clips (48 newly encoded, 198s)
+  49/100 clips (49 newly encoded, 202s)
+  50/100 clips (50 newly encoded, 206s)
+  51/100 clips (51 newly encoded, 211s)
+  52/100 clips (52 newly encoded, 215s)
+  53/100 clips (53 newly encoded, 219s)
+  54/100 clips (54 newly encoded, 224s)
+  55/100 clips (55 newly encoded, 228s)
+  56/100 clips (56 newly encoded, 232s)
+  57/100 clips (57 newly encoded, 236s)
+  58/100 clips (58 newly encoded, 241s)
+  59/100 clips (59 newly encoded, 245s)
+  60/100 clips (60 newly encoded, 249s)
+  61/100 clips (61 newly encoded, 253s)
+  62/100 clips (62 newly encoded, 258s)
+  63/100 clips (63 newly encoded, 262s)
+  64/100 clips (64 newly encoded, 266s)
+  65/100 clips (65 newly encoded, 270s)
+  66/100 clips (66 newly encoded, 275s)
+  67/100 clips (67 newly encoded, 279s)
+  68/100 clips (68 newly encoded, 283s)
+  69/100 clips (69 newly encoded, 287s)
+  70/100 clips (70 newly encoded, 292s)
+  71/100 clips (71 newly encoded, 296s)
+  72/100 clips (72 newly encoded, 300s)
+  73/100 clips (73 newly encoded, 304s)
+  74/100 clips (74 newly encoded, 309s)
+  75/100 clips (75 newly encoded, 313s)
+  76/100 clips (76 newly encoded, 317s)
+  77/100 clips (77 newly encoded, 321s)
+  78/100 clips (78 newly encoded, 326s)
+  79/100 clips (79 newly encoded, 330s)
+  80/100 clips (80 newly encoded, 334s)
+  81/100 clips (81 newly encoded, 339s)
+  82/100 clips (82 newly encoded, 343s)
+  83/100 clips (83 newly encoded, 347s)
+  84/100 clips (84 newly encoded, 351s)
+  85/100 clips (85 newly encoded, 356s)
+  86/100 clips (86 newly encoded, 360s)
+  87/100 clips (87 newly encoded, 364s)
+  88/100 clips (88 newly encoded, 368s)
+  89/100 clips (89 newly encoded, 373s)
+  90/100 clips (90 newly encoded, 377s)
+  91/100 clips (91 newly encoded, 381s)
+  92/100 clips (92 newly encoded, 385s)
+  93/100 clips (93 newly encoded, 390s)
+  94/100 clips (94 newly encoded, 394s)
+  95/100 clips (95 newly encoded, 398s)
+  96/100 clips (96 newly encoded, 403s)
+  97/100 clips (97 newly encoded, 407s)
+  98/100 clips (98 newly encoded, 411s)
+  99/100 clips (99 newly encoded, 415s)
+  100/100 clips (100 newly encoded, 420s)
+-> /tmp/RobustWorld/outputs/vjepa2/cache/facebook--vjepa2-vitl-fpc64-256
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  46%|████▋     | 272/587 [00:00<00:00, 2708.96it/s]
+Loading weights:  93%|█████████▎| 543/587 [00:00<00:00, 2677.33it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2700.61it/s]
+
+  1/57 clips (1 newly encoded, 5s)
+  2/57 clips (2 newly encoded, 9s)
+  3/57 clips (3 newly encoded, 13s)
+  4/57 clips (4 newly encoded, 17s)
+  5/57 clips (5 newly encoded, 22s)
+  6/57 clips (6 newly encoded, 26s)
+  7/57 clips (7 newly encoded, 30s)
+  8/57 clips (8 newly encoded, 35s)
+  9/57 clips (9 newly encoded, 39s)
+  10/57 clips (10 newly encoded, 44s)
+  11/57 clips (11 newly encoded, 48s)
+  12/57 clips (12 newly encoded, 52s)
+  13/57 clips (13 newly encoded, 57s)
+  14/57 clips (14 newly encoded, 61s)
+  15/57 clips (15 newly encoded, 65s)
+  16/57 clips (16 newly encoded, 69s)
+  17/57 clips (17 newly encoded, 74s)
+  18/57 clips (18 newly encoded, 78s)
+  19/57 clips (19 newly encoded, 82s)
+  20/57 clips (20 newly encoded, 86s)
+  21/57 clips (21 newly encoded, 90s)
+  22/57 clips (22 newly encoded, 95s)
+  23/57 clips (23 newly encoded, 99s)
+  24/57 clips (24 newly encoded, 103s)
+  25/57 clips (25 newly encoded, 107s)
+  26/57 clips (26 newly encoded, 112s)
+  27/57 clips (27 newly encoded, 116s)
+  28/57 clips (28 newly encoded, 120s)
+  29/57 clips (29 newly encoded, 125s)
+  30/57 clips (30 newly encoded, 129s)
+  31/57 clips (31 newly encoded, 133s)
+  32/57 clips (32 newly encoded, 138s)
+  33/57 clips (33 newly encoded, 142s)
+  34/57 clips (34 newly encoded, 146s)
+  35/57 clips (35 newly encoded, 150s)
+  36/57 clips (36 newly encoded, 155s)
+  37/57 clips (37 newly encoded, 159s)
+  38/57 clips (38 newly encoded, 163s)
+  39/57 clips (39 newly encoded, 167s)
+  40/57 clips (40 newly encoded, 172s)
+  41/57 clips (41 newly encoded, 176s)
+  42/57 clips (42 newly encoded, 180s)
+  43/57 clips (43 newly encoded, 184s)
+  44/57 clips (44 newly encoded, 189s)
+  45/57 clips (45 newly encoded, 193s)
+  46/57 clips (46 newly encoded, 197s)
+  47/57 clips (47 newly encoded, 202s)
+  48/57 clips (48 newly encoded, 206s)
+  49/57 clips (49 newly encoded, 210s)
+  50/57 clips (50 newly encoded, 214s)
+  51/57 clips (51 newly encoded, 219s)
+  52/57 clips (52 newly encoded, 223s)
+  53/57 clips (53 newly encoded, 227s)
+  54/57 clips (54 newly encoded, 231s)
+  55/57 clips (55 newly encoded, 236s)
+  56/57 clips (56 newly encoded, 240s)
+  57/57 clips (57 newly encoded, 244s)
+-> /tmp/RobustWorld/outputs/vjepa2/cache/facebook--vjepa2-vitl-fpc64-256
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/587 [00:00<?, ?it/s]
+Loading weights:  46%|████▌     | 268/587 [00:00<00:00, 2677.74it/s]
+Loading weights:  91%|█████████▏| 536/587 [00:00<00:00, 2494.26it/s]
+Loading weights: 100%|██████████| 587/587 [00:00<00:00, 2552.31it/s]
+== 57 new-ball clips, 100 training-ball clips (100 seen)
+colour direction: AUROC 0.997 on held-out folds; motion correlation {'new': {'x': -0.431, 'y': 0.465, 'speed': 0.543}, 'old': {'x': -0.087, 'y': -0.269, 'speed': -0.155}}; cos with decoder -0.037
+== G (lossmix_topup-after): weights aren't here; skipped
+
+  scored 1/97 clips
+  scored 2/97 clips
+  scored 3/97 clips
+  scored 4/97 clips
+  scored 5/97 clips
+  scored 6/97 clips
+  scored 7/97 clips
+  scored 8/97 clips
+  scored 9/97 clips
+  scored 10/97 clips
+  scored 11/97 clips
+  scored 12/97 clips
+  scored 13/97 clips
+  scored 14/97 clips
+  scored 15/97 clips
+  scored 16/97 clips
+  scored 17/97 clips
+  scored 18/97 clips
+  scored 19/97 clips
+  scored 20/97 clips
+  scored 21/97 clips
+  scored 22/97 clips
+  scored 23/97 clips
+  scored 24/97 clips
+  scored 25/97 clips
+  scored 26/97 clips
+  scored 27/97 clips
+  scored 28/97 clips
+  scored 29/97 clips
+  scored 30/97 clips
+  scored 31/97 clips
+  scored 32/97 clips
+  scored 33/97 clips
+  scored 34/97 clips
+  scored 35/97 clips
+  scored 36/97 clips
+  scored 37/97 clips
+  scored 38/97 clips
+  scored 39/97 clips
+  scored 40/97 clips
+  scored 41/97 clips
+  scored 42/97 clips
+  scored 43/97 clips
+  scored 44/97 clips
+  scored 45/97 clips
+  scored 46/97 clips
+  scored 47/97 clips
+  scored 48/97 clips
+  scored 49/97 clips
+  scored 50/97 clips
+  scored 51/97 clips
+  scored 52/97 clips
+  scored 53/97 clips
+  scored 54/97 clips
+  scored 55/97 clips
+  scored 56/97 clips
+  scored 57/97 clips
+  scored 58/97 clips
+  scored 59/97 clips
+  scored 60/97 clips
+  scored 61/97 clips
+  scored 62/97 clips
+  scored 63/97 clips
+  scored 64/97 clips
+  scored 65/97 clips
+  scored 66/97 clips
+  scored 67/97 clips
+  scored 68/97 clips
+  scored 69/97 clips
+  scored 70/97 clips
+  scored 71/97 clips
+  scored 72/97 clips
+  scored 73/97 clips
+  scored 74/97 clips
+  scored 75/97 clips
+  scored 76/97 clips
+  scored 77/97 clips
+  scored 78/97 clips
+  scored 79/97 clips
+  scored 80/97 clips
+  scored 81/97 clips
+  scored 82/97 clips
+  scored 83/97 clips
+  scored 84/97 clips
+  scored 85/97 clips
+  scored 86/97 clips
+  scored 87/97 clips
+  scored 88/97 clips
+  scored 89/97 clips
+  scored 90/97 clips
+  scored 91/97 clips
+  scored 92/97 clips
+  scored 93/97 clips
+  scored 94/97 clips
+  scored 95/97 clips
+  scored 96/97 clips
+  scored 97/97 clips
+real                         through-vs-blocked AUROC: training ball 1.0, new ball 1.0
+pretrained                   through-vs-blocked AUROC: training ball 0.202, new ball 0.39
+pretrained (colour removed)  through-vs-blocked AUROC: training ball 0.236, new ball 0.396
+C                            through-vs-blocked AUROC: training ball 0.92, new ball 0.903
+C (colour removed)           through-vs-blocked AUROC: training ball 0.92, new ball 0.94
+-> /tmp/RobustWorld/outputs/vjepa2/plan/other_ball/ (metrics.json, per_clip.json, colour_direction.pt, colour.png)
