@@ -337,6 +337,40 @@ def fig_failures(clips: Path, cases, name: str = "prediction_quality.png") -> No
     save(fig, name)
 
 
+def fig_variant_failures() -> None:
+    """How each evaluated technique fails, from saved metrics (right-entry passes; plan/summary.md and the
+    per-gap means of the results overview)."""
+    hit = [("Pretrained\nV-JEPA 2", 0.199), ("Plain\nlatent L1", 0.483), ("Copy\ngate", 0.478),
+           ("Multiple\nhypotheses", 0.23), ("Discrete\ncodes", 0.463), ("Motion-\nweighted\n+ contrast", 0.58),
+           ("+ sampling\n+ 20 epochs", 0.701)]
+    gaps = {"Real frames": (0.947, 0.911, 0.075), "Pretrained V-JEPA 2": (0.175, 0.189, 0.185),
+            "Motion-weighted L1 + contrast": (0.602, 0.437, 0.133), "Discrete codes": (0.846, 0.486, 0.112),
+            "+ sampling, 20 epochs": (0.819, 0.786, 0.114)}
+    cols = ["#1a1a1a", "#8c8c8c", "#e08a2c", "#7b5ea7", "#c0392b"]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.0), gridspec_kw={"width_ratios": [1.25, 1], "wspace": 0.22})
+    ax = axes[0]
+    x = np.arange(len(hit))
+    bars = ax.bar(x, [v for _, v in hit], 0.65, color=["#8c8c8c", "#e8b07a", "#e8b07a", "#7f7f7f", "#7b5ea7",
+                                                      "#e08a2c", "#c0392b"])
+    for b, (_, v) in zip(bars, hit):
+        ax.text(b.get_x() + b.get_width() / 2, v + 0.015, f"{v:.2f}", ha="center", fontsize=10)
+    ax.set_xticks(x, [l for l, _ in hit], fontsize=10)
+    ax.set_ylim(0, 0.82)
+    ax.set_ylabel("Share of steps with the predicted\nball on the real ball (within 48 px)")
+    ax.set_title("(a) Is the predicted ball where the real ball is?", fontweight="bold")
+    ax = axes[1]
+    x = np.arange(3)
+    w = 0.16
+    for i, ((lab, v), c) in enumerate(zip(gaps.items(), cols)):
+        ax.bar(x + (i - 2) * w, v, w, color=c, label=lab)
+    ax.set_xticks(x, ["Wide gap", "Narrow gap", "Blocked middle"])
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("Mean predicted P(ball beyond the plank)")
+    ax.set_title("(b) Which openings each technique learnt", fontweight="bold")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2, fontsize=10, frameon=False)
+    save(fig, "variant_failures.png")
+
+
 # ---------------------------------------------------------------- held-out orange ball
 def fig_orange() -> None:
     m = json.loads((REPO / "results" / "other_ball" / "metrics.json").read_text())
@@ -592,6 +626,7 @@ def main() -> None:
     gif_rollout(a.clips, "whole_0007", "right", "rollout_blocked.gif")
     fig_pblocked()
     fig_orange()
+    fig_variant_failures()
     fig_failures(a.clips, [("whole_0206", 6, "Correct"), ("whole_0228", 5, "Faint, smeared"),
                            ("whole_0263", 3, "Too early"), ("whole_0120", 3, "Missed\n(narrow gap)")])
     fig_auroc()
