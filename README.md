@@ -33,16 +33,16 @@ Right: the final model predicts it emerging. Cyan = probe's ball location (opaci
 
 ## Contents
 
-1. [Quick start](#quick-start)
-2. [Problem statement and data](#1-problem-statement-and-data)
-3. [Architecture and measurement](#2-architecture-and-measurement)
-4. [Post-training V-JEPA 2](#3-post-training-v-jepa-2)
-5. [Robustness](#4-robustness)
-6. [The table slope](#5-the-table-slope)
-7. [From forecast to gripper policy](#6-from-forecast-to-gripper-policy)
-8. [Conclusion, impact and outlook](#7-conclusion-impact-and-outlook)
-9. [How to run](#8-how-to-run)
-10. [References](#references)
+- [Quick start](#quick-start)
+- [1. Problem statement and data](#1-problem-statement-and-data)
+- [2. Architecture and measurement](#2-architecture-and-measurement)
+- [3. Post-training V-JEPA 2](#3-post-training-v-jepa-2)
+- [4. Robustness](#4-robustness)
+- [5. The table slope](#5-the-table-slope)
+- [6. From forecast to gripper policy](#6-from-forecast-to-gripper-policy)
+- [7. Conclusion, impact and outlook](#7-conclusion-impact-and-outlook)
+- [8. How to run](#8-how-to-run)
+- [References](#references)
 
 ## Quick start
 
