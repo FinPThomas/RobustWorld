@@ -44,6 +44,14 @@ from robust_world.eval.ball import (ball_labels, ball_track_metrics, cv_folds, o
 
 OUT = REPO / "outputs" / "vjepa2" / "plan" / "other_ball"
 RUNS = {"C": "lossmix_both-after", "G": "lossmix_topup-after"}
+MAX_SEEN = 100      # training-ball clips used (spread evenly over the list), so the run fits ~35 min of Kaggle GPU
+
+
+def pick_seen(seen: list[dict], n: int = MAX_SEEN) -> list[dict]:
+    """An even spread of the seen clips (the same every time; plan.py encodes exactly these)."""
+    if len(seen) <= n:
+        return seen
+    return [seen[i] for i in np.unique(np.linspace(0, len(seen) - 1, n).astype(int))]
 
 
 def ball_rows(enc: dict, lab: np.ndarray, centres: list) -> list[dict]:
@@ -160,7 +168,9 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--manifest", type=Path, default=generalise.MANIFEST)
     p.add_argument("--out", type=Path, default=OUT)
-    p.add_argument("--old-scored", type=int, default=80,
+    p.add_argument("--max-seen", type=int, default=MAX_SEEN,
+                   help="training-ball clips used for the decoder, the colour direction and the comparison")
+    p.add_argument("--old-scored", type=int, default=40,
                    help="training-ball clips scored for the comparison (spread over the list; all are used for "
                         "the colour direction)")
     args = p.parse_args(argv)
@@ -170,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
     others = generalise.other_segments(args.manifest)
     seen, groups, _ = generalise.split(right, new_videos, others)
     new = [c for g, cs in groups.items() if g.startswith("new ball") for c in cs]
+    seen = pick_seen(seen, args.max_seen)
     old = seen          # the training ball, training direction (the only other clips encoded in this step)
     if not new:
         print("no new-ball clips: list the video in configs/heldout.json and add its clips")
@@ -204,6 +215,9 @@ def main(argv: list[str] | None = None) -> int:
     report, dirs = colour_report(rows, is_new, decoder)
     print(f"colour direction: AUROC {report['colour_auroc_mean']} on held-out folds; motion correlation "
           f"{report['motion_correlation']}; cos with decoder {report['cos_with_decoder_readout']}", flush=True)
+    args.out.mkdir(parents=True, exist_ok=True)          # the colour checks are kept even if scoring is cut off
+    (args.out / "metrics.json").write_text(json.dumps({"new_ball_videos": new_videos, "colour_direction": report,
+                                                       "scores": "not finished"}, indent=1))
     d_raw = dirs["raw"].to(device)
     # Average coordinate over the training ball's context tokens (every cell, not just the ball's).
     acc, n = 0.0, 0

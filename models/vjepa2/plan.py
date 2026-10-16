@@ -557,8 +557,15 @@ def step_other_ball(args, state, log):
     # its end-to-end test first (a tiny random model, about a minute): a bug stops here, before the GPU encode
     must([PY, "-m", "pip", "install", "-q", "pytest"], log)
     must([PY, "-m", "pytest", "-x", "-q", REPO / "tests" / "test_other_ball.py"], log)
-    for m in [MANIFEST, *sorted(MANIFEST.parent.glob("manifest_*.jsonl"))]:   # the training ball's side + the new ball
-        if m == MANIFEST or any(generalise.stem(c) in generalise.holdout_videos(None) for c in generalise.included(m)):
+    import other_ball
+    held = generalise.holdout_videos(None)
+    seen, _, _ = generalise.split(generalise.included(MANIFEST), held, generalise.other_segments(MANIFEST))
+    sub = PLAN / "other_ball_seen.jsonl"          # the evenly spread training-ball clips other_ball.py reads
+    sub.parent.mkdir(parents=True, exist_ok=True)
+    sub.write_text("".join(json.dumps(c) + "\n" for c in other_ball.pick_seen(seen)))
+    must([PY, HERE / "posttrain.py", "encode", "--manifest", sub], log)
+    for m in sorted(MANIFEST.parent.glob("manifest_*.jsonl")):                 # the new ball's clips
+        if any(generalise.stem(c) in held for c in generalise.included(m)):
             must([PY, HERE / "posttrain.py", "encode", "--manifest", m], log)
     must([PY, HERE / "other_ball.py", "--out", PLAN / "other_ball"], log)
 
@@ -954,7 +961,7 @@ def step_hours(name: str) -> float:
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
                "rescore-aligned": 0.5,            # one scoring pass
-               "other-ball": 0.6,                 # encode the right-side and new-ball clips (~0.4 h), then a small scoring pass
+               "other-ball": 0.5,                 # encode 100 right-side + the new-ball clips (~0.3 h), then a small scoring pass
                "rescore-aligned-C": 0.5,
                "rescore-aligned-E": 0.5,
                "lossmix_topup-after": 2.3,        # 5 epochs from C with the open clips (fold-epoch 3.8 min on T4), two scoring passes
