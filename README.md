@@ -624,10 +624,43 @@ simulation by the PPO policy above. This fine-tune has not been run.
   interface, trained once on simulated demonstrations, with thin per-robot adapters. Every robot would then learn
   from one common baseline, provided the data are presented to it in the same format: the same forecast vector,
   frames and units for every embodiment.
-- *Language-triggered skills.* In a vision-language-action model, the catch could become one of several skills
-  selected by a semantic instruction ("catch the ball", "let it roll past", "block it"), each conditioned on the same
-  forecast. Training the skills on a shared latent action space would also allow interpolating between them, for
-  example a soft block that slows the ball without grasping it.
+
+### 6.7 Towards language-selected behaviour
+
+A natural extension is a multi-skill policy in which a language instruction selects *how* the robot acts on the same
+forecast: "be careful", "be quick", "only go if you are sure", "block it" or "let it roll past". This has not been
+built, but the present system already contains the hook that such an instruction would turn. The set-off rule of
+Section 6.3 weighs the reward of a pick-up against the cost of a wasted trip and of letting a ball go; those weights
+are a *risk attitude*, and changing them changes behaviour without retraining the policy or the world model.
+
+Re-applying the rule to the saved forecasts of the two-way model for all 335 real passes, with three attitudes,
+gives the following. Passes whose decision does not change keep their simulated outcome; for passes that newly set
+off, the pick-up is estimated from the policy's simulated rate $c(u)$, so these are estimates, not new simulations.
+
+| attitude (wasted-trip cost / letting-go cost) | sets off, ball emerges | sets off, ball blocked | pick-ups per 100 passes | mean reward |
+|---|---|---|---|---|
+| cautious (2 / 0.5) | 67% | 4% | 17.6 | +0.67 |
+| default (1 / 1) | 72% | 4% | 18.2 | +0.69 |
+| hasty (0.3 / 2) | 76% | 6% | 19.0 | +0.72 |
+| always go, no forecast used | 100% | 100% | 23.6 | +0.13 |
+
+A cautious robot wastes almost no trips but lets more balls go; a hasty one catches a little more at the cost of a few
+wasted trips. The effect is modest here because the forecast is usually confident, so few passes sit near the
+threshold; with a less certain world model the same instruction would move behaviour much further. Language can also
+act on the uncertainty itself, for example "assume you might be wrong" inflating $u$ before the policy sees it,
+which lowers the expected pick-up rate $c(u)$ and so makes the gripper set off less readily. In a full system, a vision-language-action model would map the
+instruction to these few interpretable parameters, or to a skill embedding learnt from simulated demonstrations of
+each style, so that intermediate instructions ("fairly careful") interpolate between styles rather than switching
+abruptly.
+
+**Implications for humanoids.** A humanoid acting in a home faces the same trade-off at larger scale: reaching for
+something that is not there costs time and energy and can be unsafe near people, while hesitating can mean failing the
+task. Keeping the world model's forecast, its uncertainty and the risk attitude as separate, explicit quantities has
+three advantages there. Safety constraints can be enforced on the attitude directly (a humanoid near a child can be
+held to "cautious" whatever it is asked). The same forecast serves every skill and every body, so only the thin
+low-level controller changes between a gripper and a humanoid hand. And the behaviour remains inspectable: when the
+robot holds back, it can say whether that was because the world model thought the ball was blocked, because it was
+unsure, or because it was told to be careful.
 
 ## 7. Conclusion, impact and outlook
 
