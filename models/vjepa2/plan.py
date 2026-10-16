@@ -552,11 +552,14 @@ def other_ball_ready() -> str | None:
 def step_other_ball(args, state, log):
     """D (Fin, 2026-10-16): the other ball, scored without training (pretrained, C, G when its weights are here),
     plus its colour direction in the frozen encoder's features and the scores with that direction removed
-    (other_ball.py). Encodes whatever isn't encoded yet first (every clip, each session)."""
+    (other_ball.py). Encodes only the training-direction clips and the new ball's (each session)."""
+    import generalise
     # its end-to-end test first (a tiny random model, about a minute): a bug stops here, before the GPU encode
     must([PY, "-m", "pip", "install", "-q", "pytest"], log)
     must([PY, "-m", "pytest", "-x", "-q", REPO / "tests" / "test_other_ball.py"], log)
-    step_encode(args, state, log)
+    for m in [MANIFEST, *sorted(MANIFEST.parent.glob("manifest_*.jsonl"))]:   # the training ball's side + the new ball
+        if m == MANIFEST or any(generalise.stem(c) in generalise.holdout_videos(None) for c in generalise.included(m)):
+            must([PY, HERE / "posttrain.py", "encode", "--manifest", m], log)
     must([PY, HERE / "other_ball.py", "--out", PLAN / "other_ball"], log)
 
 
@@ -951,7 +954,7 @@ def step_hours(name: str) -> float:
                "lossmix_both-epochs": 1.9,        # seven scoring passes
                "slope-sharp": 0.8,                # two scoring passes
                "rescore-aligned": 0.5,            # one scoring pass
-               "other-ball": 0.9,                 # encode every clip (~0.5 h), then a small scoring pass
+               "other-ball": 0.6,                 # encode the right-side and new-ball clips (~0.4 h), then a small scoring pass
                "rescore-aligned-C": 0.5,
                "rescore-aligned-E": 0.5,
                "lossmix_topup-after": 2.3,        # 5 epochs from C with the open clips (fold-epoch 3.8 min on T4), two scoring passes
@@ -1013,7 +1016,8 @@ def _run(args) -> None:
                 print(f"   {s.name}: {reason}", flush=True)
         return
     print(f"== can run this session: {', '.join(runnable)}", flush=True)
-    if state["steps"].get("encode", {}).get("state") == "done" and not cache_complete():
+    only_other_ball = bool(args.only) and set(args.only) <= {"other-ball"}   # it encodes just what it reads
+    if state["steps"].get("encode", {}).get("state") == "done" and not only_other_ball and not cache_complete():
         print("== the encoded features aren't on this disk (a new runtime): encoding again", flush=True)
         step_encode(args, state, PLAN / "logs" / "encode.txt")
     cut_off = [s for s in STEPS if s.stage < min(stages) and state["steps"].get(s.name, {}).get("state") == "running"]

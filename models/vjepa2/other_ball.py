@@ -170,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
     others = generalise.other_segments(args.manifest)
     seen, groups, _ = generalise.split(right, new_videos, others)
     new = [c for g, cs in groups.items() if g.startswith("new ball") for c in cs]
-    old = seen + [c for g, cs in groups.items() if not g.startswith("new ball") for c in cs]  # training ball, both sides
+    old = seen          # the training ball, training direction (the only other clips encoded in this step)
     if not new:
         print("no new-ball clips: list the video in configs/heldout.json and add its clips")
         return generalise.WAITING
