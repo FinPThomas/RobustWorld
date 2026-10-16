@@ -1,0 +1,329 @@
+{
+ "new_ball_videos": [
+  "other"
+ ],
+ "colour_direction": {
+  "colour_auroc_heldout_folds": [
+   0.999,
+   0.989,
+   1.0,
+   0.995,
+   1.0
+  ],
+  "colour_auroc_mean": 0.997,
+  "motion_correlation": {
+   "new": {
+    "x": -0.431,
+    "y": 0.465,
+    "speed": 0.543
+   },
+   "old": {
+    "x": -0.087,
+    "y": -0.269,
+    "speed": -0.155
+   }
+  },
+  "cos_with_decoder_readout": -0.037,
+  "n_ball_tokens": {
+   "new": 336,
+   "old": 640
+  }
+ },
+ "colour_removed_level": -1.0416,
+ "scores": {
+  "new": {
+   "real": {
+    "n": 57,
+    "outcome_auroc": 1.0,
+    "outcome_accuracy": 1.0,
+    "blocked_called_through": 0,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.914,
+     "hidden": 0.055,
+     "bounce": 0.064
+    },
+    "bounce_auroc": 1.0,
+    "outcome3_accuracy": 0.789,
+    "p_correct": {
+     "through": 0.914,
+     "hidden": 0.614,
+     "bounce": 0.513
+    },
+    "p_correct_balanced": 0.68,
+    "recall": {
+     "through": 1.0,
+     "hidden": 1.0,
+     "bounce": 0.586
+    },
+    "balanced_accuracy": 0.862,
+    "cell_auroc": 0.985,
+    "argmax_hit_rate": 0.998
+   },
+   "pretrained": {
+    "n": 57,
+    "outcome_auroc": 0.39,
+    "outcome_accuracy": 0.526,
+    "blocked_called_through": 0,
+    "through_called_blocked": 27,
+    "peak_far_mean": {
+     "through": 0.187,
+     "hidden": 0.229,
+     "bounce": 0.192
+    },
+    "bounce_auroc": 0.103,
+    "outcome3_accuracy": 0.018,
+    "p_correct": {
+     "through": 0.187,
+     "hidden": 0.536,
+     "bounce": 0.236
+    },
+    "p_correct_balanced": 0.32,
+    "recall": {
+     "through": 0.0,
+     "hidden": 1.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.665,
+    "argmax_hit_rate": 0.179
+   },
+   "pretrained (colour removed)": {
+    "n": 57,
+    "outcome_auroc": 0.396,
+    "outcome_accuracy": 0.526,
+    "blocked_called_through": 0,
+    "through_called_blocked": 27,
+    "peak_far_mean": {
+     "through": 0.18,
+     "hidden": 0.219,
+     "bounce": 0.185
+    },
+    "bounce_auroc": 0.034,
+    "outcome3_accuracy": 0.018,
+    "p_correct": {
+     "through": 0.18,
+     "hidden": 0.542,
+     "bounce": 0.236
+    },
+    "p_correct_balanced": 0.319,
+    "recall": {
+     "through": 0.0,
+     "hidden": 1.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.673,
+    "argmax_hit_rate": 0.177
+   },
+   "C": {
+    "n": 57,
+    "outcome_auroc": 0.903,
+    "outcome_accuracy": 0.877,
+    "blocked_called_through": 0,
+    "through_called_blocked": 7,
+    "peak_far_mean": {
+     "through": 0.663,
+     "hidden": 0.288,
+     "bounce": 0.186
+    },
+    "bounce_auroc": 0.862,
+    "outcome3_accuracy": 0.702,
+    "p_correct": {
+     "through": 0.663,
+     "hidden": 0.403,
+     "bounce": 0.426
+    },
+    "p_correct_balanced": 0.497,
+    "recall": {
+     "through": 0.778,
+     "hidden": 1.0,
+     "bounce": 0.655
+    },
+    "balanced_accuracy": 0.811,
+    "cell_auroc": 0.795,
+    "argmax_hit_rate": 0.421
+   },
+   "C (colour removed)": {
+    "n": 57,
+    "outcome_auroc": 0.94,
+    "outcome_accuracy": 0.877,
+    "blocked_called_through": 0,
+    "through_called_blocked": 7,
+    "peak_far_mean": {
+     "through": 0.684,
+     "hidden": 0.286,
+     "bounce": 0.169
+    },
+    "bounce_auroc": 0.517,
+    "outcome3_accuracy": 0.596,
+    "p_correct": {
+     "through": 0.684,
+     "hidden": 0.366,
+     "bounce": 0.42
+    },
+    "p_correct_balanced": 0.49,
+    "recall": {
+     "through": 0.778,
+     "hidden": 1.0,
+     "bounce": 0.483
+    },
+    "balanced_accuracy": 0.754,
+    "cell_auroc": 0.82,
+    "argmax_hit_rate": 0.439
+   },
+   "colour_coordinate_at_real_ball_cells": {
+    "real": 3.1,
+    "pretrained": -0.025,
+    "C": 1.394
+   }
+  },
+  "old": {
+   "real": {
+    "n": 40,
+    "outcome_auroc": 1.0,
+    "outcome_accuracy": 1.0,
+    "blocked_called_through": 0,
+    "through_called_blocked": 0,
+    "peak_far_mean": {
+     "through": 0.91,
+     "hidden": 0.144,
+     "bounce": 0.06
+    },
+    "bounce_auroc": 0.664,
+    "outcome3_accuracy": 0.8,
+    "p_correct": {
+     "through": 0.91,
+     "hidden": 0.379,
+     "bounce": 0.591
+    },
+    "p_correct_balanced": 0.627,
+    "recall": {
+     "through": 1.0,
+     "hidden": 0.455,
+     "bounce": 0.8
+    },
+    "balanced_accuracy": 0.752,
+    "cell_auroc": 0.937,
+    "argmax_hit_rate": 1.0
+   },
+   "pretrained": {
+    "n": 40,
+    "outcome_auroc": 0.202,
+    "outcome_accuracy": 0.525,
+    "blocked_called_through": 0,
+    "through_called_blocked": 19,
+    "peak_far_mean": {
+     "through": 0.196,
+     "hidden": 0.211,
+     "bounce": 0.204
+    },
+    "bounce_auroc": 0.259,
+    "outcome3_accuracy": 0.275,
+    "p_correct": {
+     "through": 0.196,
+     "hidden": 0.556,
+     "bounce": 0.231
+    },
+    "p_correct_balanced": 0.328,
+    "recall": {
+     "through": 0.0,
+     "hidden": 1.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.671,
+    "argmax_hit_rate": 0.227
+   },
+   "pretrained (colour removed)": {
+    "n": 40,
+    "outcome_auroc": 0.236,
+    "outcome_accuracy": 0.525,
+    "blocked_called_through": 0,
+    "through_called_blocked": 19,
+    "peak_far_mean": {
+     "through": 0.185,
+     "hidden": 0.197,
+     "bounce": 0.189
+    },
+    "bounce_auroc": 0.282,
+    "outcome3_accuracy": 0.275,
+    "p_correct": {
+     "through": 0.185,
+     "hidden": 0.567,
+     "bounce": 0.235
+    },
+    "p_correct_balanced": 0.329,
+    "recall": {
+     "through": 0.0,
+     "hidden": 1.0,
+     "bounce": 0.0
+    },
+    "balanced_accuracy": 0.333,
+    "cell_auroc": 0.668,
+    "argmax_hit_rate": 0.249
+   },
+   "C": {
+    "n": 40,
+    "outcome_auroc": 0.92,
+    "outcome_accuracy": 0.825,
+    "blocked_called_through": 0,
+    "through_called_blocked": 7,
+    "peak_far_mean": {
+     "through": 0.633,
+     "hidden": 0.209,
+     "bounce": 0.122
+    },
+    "bounce_auroc": 0.405,
+    "outcome3_accuracy": 0.5,
+    "p_correct": {
+     "through": 0.633,
+     "hidden": 0.348,
+     "bounce": 0.455
+    },
+    "p_correct_balanced": 0.479,
+    "recall": {
+     "through": 0.737,
+     "hidden": 0.182,
+     "bounce": 0.6
+    },
+    "balanced_accuracy": 0.506,
+    "cell_auroc": 0.854,
+    "argmax_hit_rate": 0.7
+   },
+   "C (colour removed)": {
+    "n": 40,
+    "outcome_auroc": 0.92,
+    "outcome_accuracy": 0.825,
+    "blocked_called_through": 1,
+    "through_called_blocked": 6,
+    "peak_far_mean": {
+     "through": 0.619,
+     "hidden": 0.232,
+     "bounce": 0.123
+    },
+    "bounce_auroc": 0.368,
+    "outcome3_accuracy": 0.5,
+    "p_correct": {
+     "through": 0.619,
+     "hidden": 0.352,
+     "bounce": 0.442
+    },
+    "p_correct_balanced": 0.471,
+    "recall": {
+     "through": 0.737,
+     "hidden": 0.182,
+     "bounce": 0.5
+    },
+    "balanced_accuracy": 0.473,
+    "cell_auroc": 0.854,
+    "argmax_hit_rate": 0.697
+   },
+   "colour_coordinate_at_real_ball_cells": {
+    "real": -2.691,
+    "pretrained": -0.958,
+    "C": -2.009
+   }
+  }
+ }
+}
