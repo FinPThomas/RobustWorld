@@ -346,8 +346,8 @@ model. Being a difference of means, it captures nothing beyond the average diffe
 
 **Checking that it is colour and nothing else.** Fitted on four folds and tested on the fifth, the projection
 $d^\top \mathrm{LN}(z)$ separates the balls at AUROC 0.997, and its cosine with the probe's position readout $w$ is
-−0.04. Within each ball it is only weakly related to position and speed for blue ($|r| \le 0.27$) but moderately to
-speed for orange ($r = 0.54$), plausibly because of the different camera angle.
+−0.04. Within each ball it is only weakly related to position and speed for blue, with $|r| \le 0.27$, but moderately to
+speed for orange, with $r = 0.54$, plausibly because of the different camera angle.
 
 **Removing it.** Before the predictor runs, each context token's coordinate along $d$ is set to the blue-ball mean,
 $z \leftarrow z - \big(d^\top z - \bar c_{\text{blue}}\big)\,d$, and the unchanged probe scores the two-way model's
@@ -410,8 +410,8 @@ must decide whether to set off and where to wait while the ball is hidden. It se
 emerges (two frames late), usually too late to start moving; a blocked ball never appears, so only the forecast can
 prevent a wasted trip.
 
-The forecast, read through the frozen probe, gives **whether** the ball emerges ($p$), **where**, **when**, **how
-fast** and **how uncertain** ($u \in [0, 1]$, from how spread or weak the predicted ball is), with standard deviations
+The forecast, read through the frozen probe, gives **whether** the ball emerges, $p$, **where**, **when**, **how
+fast** and **how uncertain**: $u \in [0, 1]$, from how spread or weak the predicted ball is, with standard deviations
 $\sigma_s = 0.12u$ m, $\sigma_t = 0.3u$ s and $\sigma_v = 0.5u\,\lvert v \rvert$; $u = 1$ means no information.
 
 ### 6.2 Problem design
@@ -441,19 +441,19 @@ $u \sim \mathcal{U}(0, 1)$ and a forecast $\hat x = x + \varepsilon$, $\varepsil
 (likewise for timing and speed), so the policy learns how far to trust a stated uncertainty. It is then **frozen**
 and driven by each world model's real forecast, so one policy serves every model.
 
-**Decision to set off.** The gripper sets off when the expected reward of going ($p$ times the reward of an
-attempt at the simulated success rate $c(u)$, minus $(1 - p)$ times a wasted trip) exceeds that of staying. Nothing
-in the rule is fitted to real data.
+**Decision to set off.** The gripper sets off when the expected reward of going exceeds that of staying. Going is
+worth $p$ times the reward of an attempt at the simulated success rate $c(u)$, minus $1 - p$ times the cost of a wasted
+trip. Nothing in the rule is fitted to real data.
 
 ### 6.4 How uncertainty drives behaviour
 
 <p align="center"><img src="docs/figures/gripper_uncertainty.png" width="900"></p>
 
-*Figure 12. Top: the frame before the ball appears, for four forecasts; the orange disc (radius $\sigma_s$) is the
+*Figure 12. Top: the frame before the ball appears, for four forecasts; the orange disc, of radius $\sigma_s$, is the
 forecast exit region (hidden by the fingers below about 2 cm). Bottom: simulated pick-up rate $c(u)$ against
 uncertainty.*
 
-The pretrained forecast carries no information ($u = 1$, 12 cm region; 42% pick-up in simulation). The post-trained
+The pretrained forecast carries no information: $u = 1$, a 12 cm region and 42% pick-up in simulation. The post-trained
 model's region is 6 cm on an uncertain pass and under 2 cm on a confident one, approaching the 71% of a perfect
 forecast.
 
@@ -505,8 +505,8 @@ past") selects *how* the robot acts on the same forecast. This has not been buil
 6.3 already provides the hook: its weights on a pick-up, a wasted trip and a ball let go are a *risk attitude*, and
 changing them changes behaviour without retraining the policy or the world model.
 
-Re-applying the rule to the two-way model's saved forecasts for all 335 real passes gives the estimates below
-(unchanged decisions keep their simulated outcome; new set-offs are scored with the simulated rate $c(u)$).
+Re-applying the rule to the two-way model's saved forecasts for all 335 real passes gives the estimates below.
+Unchanged decisions keep their simulated outcome, and new set-offs are scored with the simulated rate $c(u)$.
 
 | attitude (wasted-trip cost / letting-go cost) | sets off, ball emerges | sets off, ball blocked | pick-ups per 100 passes | mean reward |
 |---|---|---|---|---|
@@ -518,7 +518,7 @@ Re-applying the rule to the two-way model's saved forecasts for all 335 real pas
 A cautious robot wastes almost no trips but lets more balls go; a hasty one catches slightly more at the cost of a
 few wasted trips. The effect is modest because the forecast is usually confident; with a less certain world model
 the same instruction would move behaviour further. Language could also act on the uncertainty itself ("assume you
-might be wrong" inflating $u$). A vision-language-action model would map instructions to these few parameters, or to
+might be wrong" inflating $u$ before the policy sees it). A vision-language-action model would map instructions to these few parameters, or to
 a skill embedding learnt from simulated demonstrations, so that "fairly careful" interpolates between styles.
 
 **Why set risk through language.** The right level of risk depends on context the world model cannot observe:
