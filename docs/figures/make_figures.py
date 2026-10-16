@@ -308,6 +308,35 @@ def fig_pblocked() -> None:
     save(fig, "p_blocked.png")
 
 
+def fig_failures(clips: Path, cases, name: str = "prediction_quality.png") -> None:
+    """A clear success and the final model's typical failure modes, against the pretrained model, at one step."""
+    cols = ["Last seen frame", "Real future", NAMES[PRE], "Post-trained (final)"]
+    fig, axes = plt.subplots(len(cases), 4, figsize=(11.5, 2.95 * len(cases)),
+                             gridspec_kw={"wspace": 0.04, "hspace": 0.16})
+    for r, (cid, k, lab) in enumerate(cases):
+        frames = iio.imread(clips / "right" / f"{cid}.mp4")
+        cs = len(frames) // 2
+        bg = _background(frames)
+        maps = [None, _maps(PRE)[f"{cid}/real"], _maps(PRE)[f"{cid}/imagined"], _maps(FINAL)[f"{cid}/imagined"]]
+        for c in range(4):
+            ax = axes[r, c]
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for sp in ax.spines.values():
+                sp.set_color("0.7")
+            if c == 0:
+                ax.imshow(frames[cs - 1])
+                ax.set_ylabel(f"{lab}\n(+{(k + 1) / 8:.2f} s)", rotation=0, ha="right", va="center", fontsize=12,
+                              fontweight="bold", labelpad=10)
+            else:
+                ax.imshow(_grey(frames[min(cs + 2 * k, len(frames) - 1)] if c == 1 else bg))
+                _heat(ax, np.asarray(maps[c][k], float))
+            _blocker(ax, label=False)
+            if r == 0:
+                ax.set_title(cols[c], fontsize=12, fontweight="bold")
+    save(fig, name)
+
+
 # ---------------------------------------------------------------- held-out orange ball
 def fig_orange() -> None:
     m = json.loads((REPO / "results" / "other_ball" / "metrics.json").read_text())
@@ -563,6 +592,8 @@ def main() -> None:
     gif_rollout(a.clips, "whole_0007", "right", "rollout_blocked.gif")
     fig_pblocked()
     fig_orange()
+    fig_failures(a.clips, [("whole_0206", 6, "Correct"), ("whole_0228", 5, "Faint, smeared"),
+                           ("whole_0263", 3, "Too early"), ("whole_0120", 3, "Missed\n(narrow gap)")])
     fig_auroc()
     fig_slope()
     gifs_gripper()

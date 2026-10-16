@@ -342,6 +342,20 @@ gap would be the most direct remedy.
 *Figure 7. A blocked pass, predicted 0.25–1.5 s ahead. The final model holds the ball at the plank's edge, matching
 the real outcome, rather than predicting it through. Prediction panels are drawn on the empty scene.*
 
+**Where the predictions still fall short.** Figure 8 sets a correct forecast beside the final model's three typical
+errors, each against the pretrained model, which shows no ball at all in every case. A *faint, smeared* ball appears
+where the outcome is uncertain: the loss still rewards spreading probability between futures, so the ball is in the
+right place but weak. A *too early* forecast puts the ball out of the plank at the right place but before the real
+ball arrives, because timing through the occlusion is less constrained by the data than direction. A *missed* pass
+in the narrow gap is predicted as blocked, the main error discussed above. These failure modes match the
+quantitative results: most remaining errors are passes that emerge but are predicted weakly or not at all.
+
+<p align="center"><img src="docs/figures/prediction_quality.png" width="900"></p>
+
+*Figure 8. Correct and incorrect forecasts of passes that emerge, each shown at the step where the difference is
+clearest. Columns: last observed frame, real future through the probe, pretrained V-JEPA 2, final model. Cyan =
+probe's ball location (opacity = confidence); red dashed outline = hidden blocker.*
+
 > **Summary.** The final model predicts which passes are blocked nearly as well as reading the real future frames
 > through the same probe (0.97 vs 0.998 from the training direction), and better than a tracker fitted on outcomes.
 > Its main remaining weakness is the narrow gap.
@@ -406,7 +420,7 @@ post-trained model keeps the ball partly orange, whereas the pretrained model lo
 
 <p align="center"><img src="docs/figures/orange_ball.png" width="900"></p>
 
-*Figure 11. (a) Through-vs-blocked AUROC for the training (blue) and held-out (orange) ball; "colour removed" sets the
+*Figure 9. (a) Through-vs-blocked AUROC for the training (blue) and held-out (orange) ball; "colour removed" sets the
 colour coordinate to the blue level before the predictor (dotted line = chance). (b) Colour coordinate at the ball's
 position, read from real frames and from each model's predicted future (positive = orange).*
 
@@ -433,7 +447,7 @@ learnt the slope should approach the probe-on-real value rather than the tracker
 
 <p align="center"><img src="docs/figures/slope_map.png" width="900"></p>
 
-*Figure 8. Left-right acceleration from the table after removing friction (red = downhill, to the left; arrows =
+*Figure 10. Left-right acceleration from the table after removing friction (red = downhill, to the left; arrows =
 pull). Per-cell fits are smoothed with the same stretch-weighted Gaussian kernel (σ = 130 px) in every panel, and
 regions with too few track stretches are left blank. The pretrained model is omitted: its predicted ball is never
 visible on open table, so no stretches exist.*
@@ -508,7 +522,7 @@ rewards and the simulated $c(u)$ only; nothing in it is fitted to real data.
 
 <p align="center"><img src="docs/figures/gripper_uncertainty.png" width="900"></p>
 
-*Figure 9. Top: the frame before the ball appears, for four forecasts. The orange disc is the forecast exit region;
+*Figure 11. Top: the frame before the ball appears, for four forecasts. The orange disc is the forecast exit region;
 its radius is $\sigma_s$, and the gripper lines up on its centre. Below about 2 cm the disc is hidden by the fingers.
 Bottom: simulated pick-up rate $c(u)$ of the frozen policy against forecast uncertainty, with the four forecasts
 marked.*
@@ -534,7 +548,7 @@ Mean reward per pass over all 335 real passes (141 emerge, 194 blocked):
 | **Emerges, uncertain forecast** | <img src="docs/figures/gripper/uncertain_no_posttraining.gif" width="280"> | <img src="docs/figures/gripper/uncertain_posttrained.gif" width="280"> | <img src="docs/figures/gripper/uncertain_perfect.gif" width="280"> |
 | **Emerges, confident forecast** | <img src="docs/figures/gripper/confident_no_posttraining.gif" width="280"> | <img src="docs/figures/gripper/confident_posttrained.gif" width="280"> | <img src="docs/figures/gripper/confident_perfect.gif" width="280"> |
 
-*Figure 10. The same frozen policy driven by three forecast sources on three real passes. Each header shows P(comes
+*Figure 12. The same frozen policy driven by three forecast sources on three real passes. Each header shows P(comes
 out), the decision threshold and the decision. Without post-training the gripper sets off for every ball, including
 blocked ones; with the post-trained forecast it holds back on the blocked pass and lines up on the emerging ones.*
 
