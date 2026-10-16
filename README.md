@@ -614,6 +614,21 @@ to new observation inputs and action spaces by adding a small input tokenizer an
 enter as one extra low-dimensional observation token, and Octo would be fine-tuned on demonstrations generated in
 simulation by the PPO policy above. This fine-tune has not been run.
 
+**Further directions for transfer (not yet tested).**
+
+- *Retargeting.* Because the forecast is expressed in scene coordinates rather than joint commands, a grasp plan made
+  for one gripper can be retargeted to another by mapping the target pose (where and when to close) through each
+  robot's own kinematics, as motion-retargeting methods do for human-to-robot transfer. Only the low-level
+  controller then differs between robots.
+- *A neutral shared policy.* A single embodiment-neutral policy could act in end-effector space on the same forecast
+  interface, trained once on simulated demonstrations, with thin per-robot adapters. Every robot would then learn
+  from one common baseline, provided the data are presented to it in the same format: the same forecast vector,
+  frames and units for every embodiment.
+- *Language-triggered skills.* In a vision-language-action model, the catch could become one of several skills
+  selected by a semantic instruction ("catch the ball", "let it roll past", "block it"), each conditioned on the same
+  forecast. Training the skills on a shared latent action space would also allow interpolating between them, for
+  example a soft block that slows the ball without grasping it.
+
 ## 7. Conclusion, impact and outlook
 
 ### 7.1 Conclusion
