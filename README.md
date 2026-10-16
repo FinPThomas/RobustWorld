@@ -98,12 +98,14 @@ scoring only. Clips in which a hand touches the ball are excluded.
 <p align="center"><img src="docs/figures/data.gif" width="420"></p>
 
 *Figure 2. Sample clips: the three outcomes from the training direction, a pass from the opposite direction, and
-stills of the held-out orange ball.*
+stills of the held-out orange ball. The red dashed outline marks the hidden blocker.*
 
 <p align="center"><img src="docs/figures/data_outcomes.png" width="900"></p>
 
 *Figure 3. The three outcome classes, shown on the last context frame. White: the observed context track (circle =
-start). Yellow: the target track the model must predict. "Bounce" and "hidden" are both blocked passes.*
+start). Yellow: the target track the model must predict; on the hidden pass it is dashed because the ball is never
+seen again. Red dashed outline: the hidden blocker, centred under the plank. "Bounce" and "hidden" are both blocked
+passes.*
 
 ## 2. Architecture and measurement
 
@@ -112,7 +114,10 @@ start). Yellow: the target track the model must predict. "Bounce" and "hidden" a
 Three generative video models, Wan 2.1 [1], Cosmos and LTX-Video (runners in `models/`), were evaluated
 zero-shot and did not meet the requirements of the problem. Pixel generation spends capacity on texture and
 lighting that carry no information about the blocker; their outputs were frequently blurry or physically
-implausible and had to be re-tracked before they could be scored. Billion-parameter diffusion models are also
+implausible and had to be re-tracked before they could be scored. They also lacked the scene knowledge itself:
+zero-shot, they typically showed the ball continuing along or under the plank rather than being stopped, the same
+inherent error as the pretrained V-JEPA 2, so they too would have required post-training on this scene, at far
+greater cost. Billion-parameter diffusion models are also
 expensive to adapt on a few hundred clips and prone to overfitting at that scale, and iterative denoising is too
 slow for a robot control loop.
 
@@ -142,6 +147,14 @@ Post-training is therefore not an extra matrix added after the model. It is a fu
 observed scene tokens to future scene tokens, with the representation $E_\theta$ held fixed. The prediction target
 is the layer-normalised encoder output of the real target half, $\bar z_t = \mathrm{LN}(z_t)$, as in V-JEPA 2's
 pretraining.
+
+**What is standard and what is new.** The architecture, the frozen encoder, the layer-normalised latent target and
+the plain L1 regression are V-JEPA 2's own design [2], which pretrains with a non-contrastive masked-prediction loss
+and an exponential-moving-average target encoder to avoid collapse. Three elements are added in this work for
+post-training on a small scene-specific dataset: the motion weighting $w_i$, the contrastive term, and
+loss-weighted sampling. The contrastive term is InfoNCE, introduced for Contrastive Predictive Coding [5]; JEPA
+pretraining deliberately avoids contrastive objectives, but here the term is safe to use because the encoder, and
+therefore the target space, is frozen, so the representation cannot collapse.
 
 **Objective.** The final configuration minimises a motion-weighted latent L1 loss plus a contrastive term:
 
@@ -407,58 +420,37 @@ above are what make the forecast matter.
 
 ### 6.3 Simulation and policy training
 
-The gripper is simulated in PyBullet (`models/gripper/`). Only the grasp of a single rolling ball is modelled,
-so a lightweight rigid-body simulator gives fast, reproducible training on a laptop CPU; heavier robotics stacks add
-fidelity this task does not need. Each episode replays a real exit (position, time and velocity from the tracker,
-with small jitter).
+**Simulator.** The gripper is simulated in PyBullet (`models/gripper/`). The question here is whether the forecast
+changes behaviour, not how to grasp in general, so the simulator only needs a rolling ball, two fingers and
+contact good enough to tell a held ball from a dropped one. PyBullet provides this from a single pip install, runs
+fast on a laptop CPU and has a built-in viewer for checking episodes. MuJoCo would offer more accurate contact and
+GPU-parallel training, but neither changes the answer for a 4 cm ball and a two-finger gripper, so the simpler tool
+was chosen deliberately to avoid over-engineering the part of the system that is not under test. Each episode
+replays a real exit (position, time and velocity from the tracker, with small jitter).
 
-**Observation, action and reward.** The observation $o_t \in \mathbb{R}^{17}$ contains the forecast
-$(\hat x, \hat t - t, \hat v)$ and its stated $(\sigma_s, \sigma_t, \sigma_v)$, the gripper's position and finger
-opening, and, once the ball is visible, a fit of its observed position and velocity. The action
-$a_t \in [-1, 1]^4$ sets the gripper's velocity in two directions, the finger opening and a grasp trigger, every
-1/16 s. The episode reward is
+**What the policy learns.** Every 1/16 s the policy outputs four numbers in $[-1, 1]$: the gripper's velocity
+along the plank edge, its velocity towards or away from the plank, how far the fingers are open, and a trigger to
+close. In effect it learns **where to wait** before the ball appears, **when to start moving**, **how wide to open**
+(wider is safer but slower to close) and **when to close**. Its observation $o_t \in \mathbb{R}^{17}$ is the forecast
+(exit position, time to exit, speed) and its stated uncertainty, the gripper's own position and opening, and, once
+the ball is visible, a fit of the ball's observed position and velocity.
 
-$$
-r =
-\begin{cases}
-1 + 0.5\,(1 - \delta) - 0.3\,g - c_{\text{move}} & \text{ball lifted and held} \\
--1 - c_{\text{move}} & \text{miss}
-\end{cases}
-$$
+**Reward and training.** Each episode scores
+$r = 1 + 0.5\,(1 - \delta) - 0.3\,g - c_{\text{move}}$ if the ball is lifted and held, and
+$r = -1 - c_{\text{move}}$ otherwise, where $\delta$ is how late the grasp happened, $g$ how wide the fingers were
+open and $c_{\text{move}}$ a small travel cost. The policy, a two-layer MLP (128 units), is trained with the standard
+PPO clipped objective [6] (Stable-Baselines3, standard settings with a small entropy bonus; 2.5 M steps per fold, 5 folds). The task-specific part is the
+training forecast: each episode draws an uncertainty $u \sim \mathcal{U}(0, 1)$ and a forecast equal to the true
+exit plus Gaussian noise of exactly the stated size, $\hat x = x + \varepsilon$, $\varepsilon \sim \mathcal{N}(0, (0.12u)^2)$
+m, and likewise for timing and speed. The policy therefore learns how far to trust a
+forecast from its stated uncertainty. It is then **frozen** and driven by each world model's real forecast, which it
+never saw paired with a real outcome, so one policy serves every world model and the comparison is not confounded by
+policy training.
 
-where $\delta \in [0, 1]$ is how deep into the catch zone the grasp happened (earlier is better), $g \in [0, 1]$ is
-how wide the fingers were open, and $c_{\text{move}}$ is a small cost on distance travelled.
-
-**Training.** The policy $\pi_\psi(a \mid o)$, a two-layer MLP (128 units per layer), is trained with PPO [6] by
-maximising the clipped surrogate objective
-
-$$
-\mathcal{L}^{\text{CLIP}}(\psi) = \mathbb{E}_t\Big[\min\big(\rho_t(\psi)\,\hat A_t,\ \mathrm{clip}(\rho_t(\psi), 1 - \epsilon, 1 + \epsilon)\,\hat A_t\big)\Big] + \beta\,\mathcal{H}[\pi_\psi],
-\qquad \rho_t(\psi) = \frac{\pi_\psi(a_t \mid o_t)}{\pi_{\psi_{\text{old}}}(a_t \mid o_t)}
-$$
-
-with advantages $\hat A_t$ from generalised advantage estimation ($\gamma = 0.99$, $\lambda = 0.95$),
-$\epsilon = 0.2$, entropy weight $\beta = 0.003$, learning rate $3 \times 10^{-4}$, 512-step rollouts and 10 update
-epochs, for 2.5 M steps per fold over 5 folds (Stable-Baselines3). During training each episode draws
-$u \sim \mathcal{U}(0, 1)$ and a forecast equal to the true exit plus Gaussian noise of exactly the stated size,
-$\hat x = x + \varepsilon$ with $\varepsilon \sim \mathcal{N}(0, \sigma_s^2)$, and likewise for timing and speed.
-The policy therefore learns how much to trust a forecast from its stated uncertainty. It is then **frozen** and
-evaluated on real passes with each world model's forecast, and it never sees a world model's real forecast paired
-with a real outcome. The trade-off is that the policy must be calibrated to the uncertainty the world model actually
-reports; in exchange, one policy serves every world model and the comparison between world models is not confounded
-by policy training.
-
-**Decision to set off.** Before the ball can emerge, the gripper decides whether to move at all. With $c(u)$ the
-frozen policy's simulated pick-up rate at uncertainty $u$ (Figure 9), it sets off if and only if
-
-$$
-p\,\big[c(u)\,(R_{\text{pick}} + \bar e) - (1 - c(u))\,R_{\text{miss}}\big] - (1 - p)\,R_{\text{waste}}
-\;>\; -p\,R_{\text{let go}} + (1 - p)\,R_{\text{hold}}
-$$
-
-with the evaluation rewards $R_{\text{pick}} = 3$ (plus a mean early bonus $\bar e = 0.25$), $R_{\text{miss}} = 0.5$,
-$R_{\text{waste}} = 1$ for a trip to a blocked ball, $R_{\text{let go}} = 1$ for staying when the ball emerges, and
-$R_{\text{hold}} = 0.5$ for correctly holding back. Nothing in this rule is fitted to real data.
+**Decision to set off.** Before the ball can emerge, the gripper decides whether to move at all: it sets off when
+the expected reward of going, $p$ times the reward of a pick-up attempt at the policy's simulated success rate
+$c(u)$ minus $(1 - p)$ times the cost of a wasted trip, exceeds the expected reward of staying. The rule uses fixed
+rewards and the simulated $c(u)$ only; nothing in it is fitted to real data.
 
 ### 6.4 How uncertainty drives behaviour
 
@@ -512,17 +504,10 @@ limits, its observation layout and a reward tuned to its catch geometry, and the
 catch-rate curve $c(u)$. A different robot needs its own low-level controller, which is the cheapest part to obtain
 because it is trained in simulation.
 
-**A concrete route for a generalist policy: Octo.** Octo [7] is an open-source transformer policy whose inputs are
-tokenised modality by modality, and which was designed to be fine-tuned to **new observation inputs and new action
-spaces** by adding a lightweight tokenizer and head while keeping the pretrained backbone. The forecast vector would
-enter as an additional low-dimensional observation token alongside the camera tokens, and Octo would be fine-tuned
-on demonstrations generated in simulation by the PPO policy above, which supplies unlimited, perfectly labelled
-trajectories for any embodiment that can be simulated. Octo suits this because its tokenised inputs accept a new
-sensor-like signal without architectural change and it fine-tunes on a single GPU from a few hundred
-demonstrations. π0 is a viable alternative through its proprioceptive state input, at higher compute cost.
-OpenVLA conditions only on an image and a language instruction, so the forecast would have to be rendered into
-the image or the prompt, which discards its numerical precision. This fine-tune has not been run; it is the natural
-next step for carrying the result to a general-purpose manipulator.
+**A route to a generalist policy.** Octo [7], an open-source generalist robot policy, is designed to be fine-tuned
+to new observation inputs and action spaces by adding a small input tokenizer and output head. The forecast would
+enter as one extra low-dimensional observation token, and Octo would be fine-tuned on demonstrations generated in
+simulation by the PPO policy above. This fine-tune has not been run.
 
 ## 7. Conclusion, impact and outlook
 
@@ -546,14 +531,36 @@ verifiable test of the property those systems rely on: that scene-specific physi
 video and measured independently of the readout. Latent prediction also needs only one forward pass per forecast,
 which suits on-board inference on power-limited humanoid hardware better than iterative video generation.
 
-### 7.3 Handheld and egocentric video
+### 7.3 Updating the world model while the robot operates
+
+Because every pass labels itself (the first half of a clip is the input, the second half the target), the world
+model can keep learning during operation. A feasible scheme is to buffer recent clips from the robot's camera, run
+predictor updates in the background between tasks with a small learning rate, and replay a share of older clips so
+that earlier knowledge is not forgotten. The frozen probe and encoder keep the readout valid throughout, so the
+policy's input means the same thing before and after each update. This is cheaper for a JEPA than for a generative
+model: only the predictor (12 layers at width 384, a small fraction of the model) is updated, the target is one
+encoder pass of the real future rather than a pixel reconstruction, and no diffusion steps are needed. In this work
+an update cost under one second per clip on a single T4 (from the 20-epoch run time), against billion-parameter
+updates for a video diffusion model. A moved-blocker recording would test how quickly such updates adapt.
+
+### 7.4 Would a JEPA remain the choice with more compute?
+
+For the forecasting layer, yes. Compute was not the only reason for choosing V-JEPA 2: latent prediction suits
+multi-modal outcomes, is cheap to run on a robot and plugs directly into planning [2]. With more compute, the main
+change would be to post-train more of the model (unfreezing upper encoder layers, which would also require
+re-fitting the probe before post-training) and to use the action-conditioned predictor so that the robot's own
+actions enter the forecast. Generative video models would remain useful where a human must see the prediction, or
+to synthesise extra training scenes, so a likely future system pairs a latent model for control with a generative
+model for visualisation and data.
+
+### 7.5 Handheld and egocentric video
 
 Large egocentric datasets and handheld data-collection tools show that human-held cameras are the scalable
 source of home video. Handheld video introduces camera motion; latent models are better placed than pixel
 generators to absorb it, but the probe and the slope measurement would need to operate in a camera-stabilised or
 world-fixed frame.
 
-### 7.4 Limitations and next steps
+### 7.6 Limitations and next steps
 
 The study uses one scene, one blocker position and a single training seed with 5-fold cross-validation; the
 left-entry set contains only 3 hidden passes; the predicted ball remains fainter than the real one in the narrow
