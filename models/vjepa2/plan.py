@@ -553,6 +553,9 @@ def step_other_ball(args, state, log):
     """D (Fin, 2026-10-16): the other ball, scored without training (pretrained, C, G when its weights are here),
     plus its colour direction in the frozen encoder's features and the scores with that direction removed
     (other_ball.py). Encodes whatever isn't encoded yet first (every clip, each session)."""
+    # its end-to-end test first (a tiny random model, about a minute): a bug stops here, before the GPU encode
+    must([PY, "-m", "pip", "install", "-q", "pytest"], log)
+    must([PY, "-m", "pytest", "-x", "-q", REPO / "tests" / "test_other_ball.py"], log)
     step_encode(args, state, log)
     must([PY, HERE / "other_ball.py", "--out", PLAN / "other_ball"], log)
 
