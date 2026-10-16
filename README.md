@@ -152,7 +152,7 @@ tokens per half.
 Post-training is therefore not an extra matrix added after the model. It is a full update of the predictor that maps
 observed scene tokens to future scene tokens, with the representation $E_\theta$ held fixed. The prediction target
 is the layer-normalised encoder output of the real target half, $\bar z_t = \mathrm{LN}(z_t)$, as in V-JEPA 2's
-pretraining.
+pretraining; $\mathrm{LN}$ (layer normalisation) rescales each token's 1024 features to zero mean and unit variance, so every token counts equally in the loss regardless of its raw scale.
 
 **What is standard and what is new.** The architecture, the frozen encoder, the layer-normalised latent target and
 the plain L1 regression are V-JEPA 2's own design [2], which pretrains with a non-contrastive masked-prediction loss
