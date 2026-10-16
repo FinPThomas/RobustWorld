@@ -48,6 +48,8 @@ RUNS = {"C": "lossmix_both-after", "G": "lossmix_topup-after"}
 
 def ball_rows(enc: dict, lab: np.ndarray, centres: list) -> list[dict]:
     """Context steps with the ball in view: raw and layer-normed mean token at its cells, centre and speed."""
+    import torch
+
     import eval_decoder
     ctx = enc["context"]
     rows = []
@@ -55,7 +57,7 @@ def ball_rows(enc: dict, lab: np.ndarray, centres: list) -> list[dict]:
         cells = np.asarray(lab[t], bool)
         if not cells.any() or centres[t] is None:
             continue
-        tok = ctx[t][cells].float()
+        tok = ctx[t][torch.from_numpy(cells)].float()
         prev = centres[t - 1] if t else None
         speed = float(np.hypot(centres[t][0] - prev[0], centres[t][1] - prev[1])) if prev is not None else None
         rows.append({"raw": tok.mean(0), "ln": eval_decoder.token_space(tok).mean(0),
@@ -249,7 +251,8 @@ def main(argv: list[str] | None = None) -> int:
         ctx = enc["context"][None].float().to(device)
         ctx_rm = remove(ctx, d_raw, level)
         maps = {"real": decoder(enc["real"][cs:]).numpy()}
-        colour_kept = {"real": float(eval_decoder.token_space(enc["real"][cs:].float())[lab[cs:].astype(bool)]
+        tgt = torch.from_numpy(np.asarray(lab[cs:], bool))
+        colour_kept = {"real": float(eval_decoder.token_space(enc["real"][cs:].float())[tgt]
                                      .mean(0) @ dirs["ln"]) if lab[cs:].any() else None}
         with torch.no_grad():
             for r in runs:
@@ -259,7 +262,7 @@ def main(argv: list[str] | None = None) -> int:
                 maps[r] = decoder(pred).numpy()
                 maps[f"{r} (colour removed)"] = decoder(predict(r, ctx_rm, steps, c, b == "new")).numpy()
                 if lab[cs:].any():
-                    colour_kept[r] = float(eval_decoder.token_space(pred)[lab[cs:].astype(bool)].mean(0) @ dirs["ln"])
+                    colour_kept[r] = float(eval_decoder.token_space(pred)[tgt].mean(0) @ dirs["ln"])
         rec = {"clip_id": c["clip_id"], "ball": b, "outcome": c["outcome"],
                "colour_at_real_ball_cells": colour_kept}
         for k, m in maps.items():

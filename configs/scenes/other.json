@@ -1,0 +1,7 @@
+{
+  "_comment": "Scene for other.mp4 (the other, orange ping-pong ball; 512x512, fixed overhead camera). Set 2026-10-16 from results/other_ball_check/. Pixel coords (x, y), origin top-left. The occluder includes the upright at the plank's top end. Wood is H 12-16 at V up to ~170; the ball is H 17-21 and brighter (V ~200), so V >= 175 separates them.",
+  "occluder_polygon": [[205, 28], [222, 28], [222, 0], [242, 0], [242, 28], [263, 28], [260, 448], [102, 448]],
+  "ball_hsv_lo": [15, 100, 175],
+  "ball_hsv_hi": [25, 235, 250],
+  "segments": [{"name": "orange", "side_in": null, "start_s": 0, "end_s": null}]
+}
