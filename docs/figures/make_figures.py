@@ -26,6 +26,10 @@ PLAN = REPO / "results" / "2026-10-04_2110_twoday" / "vjepa2" / "plan"
 SCENE = json.loads((REPO / "configs" / "scenes" / "whole.json").read_text())
 PLANK = np.asarray(SCENE["occluder_polygon"], float)
 
+# hidden blocker as placed (Fin, 16 Oct): under the two dark markers on the plank's right edge,
+# about half the plank width, in the middle along the plank
+BLOCKER = np.array([[201, 255], [258, 255], [256, 370], [188, 370]], float)
+
 PRE, TWO, FINAL = "both-before", "lossmix_both-after", "lossmix_topup-after"
 NAMES = {PRE: "Pretrained V-JEPA 2",
          TWO: "Post-trained, both directions",
@@ -192,6 +196,15 @@ def fig_rollout(clips: Path, cid: str, side: str, title: str, name: str) -> None
     save(fig, name)
 
 
+def _blocker(ax) -> None:
+    from matplotlib.patches import Polygon
+    import matplotlib.patheffects as pe
+    ax.add_patch(Polygon(BLOCKER, closed=True, fill=False, ec="#ff2d2d", lw=2.2, ls=(0, (4, 2))))
+    ax.text(BLOCKER[:, 0].max() + 10, BLOCKER[:, 1].mean(), "hidden\nblocker", ha="left", va="center",
+            fontsize=10, color="white", fontweight="bold",
+            path_effects=[pe.withStroke(linewidth=2.5, foreground="#b00000")])
+
+
 def gif_rollout(clips: Path, cid: str, side: str, name: str) -> None:
     real = _maps(PRE)[f"{cid}/real"].astype(float)
     pre = _maps(PRE)[f"{cid}/imagined"].astype(float)
@@ -208,9 +221,11 @@ def gif_rollout(clips: Path, cid: str, side: str, name: str) -> None:
             ax.set_title(lab, fontsize=13, fontweight="bold")
             if k < 0:
                 ax.imshow(frames[cs - 1])
+                _blocker(ax)
                 continue
             ax.imshow(_grey(frames[min(cs + 2 * k, len(frames) - 1)] if m is real else bg))
             _heat(ax, m[k])
+            _blocker(ax)
         fig.text(0.5, 0.025, "last seen frame" if k < 0 else f"prediction +{(k + 1) / 8:.2f} s",
                  ha="center", fontsize=13)
         fig.canvas.draw()
